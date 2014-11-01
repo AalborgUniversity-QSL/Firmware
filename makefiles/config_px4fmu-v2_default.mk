@@ -129,6 +129,11 @@ MODULES		+= lib/conversion
 MODULES		+= lib/launchdetection
 
 #
+# Custom apps
+#
+MODULES		+= modules/q_formation_control
+
+#
 # OBC challenge
 #
 MODULES		+= modules/bottle_drop
