@@ -49,56 +49,81 @@ int formation_control_thread_main(int argc, char *argv[]) {
         warnx("[Formation_control] started");
         
         int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
+
         orb_set_interval(sensor_sub_fd, 250);
 
 	struct vehicle_attitude_setpoint_s att_sp;
 	memset(&att_sp, 0, sizeof(att_sp));
         orb_advert_t att_sp_pub = orb_advertise(ORB_ID(vehicle_attitude_setpoint), &att_sp);
 
+        int vcmd_sub = orb_subscribe(ORB_ID(vehicle_command)); /* handle til vehicle command */
+        struct vehicle_command_s vcmd;
+        orb_copy(ORB_ID(vehicle_command), vcmd_sub, &vcmd);
+
         struct pollfd fds[] = { 
             { .fd = sensor_sub_fd,   .events = POLLIN },
+        };
+
+        struct pollfd fd_cmd[] = { 
+                { .fd = vcmd_sub,   .events = POLLIN },
         };
         
         struct sensor_combined_s raw;
         orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
         float gnd_alt = raw.baro_alt_meter;
-
-        while (!thread_should_exit) {
-                int ret = poll(fds, 2, 250);
-                if (ret < 0) {
-			warnx("poll error");
-		} else if (ret == 0) {
+        
+        while(!thread_should_exit) {
+                int ret_cmd = poll(fd_cmd, 1, 250);
+                if (ret_cmd < 0) {
+			warnx("poll cmd error");
+		} else if (ret_cmd == 0) {
 			/* no return value - nothing has happened */
 		} else {
-                        if (fds[0].revents & POLLIN) { /* if there is new data */
-                                orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
+                        if (fd_cmd[0].revents & POLLIN) {
+                                orb_copy(ORB_ID(vehicle_command), vcmd_sub, &vcmd);
+                                if (vcmd.command == VEHICLE_CMD_FORMATION_CONTROL_START) {
+                                        while (!thread_should_exit) {
+                                                int ret = poll(fds, 1, 250);
+                                                if (ret < 0) {
+                                                        warnx("poll error");
+                                                } else if (ret == 0) {
+                                                        /* no return value - nothing has happened */
+                                                } else {
+                                                        if (fds[0].revents & POLLIN) { /* if there is new data */
+                                                                orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
 
-                                if ( raw.baro_alt_meter < (gnd_alt + 10) && raw.baro_alt_meter > 5 ) { /* Skal det her være i meter eller? */
-                                        att_sp.thrust += (float)0.2;
-                                        att_sp.q_d[0] = 0;
-                                        att_sp.q_d[1] = 0;
-                                        att_sp.q_d[2] = 0;
-                                        att_sp.q_d[3] = 1;
-                                        att_sp.q_d_valid = true;
-                                        orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
-                                } else if ( raw.baro_alt_meter >= (gnd_alt + 10) ) { /* Skal det her være i meter eller? */
-                                        att_sp.thrust -= (float)0.2;
-                                        att_sp.q_d[0] = 0;
-                                        att_sp.q_d[1] = 0;
-                                        att_sp.q_d[2] = 0;
-                                        att_sp.q_d[3] = 1;
-                                        att_sp.q_d_valid = true;
-                                        orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
-                                } else if ( raw.baro_alt_meter <= 2 ) {
-                                        att_sp.thrust = (float)0,0;
-                                        att_sp.q_d[0] = 0;
-                                        att_sp.q_d[1] = 0;
-                                        att_sp.q_d[2] = 0;
-                                        att_sp.q_d[3] = 1;
-                                        att_sp.q_d_valid = true;
-                                        orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
+                                                                if ( raw.baro_alt_meter < (gnd_alt + 10) && raw.baro_alt_meter > 5 ) { /* Skal det her være i meter eller? */
+                                                                        att_sp.thrust += (float)0.2;
+                                                                        att_sp.q_d[0] = 0;
+                                                                        att_sp.q_d[1] = 0;
+                                                                        att_sp.q_d[2] = 0;
+                                                                        att_sp.q_d[3] = 1;
+                                                                        att_sp.q_d_valid = true;
+                                                                        orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
+                                                                } else if ( raw.baro_alt_meter >= (gnd_alt + 10) ) { /* Skal det her være i meter eller? */
+                                                                        att_sp.thrust -= (float)0.2;
+                                                                        att_sp.q_d[0] = 0;
+                                                                        att_sp.q_d[1] = 0;
+                                                                        att_sp.q_d[2] = 0;
+                                                                        att_sp.q_d[3] = 1;
+                                                                        att_sp.q_d_valid = true;
+                                                                        orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
+                                                                } else if ( raw.baro_alt_meter <= 2 ) {
+                                                                        att_sp.thrust = (float)0,0;
+                                                                        att_sp.q_d[0] = 0;
+                                                                        att_sp.q_d[1] = 0;
+                                                                        att_sp.q_d[2] = 0;
+                                                                        att_sp.q_d[3] = 1;
+                                                                        att_sp.q_d_valid = true;
+                                                                        orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
+                                                                } else {
+                                                                        /* this is bad */
+                                                                }
+                                                        }
+                                                }
+                                        }
                                 } else {
-                                        /* this is bad */
+                                        /* Ingen kommando ankommet */
                                 }
                         }
                 }
