@@ -22,6 +22,8 @@
 #include <time.h>
 #include <drivers/drv_hrt.h>
 
+#include <mavlink/mavlink_log.h>
+
 #include <uORB/uORB.h>
 #include <uORB/topics/vehicle_attitude_setpoint.h>
 #include <uORB/topics/parameter_update.h>
@@ -47,6 +49,10 @@ static int daemon_task;
 int formation_control_thread_main(int argc, char *argv[]) {
 
         warnx("[Formation_control] started");
+
+        static int mavlink_fd;
+        mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
+        mavlink_log_info(mavlink_fd, "[q_formation_control] Halløj Jens, program lige startet.");
         
         int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
 
@@ -73,6 +79,7 @@ int formation_control_thread_main(int argc, char *argv[]) {
         float gnd_alt = raw.baro_alt_meter;
         
         while(!thread_should_exit) {
+                mavlink_log_info(mavlink_fd, "[q_formation_control] Halløj Jens, program i yderste loop.");
                 int ret_cmd = poll(fd_cmd, 1, 250);
                 if (ret_cmd < 0) {
 			warnx("poll cmd error");
@@ -83,6 +90,7 @@ int formation_control_thread_main(int argc, char *argv[]) {
                                 orb_copy(ORB_ID(vehicle_command), vcmd_sub, &vcmd);
                                 if (vcmd.command == VEHICLE_CMD_FORMATION_CONTROL_START) {
                                         while (!thread_should_exit) {
+                                                mavlink_log_info(mavlink_fd, "[q_formation_control] Halløj Jens, program i yderste loop.");
                                                 int ret = poll(fds, 1, 250);
                                                 if (ret < 0) {
                                                         warnx("poll error");
