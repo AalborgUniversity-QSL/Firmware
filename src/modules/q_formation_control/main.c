@@ -81,7 +81,7 @@ int formation_control_thread_main(int argc, char *argv[]) {
 		} else {
                         if (fd_cmd[0].revents & POLLIN) {
                                 orb_copy(ORB_ID(vehicle_command), vcmd_sub, &vcmd);
-                                if (vcmd.command == VEHICLE_CMD_FORMATION_CONTROL_START) {
+                                if (vcmd.command == MAV_CMD_FORMATION_CONTROL_START) {
                                         while (!thread_should_exit) {
                                                 int ret = poll(fds, 1, 250);
                                                 if (ret < 0) {
