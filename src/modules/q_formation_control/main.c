@@ -92,7 +92,7 @@ int formation_control_thread_main(int argc, char *argv[]) {
                                                         if (fds[0].revents & POLLIN) { /* if there is new data */
                                                                 orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
 
-                                                                if ( raw.baro_alt_meter < (gnd_alt + 10) && raw.baro_alt_meter > 5 ) { /* Skal det her være i meter eller? */
+                                                                if ( raw.baro_alt_meter < (gnd_alt + 10) ) { /* Skal det her være i meter eller? */
                                                                         att_sp.thrust += (float)0.2;
                                                                         att_sp.q_d[0] = 0;
                                                                         att_sp.q_d[1] = 0;
@@ -102,14 +102,6 @@ int formation_control_thread_main(int argc, char *argv[]) {
                                                                         orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
                                                                 } else if ( raw.baro_alt_meter >= (gnd_alt + 10) ) { /* Skal det her være i meter eller? */
                                                                         att_sp.thrust -= (float)0.2;
-                                                                        att_sp.q_d[0] = 0;
-                                                                        att_sp.q_d[1] = 0;
-                                                                        att_sp.q_d[2] = 0;
-                                                                        att_sp.q_d[3] = 1;
-                                                                        att_sp.q_d_valid = true;
-                                                                        orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
-                                                                } else if ( raw.baro_alt_meter <= 2 ) {
-                                                                        att_sp.thrust = (float)0,0;
                                                                         att_sp.q_d[0] = 0;
                                                                         att_sp.q_d[1] = 0;
                                                                         att_sp.q_d[2] = 0;
