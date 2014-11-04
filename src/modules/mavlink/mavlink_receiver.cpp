@@ -244,11 +244,11 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 void 
 MavlinkReceiver::handle_message_command_quad_formation(mavlink_message_t *msg) { /* Funktion til at modtage custom beskeder - BGT */
 	/* command */
-	mavlink_command_long_t cmd_mavlink;
-	mavlink_msg_command_long_decode(msg, &cmd_mavlink);
+        mavlink_quad_pos_t msg_mavlink;
+        mavlink_msg_quad_pos_encode(msg, &msg_mavlink);
 
-	if (cmd_mavlink.target_system == mavlink_system.sysid && ((cmd_mavlink.target_component == mavlink_system.compid)
-                                                                  || (cmd_mavlink.target_component == MAV_COMP_ID_ALL))) {
+	if (msg_mavlink.target_system == mavlink_system.sysid && ((msg_mavlink.target_component == mavlink_system.compid)
+                                                                  || (msg_mavlink.target_component == MAV_COMP_ID_ALL))) {
 		//check for MAVLINK terminate command
 		if (cmd_mavlink.command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN && ((int)cmd_mavlink.param1) == 3) {
 			/* This is the link shutdown command, terminate mavlink */

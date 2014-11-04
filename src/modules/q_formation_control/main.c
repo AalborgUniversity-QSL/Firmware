@@ -22,7 +22,7 @@
 #include <time.h>
 #include <drivers/drv_hrt.h>
 
-#include <mavlink/mavlink_log.h>
+#include <quad_formation/mavlink.h>
 
 #include <uORB/uORB.h>
 #include <uORB/topics/vehicle_attitude_setpoint.h>
@@ -96,7 +96,7 @@ int formation_control_thread_main(int argc, char *argv[]) {
 		} else {
                         if (fd_cmd[0].revents & POLLIN) {
                                 orb_copy(ORB_ID(vehicle_command), vcmd_sub, &vcmd);
-                                if (vcmd.command == VEHICLE_CMD_FORMATION_CONTROL_START) {
+                                if (vcmd.command == MAV_VEHICLE_CMD_FORMATION_START) {
                                         while (!thread_should_exit) {
                                                 if (i_first == false) {
                                                         mavlink_log_info(mavlink_fd, "[q_formation_control @ mavlink] Halløj Jens, program i inderste loop."); /* sender streng via mavlink */
