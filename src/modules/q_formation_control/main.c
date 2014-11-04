@@ -52,7 +52,8 @@ int formation_control_thread_main(int argc, char *argv[]) {
 
         static int mavlink_fd;
         mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
-        mavlink_log_info(mavlink_fd, "[q_formation_control] Halløj Jens, program lige startet.");
+        mavlink_log_info(mavlink_fd, "[q_formation_control @ mavlink] Halløj Jens, program lige startet.");
+        printf("[q_formation_control @ serial] Halløj Jens, program lige startet.\n");
         
         int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
 
@@ -78,8 +79,15 @@ int formation_control_thread_main(int argc, char *argv[]) {
         orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
         float gnd_alt = raw.baro_alt_meter;
         
+        bool y_first = false;
+        bool i_first = false;
+
         while(!thread_should_exit) {
-                mavlink_log_info(mavlink_fd, "[q_formation_control] Halløj Jens, program i yderste loop.");
+                if (y_first == false) {
+                        mavlink_log_info(mavlink_fd, "[q_formation_control @ mavlink] Halløj Jens, program i yderste loop."); /* sender strend via mavlink */
+                        printf("[q_formation_control @ serial] Halløj Jens, program i yderste loop.\n"); /* sender streng via seriel terminal */
+                        y_first = true;
+                }
                 int ret_cmd = poll(fd_cmd, 1, 250);
                 if (ret_cmd < 0) {
 			warnx("poll cmd error");
@@ -90,7 +98,11 @@ int formation_control_thread_main(int argc, char *argv[]) {
                                 orb_copy(ORB_ID(vehicle_command), vcmd_sub, &vcmd);
                                 if (vcmd.command == VEHICLE_CMD_FORMATION_CONTROL_START) {
                                         while (!thread_should_exit) {
-                                                mavlink_log_info(mavlink_fd, "[q_formation_control] Halløj Jens, program i yderste loop.");
+                                                if (i_first == false) {
+                                                        mavlink_log_info(mavlink_fd, "[q_formation_control @ mavlink] Halløj Jens, program i inderste loop."); /* sender streng via mavlink */
+                                                        printf("[q_formation_control @ serial] Halløj Jens, program i inderste loop.\n"); /* sender streng via seriel terminal */
+                                                        i_first = true;
+                                                }
                                                 int ret = poll(fds, 1, 250);
                                                 if (ret < 0) {
                                                         warnx("poll error");
@@ -134,7 +146,7 @@ static void usage(const char *reason) {
         if (reason)
                 fprintf(stderr, "%s\n", reason);
 
-        fprintf(stderr, "usage: ex_fixedwing_control {start|stop|status}\n\n");
+        fprintf(stderr, "usage: q_formation_control {start|stop|status}\n\n");
         exit(1);
 }
 
