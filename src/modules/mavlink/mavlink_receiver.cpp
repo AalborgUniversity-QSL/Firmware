@@ -121,7 +121,8 @@ MavlinkReceiver::MavlinkReceiver(Mavlink *parent) :
 	_old_timestamp(0),
 	_hil_local_proj_inited(0),
 	_hil_local_alt0(0.0f),
-	_hil_local_proj_ref{}
+	_hil_local_proj_ref{},
+        _quad_formation_msg_pub(-1)
 {
 
 	// make sure the FTP server is started
@@ -241,56 +242,36 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 	_mavlink->set_has_received_messages(true);
 }
 
+
 void 
 MavlinkReceiver::handle_message_command_quad_formation(mavlink_message_t *msg) { /* Funktion til at modtage custom beskeder - BGT */
-	/* command */
         mavlink_quad_pos_t msg_mavlink;
         mavlink_msg_quad_pos_encode(msg, &msg_mavlink);
 
-	if (msg_mavlink.target_system == mavlink_system.sysid && ((msg_mavlink.target_component == mavlink_system.compid)
-                                                                  || (msg_mavlink.target_component == MAV_COMP_ID_ALL))) {
-		//check for MAVLINK terminate command
-		if (cmd_mavlink.command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN && ((int)cmd_mavlink.param1) == 3) {
-			/* This is the link shutdown command, terminate mavlink */
-			warnx("terminated by remote command");
-			fflush(stdout);
-			usleep(50000);
+        struct quad_formation_msg_s quad_msg;
+        memset(&quad_msg, 0, sizeof(quad_msg));
 
-			/* terminate other threads and this thread */
-			_mavlink->_task_should_exit = true;
+        for (i = 0; i < 10; i++) {
+                quad_msg.x[i] = mavlink_msg.x[i];
+        }
+        
+        for (i = 0; i < 10; i++) {
+                quad_msg.y[i] = mavlink_msg.y[i];
+        }
 
-		} else {
+        for (i = 0; i < 10; i++) {
+                quad_msg.z[i] = mavlink_msg.z;
+        }
 
-			if (msg->sysid == mavlink_system.sysid && msg->compid == mavlink_system.compid) {
-				warnx("ignoring CMD spoofed with same SYS/COMP (%d/%d) ID",
-				      mavlink_system.sysid, mavlink_system.compid);
-				return;
-			}
+        quad_msg.target_system = msg_mavlink.target_system;
+        quad_msg.cmd_id = msg_mavlink.cmd_id;
+        quad_msg.pos_no = msg_mavlink.pos_no;
 
-			struct vehicle_command_s vcmd;
-			memset(&vcmd, 0, sizeof(vcmd));
+        if (_quad_formation_msg_pub < 0) {
+                _quad_formation_msg_pub = orb_advertise(ORB_ID(quad_formation_msg), &quad_msg);
 
-			/* Copy the content of mavlink_command_long_t cmd_mavlink into command_t cmd */
-			vcmd.param1 = cmd_mavlink.param1;
-			vcmd.param2 = cmd_mavlink.param2;
-			vcmd.param3 = cmd_mavlink.param3;
-			vcmd.param4 = cmd_mavlink.param4;
-			vcmd.param5 = cmd_mavlink.param5;
-			vcmd.param6 = cmd_mavlink.param6;
-			vcmd.param7 = cmd_mavlink.param7;
-			vcmd.command = (enum VEHICLE_CMD)cmd_mavlink.command;
-			vcmd.target_system = cmd_mavlink.target_system;
-			vcmd.target_component = cmd_mavlink.target_component;
-			vcmd.source_system = msg->sysid;
-			vcmd.source_component = msg->compid;
-			vcmd.confirmation =  cmd_mavlink.confirmation;
-
-			if (_cmd_pub <= 0) {
-				_cmd_pub = orb_advertise(ORB_ID(vehicle_command), &vcmd);
-                        }
- 
-                       orb_publish(ORB_ID(vehicle_command), _cmd_pub, &vcmd);
-                }
+        } else {
+                orb_publish(ORB_ID(quad_formation_msg), _quad_formation_msg_pub, &quad_msg);
         }
 }
 

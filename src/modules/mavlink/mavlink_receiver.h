@@ -165,6 +165,7 @@ private:
 	bool _hil_local_proj_inited;
 	float _hil_local_alt0;
 	struct map_projection_reference_s _hil_local_proj_ref;
+        orb_advert_t _quad_formation_msg_pub;
 
 	/* do not allow copying this class */
 	MavlinkReceiver(const MavlinkReceiver&);
