@@ -72,6 +72,7 @@
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/battery_status.h>
 #include <uORB/topics/vehicle_force_setpoint.h>
+#include <uORB/topics/quad_formation_msg.h>
 
 #include "mavlink_ftp.h"
 

@@ -246,21 +246,21 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 void 
 MavlinkReceiver::handle_message_command_quad_formation(mavlink_message_t *msg) { /* Funktion til at modtage custom beskeder - BGT */
         mavlink_quad_pos_t msg_mavlink;
-        mavlink_msg_quad_pos_encode(msg, &msg_mavlink);
+        mavlink_msg_quad_pos_decode(msg, &msg_mavlink);
 
         struct quad_formation_msg_s quad_msg;
         memset(&quad_msg, 0, sizeof(quad_msg));
 
-        for (i = 0; i < 10; i++) {
-                quad_msg.x[i] = mavlink_msg.x[i];
+        for (int i = 0; i < 10; i++) {
+                quad_msg.x[i] = msg_mavlink.x[i];
         }
         
-        for (i = 0; i < 10; i++) {
-                quad_msg.y[i] = mavlink_msg.y[i];
+        for (int i = 0; i < 10; i++) {
+                quad_msg.y[i] = msg_mavlink.y[i];
         }
 
-        for (i = 0; i < 10; i++) {
-                quad_msg.z[i] = mavlink_msg.z;
+        for (int i = 0; i < 10; i++) {
+                quad_msg.z[i] = msg_mavlink.z[i];
         }
 
         quad_msg.target_system = msg_mavlink.target_system;

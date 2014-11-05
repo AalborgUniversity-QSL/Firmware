@@ -22,7 +22,7 @@
 #include <time.h>
 #include <drivers/drv_hrt.h>
 
-#include <quad_formation/mavlink.h>
+#include <v1.0/quad_formation/mavlink.h>
 
 #include <uORB/uORB.h>
 #include <uORB/topics/vehicle_attitude_setpoint.h>
