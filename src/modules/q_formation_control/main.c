@@ -22,17 +22,19 @@
 #include <time.h>
 #include <drivers/drv_hrt.h>
 
-#include <v1.0/quad_formation/mavlink.h>
+#include <mavlink/mavlink_log.h>
 
 #include <uORB/uORB.h>
 #include <uORB/topics/vehicle_attitude_setpoint.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/vehicle_command.h>
+#include <uORB/topics/quad_formation_msg.h>
+
+#include <geo/geo.h>
 
 #include <systemlib/param/param.h>
 #include <systemlib/pid/pid.h>
-#include <geo/geo.h>
 #include <systemlib/perf_counter.h>
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
@@ -63,16 +65,16 @@ int formation_control_thread_main(int argc, char *argv[]) {
 	memset(&att_sp, 0, sizeof(att_sp));
         orb_advert_t att_sp_pub = orb_advertise(ORB_ID(vehicle_attitude_setpoint), &att_sp);
 
-        int vcmd_sub = orb_subscribe(ORB_ID(vehicle_command)); /* handle til vehicle command */
-        struct vehicle_command_s vcmd;
-        orb_copy(ORB_ID(vehicle_command), vcmd_sub, &vcmd);
+        int qmsg_sub = orb_subscribe(ORB_ID(quad_formation_msg)); /* handle til vehicle command */
+        struct quad_formation_msg_s qmsg;
+        orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
 
         struct pollfd fds[] = { 
             { .fd = sensor_sub_fd,   .events = POLLIN },
         };
 
-        struct pollfd fd_cmd[] = { 
-                { .fd = vcmd_sub,   .events = POLLIN },
+        struct pollfd fd_qmsg[] = { 
+                { .fd = qmsg_sub,   .events = POLLIN },
         };
         
         struct sensor_combined_s raw;
@@ -84,22 +86,22 @@ int formation_control_thread_main(int argc, char *argv[]) {
 
         while(!thread_should_exit) {
                 if (y_first == false) {
-                        mavlink_log_info(mavlink_fd, "[q_formation_control @ mavlink] Halløj Jens, program i yderste loop."); /* sender strend via mavlink */
+                        mavlink_log_info(mavlink_fd, "[q_formation_control@mavlink] yderste loop."); /* sender strend via mavlink */
                         printf("[q_formation_control @ serial] Halløj Jens, program i yderste loop.\n"); /* sender streng via seriel terminal */
                         y_first = true;
                 }
-                int ret_cmd = poll(fd_cmd, 1, 250);
-                if (ret_cmd < 0) {
+                int ret_qmsg = poll(fd_qmsg, 1, 250);
+                if (ret_qmsg < 0) {
 			warnx("poll cmd error");
-		} else if (ret_cmd == 0) {
+		} else if (ret_qmsg == 0) {
 			/* no return value - nothing has happened */
 		} else {
-                        if (fd_cmd[0].revents & POLLIN) {
-                                orb_copy(ORB_ID(vehicle_command), vcmd_sub, &vcmd);
-                                if (vcmd.command == MAV_VEHICLE_CMD_FORMATION_START) {
+                        if (fd_qmsg[0].revents & POLLIN) {
+                                orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
+                                if (qmsg.cmd_id == QUAD_MSG_CMD_START) {
                                         while (!thread_should_exit) {
                                                 if (i_first == false) {
-                                                        mavlink_log_info(mavlink_fd, "[q_formation_control @ mavlink] Halløj Jens, program i inderste loop."); /* sender streng via mavlink */
+                                                        mavlink_log_info(mavlink_fd, "[q_formation_control@mavlink] inderste loop."); /* sender streng via mavlink */
                                                         printf("[q_formation_control @ serial] Halløj Jens, program i inderste loop.\n"); /* sender streng via seriel terminal */
                                                         i_first = true;
                                                 }

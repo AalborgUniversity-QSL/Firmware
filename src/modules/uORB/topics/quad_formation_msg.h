@@ -20,6 +20,12 @@
  * @{
  */
 
+enum QUAD_MSG_CMD {
+        QUAD_MSG_CMD_START = 42,
+	QUAD_MSG_CMD_STOP = 43,
+	QUAD_MSG_CMD_ENUM_END = 44
+};
+
 struct quad_formation_msg_s {
         int16_t x[10];           ///< x-axis (int16_t[10])
         int16_t y[10];           ///< y-axis (int16_t[10])
