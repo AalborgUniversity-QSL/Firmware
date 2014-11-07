@@ -150,7 +150,7 @@ int formation_control_thread_main(int argc, char *argv[]) {
                                                         }
                                                 }
                                                 
-                                                check_topic();
+                                                /* check_topic(); */
                                         }
                                 } else {
                                         /* Ingen kommando ankommet */
