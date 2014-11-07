@@ -116,18 +116,15 @@ int formation_control_thread_main(int argc, char *argv[]) {
 
                                                                 if ( raw.baro_alt_meter < (gnd_alt + 10) ) { /* Skal det her være i meter eller? */
                                                                         att_sp.thrust += (float)0.2;
-                                                                        att_sp.q_d[0] = 0;
-                                                                        att_sp.q_d[1] = 0;
-                                                                        att_sp.q_d[2] = 0;
-                                                                        att_sp.q_d[3] = 1;
-                                                                        att_sp.q_d_valid = true;
+                                                                        att_sp.roll_body = 0;
+                                                                        att_sp.pitch_body = 0;
+                                                                        att_sp.yaw_body = 0;
                                                                         orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
                                                                 } else if ( raw.baro_alt_meter >= (gnd_alt + 10) ) { /* Skal det her være i meter eller? */
                                                                         att_sp.thrust -= (float)0.2;
-                                                                        att_sp.q_d[0] = 0;
-                                                                        att_sp.q_d[1] = 0;
-                                                                        att_sp.q_d[2] = 0;
-                                                                        att_sp.q_d[3] = 1;
+                                                                        att_sp.roll_body = 0;
+                                                                        att_sp.pitch_body = 0;
+                                                                        att_sp.yaw_body = 0;
                                                                         att_sp.q_d_valid = true;
                                                                         orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
                                                                 } else {
