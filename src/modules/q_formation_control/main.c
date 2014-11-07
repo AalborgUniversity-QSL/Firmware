@@ -48,6 +48,7 @@ static bool thread_should_exit = false;
 static bool thread_running = false;
 static int daemon_task;
 
+
 int formation_control_thread_main(int argc, char *argv[]) {
 
         warnx("[Formation_control] started");
@@ -79,7 +80,7 @@ int formation_control_thread_main(int argc, char *argv[]) {
         
         struct sensor_combined_s raw;
         orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
-        float gnd_alt = raw.baro_alt_meter;
+//        float gnd_alt = raw.baro_alt_meter;
         
         bool y_first = false;
         bool i_first = false;
@@ -111,27 +112,32 @@ int formation_control_thread_main(int argc, char *argv[]) {
                                                 } else if (ret == 0) {
                                                         /* no return value - nothing has happened */
                                                 } else {
-                                                        if (fds[0].revents & POLLIN) { /* if there is new data */
-                                                                orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
+                                                        att_sp.thrust = (float)5;
+                                                        att_sp.roll_body = 0;
+                                                        att_sp.pitch_body = 0;
+                                                        att_sp.yaw_body = 0;
+                                                        orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
+                                                        /* if (fds[0].revents & POLLIN) { /\* if there is new data *\/ */
+                                                        /*         orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw); */
 
-                                                                if ( raw.baro_alt_meter < (gnd_alt + 10) ) { /* Skal det her være i meter eller? */
-                                                                        att_sp.thrust += (float)0.2;
-                                                                        att_sp.roll_body = 0;
-                                                                        att_sp.pitch_body = 0;
-                                                                        att_sp.yaw_body = 0;
-                                                                        orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
-                                                                } else if ( raw.baro_alt_meter >= (gnd_alt + 10) ) { /* Skal det her være i meter eller? */
-                                                                        att_sp.thrust -= (float)0.2;
-                                                                        att_sp.roll_body = 0;
-                                                                        att_sp.pitch_body = 0;
-                                                                        att_sp.yaw_body = 0;
-                                                                        att_sp.q_d_valid = true;
-                                                                        orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
-                                                                } else {
-                                                                        /* this is bad */
-                                                                }
+                                                        /*         if ( raw.baro_alt_meter < (gnd_alt + 10) ) { /\* Skal det her være i meter eller? *\/ */
+                                                        /*                 att_sp.thrust += (float)0.2; */
+                                                        /*                 att_sp.roll_body = 0; */
+                                                        /*                 att_sp.pitch_body = 0; */
+                                                        /*                 att_sp.yaw_body = 0; */
+                                                        /*                 orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp); */
+                                                        /*         } else if ( raw.baro_alt_meter >= (gnd_alt + 10) ) { /\* Skal det her være i meter eller? *\/ */
+                                                        /*                 att_sp.thrust -= (float)0.2; */
+                                                        /*                 att_sp.roll_body = 0; */
+                                                        /*                 att_sp.pitch_body = 0; */
+                                                        /*                 att_sp.yaw_body = 0; */
+                                                        /*                 att_sp.q_d_valid = true; */
+                                                        /*                 orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp); */
+                                                        /*         } else { */
+                                                        /*                 /\* this is bad *\/ */
+                                                        /*         } */
                                                         }
-                                                }
+                                                //}
                                         }
                                 } else {
                                         /* Ingen kommando ankommet */
