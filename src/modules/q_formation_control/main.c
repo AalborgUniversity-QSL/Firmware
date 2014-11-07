@@ -48,6 +48,10 @@ static bool thread_should_exit = false;
 static bool thread_running = false;
 static int daemon_task;
 
+/* void check_topic(void) { */
+        
+        
+/* } */
 
 int formation_control_thread_main(int argc, char *argv[]) {
 
@@ -80,10 +84,11 @@ int formation_control_thread_main(int argc, char *argv[]) {
         
         struct sensor_combined_s raw;
         orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
-//        float gnd_alt = raw.baro_alt_meter;
+        float gnd_alt = raw.baro_alt_meter;
         
         bool y_first = false;
         bool i_first = false;
+        double rel_alt = 0.0;
 
         while(!thread_should_exit) {
                 if (y_first == false) {
@@ -112,32 +117,40 @@ int formation_control_thread_main(int argc, char *argv[]) {
                                                 } else if (ret == 0) {
                                                         /* no return value - nothing has happened */
                                                 } else {
-                                                        att_sp.thrust = (float)5;
-                                                        att_sp.roll_body = 0;
-                                                        att_sp.pitch_body = 0;
-                                                        att_sp.yaw_body = 0;
-                                                        orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
-                                                        /* if (fds[0].revents & POLLIN) { /\* if there is new data *\/ */
-                                                        /*         orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw); */
+                                                        /* att_sp.thrust = (float)5; */
+                                                        /* att_sp.roll_body = 0; */
+                                                        /* att_sp.pitch_body = 0; */
+                                                        /* att_sp.yaw_body = 0; */
+                                                        /* orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp); */
+                                                        if (fds[0].revents & POLLIN) { /* if there is new data */
+                                                                orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
 
-                                                        /*         if ( raw.baro_alt_meter < (gnd_alt + 10) ) { /\* Skal det her være i meter eller? *\/ */
-                                                        /*                 att_sp.thrust += (float)0.2; */
-                                                        /*                 att_sp.roll_body = 0; */
-                                                        /*                 att_sp.pitch_body = 0; */
-                                                        /*                 att_sp.yaw_body = 0; */
-                                                        /*                 orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp); */
-                                                        /*         } else if ( raw.baro_alt_meter >= (gnd_alt + 10) ) { /\* Skal det her være i meter eller? *\/ */
-                                                        /*                 att_sp.thrust -= (float)0.2; */
-                                                        /*                 att_sp.roll_body = 0; */
-                                                        /*                 att_sp.pitch_body = 0; */
-                                                        /*                 att_sp.yaw_body = 0; */
-                                                        /*                 att_sp.q_d_valid = true; */
-                                                        /*                 orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp); */
-                                                        /*         } else { */
-                                                        /*                 /\* this is bad *\/ */
-                                                        /*         } */
+                                                                rel_alt = (double)raw.baro_alt_meter - (double)gnd_alt;
+
+                                                                if ( (double)rel_alt < (double)0.8 ) {
+                                                                        att_sp.thrust += (float)0.2;
+                                                                        att_sp.roll_body = 0;
+                                                                        att_sp.pitch_body = 0;
+                                                                        att_sp.yaw_body = 0;
+                                                                        orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
+                                                                        printf("alt skru op: %8.4f\n", (double)att_sp.thrust);
+                                                                        printf("alt sensor: %8.4f\n\n", (double)rel_alt);
+                                                                } else if ((double)rel_alt > (double)0.8 ) {
+                                                                        att_sp.thrust -= (float)0.2;
+                                                                        att_sp.roll_body = 0;
+                                                                        att_sp.pitch_body = 0;
+                                                                        att_sp.yaw_body = 0;
+                                                                        att_sp.q_d_valid = true;
+                                                                        orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
+                                                                        printf("alt skru ned: %8.4f\n", (double)att_sp.thrust);
+                                                                        printf("alt sensor: %8.4f\n\n", (double)rel_alt);
+                                                                } else {
+                                                                        /* this is bad */
+                                                                }
                                                         }
-                                                //}
+                                                }
+                                                
+                                                check_topic();
                                         }
                                 } else {
                                         /* Ingen kommando ankommet */
