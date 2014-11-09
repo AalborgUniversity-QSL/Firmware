@@ -4,7 +4,7 @@
 #include "swarm_formation.h"
 
 
-velocity_t w2p(float posx, float posy)
+velocity_t wall(float posx, float posy)
 {
 
 	float ax;

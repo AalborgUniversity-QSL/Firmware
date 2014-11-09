@@ -14,7 +14,7 @@ int main()
 	velocity_t vel_wl = {0, 0};
 	vel_sw = swarm(i, allposx, allposy);
 	vel_ob = avoid(allposx[i],allposx[i], allposx[i]+0.5,allposx[i]-0.5);
-	vel_wl = w2p(allposx[i],allposx[i]);
+	vel_wl = wall(allposx[i],allposx[i]);
 	vx = vel_sw.v1+vel_ob.v1+vel_wl.v1;
 	vy = vel_sw.v2+vel_ob.v2+vel_wl.v2;
 	printf("v1 = %f, v2 = %f \n", vx,vy);

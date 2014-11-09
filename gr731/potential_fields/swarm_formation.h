@@ -8,6 +8,6 @@ typedef struct v {
 
 velocity_t swarm(int i, float allposx [10], float allposy [10]);
 velocity_t avoid(float posx, float posy, float obsx, float obsy);
-velocity_t w2p(float posx, float posy);
+velocity_t wall(float posx, float posy);
 
 #endif /* SWARM_FORMATION_H */
