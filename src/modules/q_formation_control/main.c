@@ -48,10 +48,10 @@ static bool thread_should_exit = false;
 static bool thread_running = false;
 static int daemon_task;
 
-/* void check_topic(void) { */
+void check_topic(void) {
         
         
-/* } */
+}
 
 int formation_control_thread_main(int argc, char *argv[]) {
 
