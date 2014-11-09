@@ -1,5 +1,6 @@
 mavlink start -d /dev/ttyS1 -b 57600
 mixer load /dev/pwm_output /etc/mixers/FMU_quad_x.mix
+sensors start
 commander start
 mc_att_control start
 attitude_estimator_ekf start
