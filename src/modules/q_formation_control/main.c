@@ -30,6 +30,7 @@
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/vehicle_command.h>
 #include <uORB/topics/quad_formation_msg.h>
+#include <uORB/topics/actuator_controls.h>
 
 #include <geo/geo.h>
 
@@ -48,10 +49,10 @@ static bool thread_should_exit = false;
 static bool thread_running = false;
 static int daemon_task;
 
-void check_topic(void) {
+/* void check_topic(void) { */
         
         
-}
+/* } */
 
 int formation_control_thread_main(int argc, char *argv[]) {
 
@@ -66,13 +67,22 @@ int formation_control_thread_main(int argc, char *argv[]) {
 
         orb_set_interval(sensor_sub_fd, 250);
 
-	struct vehicle_attitude_setpoint_s att_sp;
-	memset(&att_sp, 0, sizeof(att_sp));
-        orb_advert_t att_sp_pub = orb_advertise(ORB_ID(vehicle_attitude_setpoint), &att_sp);
+	/* struct vehicle_attitude_setpoint_s att_sp; */
+	/* memset(&att_sp, 0, sizeof(att_sp)); */
+        /* orb_advert_t att_sp_pub = orb_advertise(ORB_ID(vehicle_attitude_setpoint), &att_sp); */
 
         int qmsg_sub = orb_subscribe(ORB_ID(quad_formation_msg)); /* handle til vehicle command */
         struct quad_formation_msg_s qmsg;
         orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
+
+        struct actuator_controls_s actuators;
+        memset(&actuators, 0, sizeof(actuators));
+
+        for (unsigned i = 0; i < NUM_ACTUATOR_CONTROLS; i++) {
+		actuators.control[i] = 0.0f;
+	}
+
+        orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
 
         struct pollfd fds[] = { 
             { .fd = sensor_sub_fd,   .events = POLLIN },
@@ -84,11 +94,11 @@ int formation_control_thread_main(int argc, char *argv[]) {
         
         struct sensor_combined_s raw;
         orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
-        float gnd_alt = raw.baro_alt_meter;
+//        float gnd_alt = raw.baro_alt_meter;
         
         bool y_first = false;
         bool i_first = false;
-        double rel_alt = 0.0;
+//        double rel_alt = 0.0;
 
         while(!thread_should_exit) {
                 if (y_first == false) {
@@ -117,37 +127,41 @@ int formation_control_thread_main(int argc, char *argv[]) {
                                                 } else if (ret == 0) {
                                                         /* no return value - nothing has happened */
                                                 } else {
+                                                        for (unsigned i = 0; i < NUM_ACTUATOR_CONTROLS; i++)
+                                                                actuators.control[i] = (float)1.0;
+
+                                                        orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
                                                         /* att_sp.thrust = (float)5; */
                                                         /* att_sp.roll_body = 0; */
                                                         /* att_sp.pitch_body = 0; */
                                                         /* att_sp.yaw_body = 0; */
                                                         /* orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp); */
-                                                        if (fds[0].revents & POLLIN) { /* if there is new data */
-                                                                orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
+                                                        /* if (fds[0].revents & POLLIN) { /\* if there is new data *\/ */
+                                                        /*         orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw); */
 
-                                                                rel_alt = (double)raw.baro_alt_meter - (double)gnd_alt;
+                                                        /*         rel_alt = (double)raw.baro_alt_meter - (double)gnd_alt; */
 
-                                                                if ( (double)rel_alt < (double)0.8 ) {
-                                                                        att_sp.thrust += (float)0.2;
-                                                                        att_sp.roll_body = 0;
-                                                                        att_sp.pitch_body = 0;
-                                                                        att_sp.yaw_body = 0;
-                                                                        orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
-                                                                        printf("alt skru op: %8.4f\n", (double)att_sp.thrust);
-                                                                        printf("alt sensor: %8.4f\n\n", (double)rel_alt);
-                                                                } else if ((double)rel_alt > (double)0.8 ) {
-                                                                        att_sp.thrust -= (float)0.2;
-                                                                        att_sp.roll_body = 0;
-                                                                        att_sp.pitch_body = 0;
-                                                                        att_sp.yaw_body = 0;
-                                                                        att_sp.q_d_valid = true;
-                                                                        orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp);
-                                                                        printf("alt skru ned: %8.4f\n", (double)att_sp.thrust);
-                                                                        printf("alt sensor: %8.4f\n\n", (double)rel_alt);
-                                                                } else {
-                                                                        /* this is bad */
-                                                                }
-                                                        }
+                                                        /*         if ( (double)rel_alt < (double)0.8 ) { */
+                                                        /*                 att_sp.thrust += (float)0.2; */
+                                                        /*                 att_sp.roll_body = 0; */
+                                                        /*                 att_sp.pitch_body = 0; */
+                                                        /*                 att_sp.yaw_body = 0; */
+                                                        /*                 orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp); */
+                                                        /*                 printf("alt skru op: %8.4f\n", (double)att_sp.thrust); */
+                                                        /*                 printf("alt sensor: %8.4f\n\n", (double)rel_alt); */
+                                                        /*         } else if ((double)rel_alt > (double)0.8 ) { */
+                                                        /*                 att_sp.thrust -= (float)0.2; */
+                                                        /*                 att_sp.roll_body = 0; */
+                                                        /*                 att_sp.pitch_body = 0; */
+                                                        /*                 att_sp.yaw_body = 0; */
+                                                        /*                 att_sp.q_d_valid = true; */
+                                                        /*                 orb_publish(ORB_ID(vehicle_attitude_setpoint), att_sp_pub, &att_sp); */
+                                                        /*                 printf("alt skru ned: %8.4f\n", (double)att_sp.thrust); */
+                                                        /*                 printf("alt sensor: %8.4f\n\n", (double)rel_alt); */
+                                                        /*         } else { */
+                                                        /*                 /\* this is bad *\/ */
+                                                        /*         } */
+                                                        /* } */
                                                 }
                                                 
                                                 /* check_topic(); */
