@@ -71,6 +71,12 @@ int wai_quad_pos_thread_main(int argc, char *argv[])
 			if (fd[0].revents & POLLIN) {
 				struct quad_formation_msg_s qmsg;
 				orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
+
+				mavlink_log_info(mavlink_fd,"[wai@mavlink] sample no: %u ([%d \t %d \t %d]) \n",
+						(uint8_t)qmsg.pos_no,
+						(int16_t)qmsg.x[0],
+						(int16_t)qmsg.y[0],
+						(int16_t)qmsg.z[0]);
 			}
 			if (fd[1].revents & POLLIN) {
 				struct sensor_combined_s raw;
