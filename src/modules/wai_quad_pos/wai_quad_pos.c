@@ -37,6 +37,8 @@ static int daemon_task;
 
 float z_baro_ajusted;
 
+int8_t no_of_quads = 10;
+
 int16_t x_init [10];
 int16_t y_init [10];
 int16_t z_init [10];
@@ -76,6 +78,8 @@ int wai_quad_pos_thread_main(int argc, char *argv[])
 			error_counter++;
 		} 
 		else {
+			float alt_diff[no_of_quads];
+
 			// Update raw Sensor values to the struct raw
 			if (fd[1].revents & POLLIN) {
 				struct sensor_combined_s raw;
@@ -84,9 +88,12 @@ int wai_quad_pos_thread_main(int argc, char *argv[])
 				z_baro = (float)raw.baro_alt_meter;
 				z_baro_ajusted = z_baro;
 
-				if(!init_pos_set && qmsg.cmd_id == QUAD_MSG_CMD_START) {
-					
-				}
+				// if(!init_pos_set && qmsg.cmd_id == QUAD_MSG_CMD_START) {
+
+				// 	for (int i = 0; i < no_of_quads - 1; ++i){
+				// 		// Find the minimum difference between the barometer data and the vicon position data
+				// 	}		
+				// }
 			}
 
 			// Update Quadrotor position from vicon data
@@ -94,9 +101,11 @@ int wai_quad_pos_thread_main(int argc, char *argv[])
 				struct quad_formation_msg_s qmsg;
 				orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
 
-				if(!init_pos_set) {
-					// (int16_t)z_init = ()
-				}
+				if()
+
+				// if(!init_pos_set) {
+				// 	// (int16_t)z_init = ()
+				// }
 
 				mavlink_log_info(mavlink_fd,"[wai@mavlink] sample no: %u ([%d \t %d \t %d]) \n",
 						(uint8_t)qmsg.pos_no,
@@ -104,9 +113,9 @@ int wai_quad_pos_thread_main(int argc, char *argv[])
 						(int16_t)qmsg.y[0],
 						(int16_t)qmsg.z[0]);
 
-				if(init_pos_set) {
-					// Do WHO AM I algorithm
-				} 
+				// if(init_pos_set) {
+				// 	// Do WHO AM I algorithm
+				// } 
 				
 			}
 		}
