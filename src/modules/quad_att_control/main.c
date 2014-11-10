@@ -50,7 +50,11 @@ static bool thread_running = false;
 static int daemon_task;
 
 int att_control_thread_main(int argc, char *argv[]) {
-        
+        warnx("[quad_att_control] started");
+
+        static int mavlink_fd;
+        mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
+        mavlink_log_info(mavlink_fd, "[quad_att__control] started");
 }
 
 static void usage(const char *reason) {
