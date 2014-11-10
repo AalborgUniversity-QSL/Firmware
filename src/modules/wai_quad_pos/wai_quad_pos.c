@@ -32,12 +32,13 @@ static void usage(const char *reason);
 
 static bool thread_running = false;
 static bool thread_should_exit = false;
-static bool init_pos_set = false;
+// static bool init_pos_set = false;
 static int daemon_task;
 
 float z_baro_ajusted;
 
 int8_t max_no_of_quads = 10;
+int8_t no_of_quads;
 
 int16_t x_init [10];
 int16_t y_init [10];
@@ -78,14 +79,14 @@ int wai_quad_pos_thread_main(int argc, char *argv[])
 			error_counter++;
 		} 
 		else {
-			float alt_diff[no_of_quads];
+			// float alt_diff[no_of_quads];
 
 			// Update raw Sensor values to the struct raw
 			if (fd[1].revents & POLLIN) {
 				struct sensor_combined_s raw;
 				orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
 
-				z_baro = (float)raw.baro_alt_meter;
+				float z_baro = (float)raw.baro_alt_meter;
 				z_baro_ajusted = z_baro;
 
 				// if(!init_pos_set && qmsg.cmd_id == QUAD_MSG_CMD_START) {
