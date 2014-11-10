@@ -37,7 +37,7 @@ static int daemon_task;
 
 float z_baro_ajusted;
 
-int8_t no_of_quads = 10;
+int8_t max_no_of_quads = 10;
 
 int16_t x_init [10];
 int16_t y_init [10];
@@ -101,7 +101,11 @@ int wai_quad_pos_thread_main(int argc, char *argv[])
 				struct quad_formation_msg_s qmsg;
 				orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
 
-				if()
+				for (int i = 0; i < max_no_of_quads; ++i){
+					if((float)qmsg.z[i] == -1){
+						no_of_quads = max_no_of_quads - 1;
+					}
+				}
 
 				// if(!init_pos_set) {
 				// 	// (int16_t)z_init = ()
