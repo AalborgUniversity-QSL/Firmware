@@ -127,8 +127,10 @@ int formation_control_thread_main(int argc, char *argv[]) {
                                                 } else if (ret == 0) {
                                                         /* no return value - nothing has happened */
                                                 } else {
-                                                        for (unsigned i = 0; i < NUM_ACTUATOR_CONTROLS; i++)
-                                                                actuators.control[i] = (float)1.0;
+                                                        actuators.control[0] = (float)0;
+                                                        actuators.control[1] = (float)0;
+                                                        actuators.control[2] = (float)0;
+                                                        actuators.control[3] = (float)0.6;
 
                                                         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
                                                         /* att_sp.thrust = (float)5; */
