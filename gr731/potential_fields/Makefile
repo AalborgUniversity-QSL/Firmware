@@ -2,7 +2,7 @@ CC	=	g++
 CFLAGS	=	-Wall #Flag til compiling af Objects
 LFLAGS	=	-Wall #Flag til linkeren
 TARGET	=	potential_fields
-SRC	=	main.c swarm_formation.c obstacle_avoidance.c
+SRC	=	main.c swarm_formation.c obstacle_avoidance.c wall.c
 OBJS	=	${SRC:.c=.o}
 
 .PHONY: clean
