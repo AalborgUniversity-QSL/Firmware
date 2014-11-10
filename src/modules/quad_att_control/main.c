@@ -25,12 +25,9 @@
 #include <mavlink/mavlink_log.h>
 
 #include <uORB/uORB.h>
-#include <uORB/topics/vehicle_attitude_setpoint.h>
-#include <uORB/topics/parameter_update.h>
 #include <uORB/topics/sensor_combined.h>
-#include <uORB/topics/vehicle_command.h>
-#include <uORB/topics/quad_formation_msg.h>
 #include <uORB/topics/actuator_controls.h>
+#include <uORB/topics/quad_att_sp.h>
 
 #include <geo/geo.h>
 
@@ -55,6 +52,30 @@ int att_control_thread_main(int argc, char *argv[]) {
         static int mavlink_fd;
         mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
         mavlink_log_info(mavlink_fd, "[quad_att__control] started");
+
+        struct actuator_controls_s actuators;
+        memset(&actuators, 0, sizeof(actuators));
+        struct sensor_combined_s raw;
+        memset(&raw, 0, sizeof(raw));
+        struct quad_att_sp_s sp;
+        memset(&sp, 0, sizeof(sp));
+        
+        for (unsigned i = 0; i < NUM_ACTUATOR_CONTROLS; i++) {
+                actuators.control[i] = 0.0f;
+	}
+        orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
+
+        struct pollfd fds[] = { 
+                { .fd = sensor_sub_fd,   .events = POLLIN },
+        };
+        struct pollfd fd_sp[] = { 
+                { .fd = sp_sub,   .events = POLLIN },
+        };
+
+        while (!thread_should_exit) {
+                
+        }
+
 }
 
 static void usage(const char *reason) {
