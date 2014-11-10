@@ -132,6 +132,7 @@ MODULES		+= lib/launchdetection
 # Custom apps
 #
 MODULES		+= modules/q_formation_control
+#MODULES		+= modules/swarm_control
 
 #
 # OBC challenge
