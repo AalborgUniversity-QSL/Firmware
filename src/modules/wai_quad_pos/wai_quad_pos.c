@@ -18,32 +18,72 @@
  #include <math.h>
  #include <time.h>
 
+ #include <mavlink/mavlink_log.h>
+
  #include <uORB/uORB.h>
+ #include <uORB/topics/sensor_combined.h>
  #include <uORB/topics/quad_formation_msg.h>
  
 __EXPORT int wai_quad_pos_main(int argc, char *argv[]);
 int wai_quad_pos_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
+
+static bool thread_running = false;
+static bool there_should_exit = false;
+static int daemon_task;
  
 int wai_quad_pos_thread_main(int argc, char *argv[])
 {
-	printf("Hello Sky!\n");
+	warnx("[wai] Started ")
+	static int mavlink_fd;
+	mavlink_fd = open(MAVLINK_LOG_DEVICE,0);
 
-	int qmsg_sub = orb_subscribe(ORB_ID(quad_formation_msg));
+	int qmsg_sub_fd = orb_subscribe(ORB_ID(quad_formation_msg));
+	int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
+	orb_set_interval(qmsg_sub_fd, 100);
+	orb_set_interval(sensor_combined,100);
 
-	struct pollfd fds[] = {
-		{ .fd = qmsg_sub,   .events = POLLIN },
-		/* there could be more file descriptors here, in the form like:
-		 * { .fd = other_sub_fd,   .events = POLLIN },
-		 */
-		 
-	};
+	struct pollfd fd[] = {
+                { .fd = qmsg_sub_fd,   .events = POLLIN },
+                { .fd = sensor_sub_fd, .events = POLLIN },
+        };
 
-	// int error_counter = 0;
+	int error_counter = 0;
 
-	return OK;
+	while(true) {
+		// wait for sensor update of 2 descriptor for 1000 ms
+		int poll_ret = poll(fd, 2, 1000)
+
+		if (poll_ret == 0) {
+			mavlink_log_info(mavlink_fd, "[wai@mavlink] No pos recived"); /* Send string with mavlink */
+		} 
+		else if (poll_ret < 0) {
+			/* this is seriously bad - should be an emergency */
+			if (error_counter < 10 || error_counter % 50 == 0) {
+				/* use a counter to prevent flooding (and slowing us down) */
+				printf("[wai] ERROR return value from poll(): %d\n"
+					, poll_ret);
+			}
+			error_counter++;
+		} 
+		else {
+			if (fd[0].revents & POLLIN) {
+				struct quad_formation_msg_s qmsg;
+				orb_copy(ORB_ID(quad_formation_msg, qmsg_sub_fd, &qmsg))
+			}
+			else if (fd[1].revents & POLLIN) {
+				struct sensor_combined_s raw;
+				orb_copy(ORB_ID(sensor_combined, sensor_sub_fd, &raw))
+			}
+		}
+	}
+
+	return 0;
 }
 
+
+
+// User interface for running in shell
 static void usage(const char *reason) {
         if (reason)
                 fprintf(stderr, "%s\n", reason);
