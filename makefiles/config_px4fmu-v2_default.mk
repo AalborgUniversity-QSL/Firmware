@@ -133,8 +133,7 @@ MODULES		+= lib/launchdetection
 #
 MODULES		+= modules/q_formation_control
 MODULES         += modules/wai_quad_pos
-=======
-#MODULES		+= modules/swarm_control
+# MODULES		+= modules/swarm_control
 
 #
 # OBC challenge

@@ -5,7 +5,7 @@
 
 /** 
  * Topic created to handle messages from groundstation
- * to the qua_formation_control application.
+ * to the quad_formation_control application.
  */
 
 #ifndef QUAD_FORMATION_MSG
