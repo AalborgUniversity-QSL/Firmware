@@ -233,3 +233,6 @@ ORB_DEFINE(wind_estimate, struct wind_estimate_s);
 
 #include "topics/quad_formation_msg.h"
 ORB_DEFINE(quad_formation_msg, struct quad_formation_msg_s);
+
+#include "topics/quad_att_sp.h"
+ORB_DEFINE(quad_att_sp, struct quad_att_sp_s);
