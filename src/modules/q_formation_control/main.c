@@ -56,7 +56,7 @@ static int daemon_task;
 
 int formation_control_thread_main(int argc, char *argv[]) {
 
-        warnx("[Formation_control] started");
+        warnx("[Formation_control] started\n");
 
         static int mavlink_fd;
         mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
