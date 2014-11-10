@@ -34,7 +34,7 @@ struct quad_att_sp_s {
         float pitch;
         float yaw;
         float thrust;
-        uint8_t CMD;
+        uint8_t cmd;
 };
 
 

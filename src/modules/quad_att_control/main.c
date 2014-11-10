@@ -53,12 +53,16 @@ int att_control_thread_main(int argc, char *argv[]) {
         mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
         mavlink_log_info(mavlink_fd, "[quad_att__control] started");
 
-        struct actuator_controls_s actuators;
-        memset(&actuators, 0, sizeof(actuators));
         struct sensor_combined_s raw;
         memset(&raw, 0, sizeof(raw));
         struct quad_att_sp_s sp;
         memset(&sp, 0, sizeof(sp));
+
+        int sensor_sub = orb_subscribe(ORB_ID(sensor_combined));
+        int quad_sp_sub = orb_subscribe(ORB_ID(quad_att_sp));
+
+        struct actuator_controls_s actuators;
+        memset(&actuators, 0, sizeof(actuators));
         
         for (unsigned i = 0; i < NUM_ACTUATOR_CONTROLS; i++) {
                 actuators.control[i] = 0.0f;
@@ -66,16 +70,54 @@ int att_control_thread_main(int argc, char *argv[]) {
         orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
 
         struct pollfd fds[] = { 
-                { .fd = sensor_sub_fd,   .events = POLLIN },
+                { .fd = sensor_sub,   .events = POLLIN },
         };
         struct pollfd fd_sp[] = { 
-                { .fd = sp_sub,   .events = POLLIN },
+                { .fd = quad_sp_sub,   .events = POLLIN },
         };
 
         while (!thread_should_exit) {
+                int ret_sp = poll(fd_sp, 1, 500);
                 
+                if (ret_sp < 0) {
+			warnx("poll sp error");
+		} else if (ret_sp == 0) {
+			/* no return value - nothing has happened */
+		} else if (fd_sp[0].revents & POLLIN) {
+                        orb_copy(ORB_ID(quad_att_sp), quad_sp_sub, &sp);
+                        if (sp.cmd == QUAD_ATT_CMD_START) {
+                                int attConRet = attControl((double)sp.roll, (double)sp.pitch, (double)sp.yaw, (double)sp.thrust);
+                                if (attConRet < 0)
+                                        mavlink_log_info(mavlink_fd, "[quad_att__control] attControl failed to start");
+                                
+                        } else if (sp.cmd == QUAD_ATT_CMD_STOP) {
+                                attControl((double)sp.roll, (double)sp.pitch, (double)sp.yaw);
+                        } else {
+                                
+                        }
+                } else {
+                        /* nothing happened */
+                }
         }
+}
 
+int 
+
+int attControl(float roll, float pitch, float yaw, float thrust) {
+        float resRoll = 0.0, 
+              resPitch = 0.0, 
+              resYaw = 0.0, 
+              resThrust = 0.0;
+
+        
+
+        actuators.control[0] = resRoll;
+        actuators.control[1] = resPitch;
+        actuators.control[2] = resYaw;
+        actuators.control[3] = resThrust;
+
+        orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
+        return 0;
 }
 
 static void usage(const char *reason) {
