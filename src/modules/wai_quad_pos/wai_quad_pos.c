@@ -43,7 +43,7 @@ static int daemon_task;
  
 int wai_quad_pos_thread_main(int argc, char *argv[]){
 
-	// static bool init_pos_set = false;
+	static bool init_pos_set = false;
 
 	static int max_no_of_quads = 10;
 	static int no_of_quads = 10;			// Initial guess
@@ -52,9 +52,14 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
 	float z_baro_ajust = 0;
 	float z_baro;
-	// float alt_diff [max_no_of_quads];
+	float alt_diff[max_no_of_quads];
 	float SMA[10] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
 	float z_SMA = 0;
+	float alt_detect_threshold = 0.7f;
+
+	float pos_x;
+	float pos_y;
+	float pos_z;
 
 	struct quad_formation_msg_s qmsg;
 	struct sensor_combined_s raw;
@@ -106,56 +111,66 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 					if((float)qmsg.z[i] == -1){
 						no_of_quads = no_of_quads - 1;
 					}
-
-					// float alt_diff[no_of_quads];
 				}
-
-				// mavlink_log_info(mavlink_fd,"[wai@mavlink] sample no: %u ([%3.6f \t %3.6f \t %3.6f]) \n",
-				// 		(uint8_t)qmsg.pos_no,
-				// 		(float)qmsg.x[0],
-				// 		(float)qmsg.y[0],
-				// 		(float)qmsg.z[0]);
-
-				// if(init_pos_set) {
-				// 	// Do WHO AM I algorithm
-				// } 
 				
 			}
 
 			// Find a matching coordinate set from increasing the altitude of the quad (Waving to point out where I am)
 			if (fd[1].revents & POLLIN) {
 
+				// If the quad position is found in the Vicon coordinate set then stop running
+				if (!init_pos_set){
 
-				/* Filter the raw barometer data with a Moving Average filter with an order of MA_order */
-				orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
-				z_baro = (float)raw.baro_alt_meter;
-				
-				for (int i = ((int)MA_order - 1); i >= 0; --i){
-					if(i > 0){
-						SMA[i] = SMA[i-1];
+					/* Filter the raw barometer data with a Moving Average filter with an order of MA_order */
+					orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
+					z_baro = (float)raw.baro_alt_meter;
+					
+					for (int i = ((int)MA_order - 1); i >= 0; --i){
+						if(i > 0){
+							SMA[i] = SMA[i-1];
+						}
+						else {
+							SMA[i] = z_baro;
+						}
 					}
-					else {
-						SMA[i] = z_baro;
+
+					for (int i = 0; i < MA_order; ++i){
+						z_SMA = z_SMA + SMA[i];
 					}
-				}
-				for (int i = 0; i < MA_order; ++i){
-					z_SMA = z_SMA + SMA[i];
-				}
-				z_SMA = z_SMA/(float)MA_order;
 
-				/*--------------------------------------------------------------------------------------*/
+					z_SMA = z_SMA/(float)MA_order;
 
-				/* read all relevant states */
-				orb_copy(ORB_ID(vehicle_status), state_sub, &state);
+					/*--------------------------------------------------------------------------------------*/
 
-				if (state.arming_state == ARMING_STATE_STANDBY){
+					/* read all relevant states */
+					orb_copy(ORB_ID(vehicle_status), state_sub, &state);
+
+					if (state.arming_state == ARMING_STATE_STANDBY){
 						z_baro_ajust = z_SMA;
 					}
 
-				if (!init_pos_set && qmsg.cmd_id == QUAD_MSG_CMD_START) {
-					for (int i = 0; i < no_of_quads; ++i){
-						// Find the minimum difference between the barometer data and the vicon position data
-						alt_diff[i] = (z_SMA - z_baro_ajust) - (float)qmsg.z[i];
+					else if (qmsg.cmd_id == QUAD_MSG_CMD_START) {
+
+						// Increase the thrust until the threshold is met (function)
+
+						if (z_SMA >= alt_detect_threshold){
+							int min_error_no = 0;
+
+							for (int i = 1; i < no_of_quads; ++i){
+								// Find the minimum difference between the barometer data and the Vicon position data
+								alt_diff[i] = (z_SMA - z_baro_ajust) - (float)qmsg.z[i];
+
+								if(alt_diff[i] < alt_diff[min_error_no]){
+									min_error_no = i;
+								}
+							}
+
+							pos_x = (float)qmsg.x[min_error_no];
+							pos_y = (float)qmsg.y[min_error_no];
+							pos_z = (float)qmsg.z[min_error_no];
+
+							init_pos_set = true;
+						}
 					}
 				}
 
