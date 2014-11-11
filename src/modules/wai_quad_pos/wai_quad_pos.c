@@ -49,11 +49,11 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 	static int no_of_quads = 10;			// Initial guess
 	static int mavlink_fd;
 
-	// float z_baro_ajust;
+	float z_baro_ajust = 0;
 	float z_baro;
 	// float alt_diff [max_no_of_quads];
-	float SMA[] = {0.,0.,0.};
-	float z_SMA;
+	float SMA[20] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
+	float z_SMA = 0;
 
 	struct quad_formation_msg_s qmsg;
 	struct sensor_combined_s raw;
@@ -127,21 +127,22 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
 				z_baro = (float)raw.baro_alt_meter;
 				
-				SMA[2] = SMA[1];
-				SMA[1] = SMA[0];
-				SMA[0] = z_baro;
-
-				z_SMA = (SMA[0] + SMA[1] + SMA[2])/(float)3;
-
-				mavlink_log_info(mavlink_fd,"[wai@mavlink] z_SMA: \t %.6f",(double)z_SMA);
-				// warnx("[wai] z_baro: \t %f",(double)z_SMA);
+				for (int i = 20-1; i >= 0; --i){
+					SMA[i] = SMA[i-1];
+					if (i == 0){
+						SMA[0] = z_baro;
+					}
+				}
+				for (int i = 0; i < 20; ++i){
+					z_SMA = z_SMA + SMA[i]/(float)20;
+				}
 
 				/* read all relevant states */
 				orb_copy(ORB_ID(vehicle_status), state_sub, &state);
 
-				// if (state.arming_state == ARMING_STATE_STANDBY){
-				// 		z_baro_ajust = z_SMA;
-				// 	}
+				if (state.arming_state == ARMING_STATE_STANDBY){
+						z_baro_ajust = z_SMA;
+					}
 
 				// if (!init_pos_set && qmsg.cmd_id == QUAD_MSG_CMD_START) {
 				// 	for (int i = 0; i < no_of_quads; ++i){
@@ -149,6 +150,9 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 				// 		alt_diff[i] = (z_SMA - z_baro_ajust) - (float)qmsg.z[i];
 				// 	}
 				// }
+				// mavlink_log_info(mavlink_fd,"[wai@mavlink] z_SMA: \t %.6f",(double)z_SMA - (double)z_baro_ajust);
+				mavlink_log_info(mavlink_fd,"[wai@mavlink] z_SMA: \t %.6f \t %f",(double)z_SMA - (double)z_baro_ajust);
+				// warnx("[wai] z_baro: \t %f",(double)z_SMA - (double)z_baro_ajust);
 			}
 		}
 	}
