@@ -48,11 +48,12 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 	static int max_no_of_quads = 10;
 	static int no_of_quads = 10;			// Initial guess
 	static int mavlink_fd;
+	static int MA_order = 10;
 
 	float z_baro_ajust = 0;
 	float z_baro;
 	// float alt_diff [max_no_of_quads];
-	float SMA[20] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
+	float SMA[10] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
 	float z_SMA = 0;
 
 	struct quad_formation_msg_s qmsg;
@@ -127,15 +128,18 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
 				z_baro = (float)raw.baro_alt_meter;
 				
-				for (int i = 20-1; i >= 0; --i){
-					SMA[i] = SMA[i-1];
-					if (i == 0){
-						SMA[0] = z_baro;
+				for (int i = ((int)MA_order - 1); i >= 0; --i){
+					if(i > 0){
+						SMA[i] = SMA[i-1];
+					}
+					else {
+						SMA[i] = z_baro;
 					}
 				}
-				for (int i = 0; i < 20; ++i){
-					z_SMA = z_SMA + SMA[i]/(float)20;
+				for (int i = 0; i < MA_order; ++i){
+					z_SMA = z_SMA + SMA[i];
 				}
+				z_SMA = z_SMA/(float)MA_order;
 
 				/* read all relevant states */
 				orb_copy(ORB_ID(vehicle_status), state_sub, &state);
@@ -151,7 +155,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 				// 	}
 				// }
 				// mavlink_log_info(mavlink_fd,"[wai@mavlink] z_SMA: \t %.6f",(double)z_SMA - (double)z_baro_ajust);
-				mavlink_log_info(mavlink_fd,"[wai@mavlink] z_SMA: \t %.6f \t %f",(double)z_SMA - (double)z_baro_ajust);
+				mavlink_log_info(mavlink_fd,"[wai@mavlink] z_SMA: \t %.3f \t %.3f",(double)z_SMA - (double)z_baro_ajust);
 				// warnx("[wai] z_baro: \t %f",(double)z_SMA - (double)z_baro_ajust);
 			}
 		}
