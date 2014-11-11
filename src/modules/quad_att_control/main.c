@@ -48,6 +48,7 @@ struct attError_s {
 __EXPORT int quad_att_control_main(int argc, char *argv[]);
 int att_control_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
+float filterMA(float *old1, float *old2, float new);
 
 static bool thread_should_exit = false;
 static bool thread_running = false;
@@ -117,7 +118,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         /*         mavlink_log_info(mavlink_fd, "[quad_att__control] attControl failed to start"); */
                         
                         int ret_sensor = poll(fds, 1, 250);
-                        if (ret < 0) {
+                        if (ret_sensor < 0) {
                                 warnx("poll error");
                         } else if (ret_sensor == 0) {
                                 /* no return value - nothing has happened */
@@ -138,7 +139,9 @@ int att_control_thread_main(int argc, char *argv[]) {
                         error.roll = sp.pitch - v_att.pitch;
                         error.roll = sp.yaw - v_att.yaw;
 
-                        if (alt < 0.5) {
+                        alt = filterMA(&old1, &old2, raw.baro_alt_meter);
+
+                        if ((double)alt < (double)0.5) {
                                 
                         }
                                                 
@@ -191,22 +194,22 @@ float filterMA(float *old1, float *old2, float new) {
 /*         return 0; */
 /* } */
 
-int attControl(float roll, float pitch, float yaw, float thrust) {
-        float resRoll = 0.0, 
-              resPitch = 0.0, 
-              resYaw = 0.0, 
-              resThrust = 0.0;
+/* int attControl(float roll, float pitch, float yaw, float thrust) { */
+/*         float resRoll = 0.0,  */
+/*               resPitch = 0.0,  */
+/*               resYaw = 0.0,  */
+/*               resThrust = 0.0; */
 
         
 
-        actuators.control[0] = resRoll;
-        actuators.control[1] = resPitch;
-        actuators.control[2] = resYaw;
-        actuators.control[3] = resThrust;
+/*         actuators.control[0] = resRoll; */
+/*         actuators.control[1] = resPitch; */
+/*         actuators.control[2] = resYaw; */
+/*         actuators.control[3] = resThrust; */
 
-        orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
-        return 0;
-}
+/*         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators); */
+/*         return 0; */
+/* } */
 
 static void usage(const char *reason) {
         if (reason)
