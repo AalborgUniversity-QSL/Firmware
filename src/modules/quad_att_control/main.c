@@ -38,6 +38,12 @@
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
 
+struct attError_s {
+        float roll;
+        float pitch;
+        float yaw;
+};
+
 /* Function prototypes */
 __EXPORT int quad_att_control_main(int argc, char *argv[]);
 int att_control_thread_main(int argc, char *argv[]);
@@ -89,6 +95,9 @@ int att_control_thread_main(int argc, char *argv[]) {
               old2 = 0.0,
               alt = 0.0;
 
+        struct attError_s error;
+        memset(&error, 0, sizeof(error));
+
         while (!thread_should_exit) {
                 int ret_sp = poll(fd_sp, 1, 500);
                 if (ret_sp < 0) {
@@ -125,7 +134,13 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
                         }
                         
-                        
+                        error.roll = sp.roll - v_att.roll;
+                        error.roll = sp.pitch - v_att.pitch;
+                        error.roll = sp.yaw - v_att.yaw;
+
+                        if (alt < 0.5) {
+                                
+                        }
                                                 
                         /* check_topic(); */
                 } else if (sp.cmd == QUAD_ATT_CMD_STOP) {
