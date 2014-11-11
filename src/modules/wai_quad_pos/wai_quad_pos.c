@@ -57,9 +57,8 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 	float z_SMA = 0;
 	float alt_detect_threshold = 0.7f;
 
-	float pos_x;
-	float pos_y;
-	float pos_z;
+	float pos_x, pos_y, pos_z;
+	float z_zero[10];
 
 	struct quad_formation_msg_s qmsg;
 	struct sensor_combined_s raw;
@@ -107,12 +106,16 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 			if (fd[0].revents & POLLIN) {
 				orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
 
+				// Find the total no of quads
 				for (int i = 0; i < max_no_of_quads; ++i){
 					if((float)qmsg.z[i] == -1){
 						no_of_quads = no_of_quads - 1;
 					}
 				}
-				
+
+				// if (init_pos_set) {
+					
+				// }
 			}
 
 			// Find a matching coordinate set from increasing the altitude of the quad (Waving to point out where I am)
@@ -147,6 +150,10 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
 					if (state.arming_state == ARMING_STATE_STANDBY){
 						z_baro_ajust = z_SMA;
+
+						for (int i = 0; i < no_of_quads; ++i){
+							z_zero[i] = (float)qmsg.z[i];							
+						}
 					}
 
 					else if (qmsg.cmd_id == QUAD_MSG_CMD_START) {
