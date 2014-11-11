@@ -124,8 +124,10 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
 			// Find a matching coordinate set from increasing the altitude of the quad (Waving to point out where I am)
 			if (fd[1].revents & POLLIN) {
-				orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
 
+
+				/* Filter the raw barometer data with a Moving Average filter with an order of MA_order */
+				orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
 				z_baro = (float)raw.baro_alt_meter;
 				
 				for (int i = ((int)MA_order - 1); i >= 0; --i){
@@ -141,6 +143,8 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 				}
 				z_SMA = z_SMA/(float)MA_order;
 
+				/*--------------------------------------------------------------------------------------*/
+
 				/* read all relevant states */
 				orb_copy(ORB_ID(vehicle_status), state_sub, &state);
 
@@ -148,14 +152,15 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 						z_baro_ajust = z_SMA;
 					}
 
-				// if (!init_pos_set && qmsg.cmd_id == QUAD_MSG_CMD_START) {
-				// 	for (int i = 0; i < no_of_quads; ++i){
-				// 		// Find the minimum difference between the barometer data and the vicon position data
-				// 		alt_diff[i] = (z_SMA - z_baro_ajust) - (float)qmsg.z[i];
-				// 	}
-				// }
+				if (!init_pos_set && qmsg.cmd_id == QUAD_MSG_CMD_START) {
+					for (int i = 0; i < no_of_quads; ++i){
+						// Find the minimum difference between the barometer data and the vicon position data
+						alt_diff[i] = (z_SMA - z_baro_ajust) - (float)qmsg.z[i];
+					}
+				}
+
 				// mavlink_log_info(mavlink_fd,"[wai@mavlink] z_SMA: \t %.6f",(double)z_SMA - (double)z_baro_ajust);
-				mavlink_log_info(mavlink_fd,"[wai@mavlink] z_SMA: \t %.3f \t %.3f",(double)z_SMA - (double)z_baro_ajust);
+				// mavlink_log_info(mavlink_fd,"[wai@mavlink] z_SMA: \t %.3f",(double)z_SMA - (double)z_baro_ajust);
 				// warnx("[wai] z_baro: \t %f",(double)z_SMA - (double)z_baro_ajust);
 			}
 		}
