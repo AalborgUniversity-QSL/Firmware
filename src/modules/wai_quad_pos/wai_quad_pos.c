@@ -23,6 +23,7 @@
  #include <uORB/uORB.h>
  #include <uORB/topics/sensor_combined.h>
  #include <uORB/topics/quad_formation_msg.h>
+ #include <uORB/topics/vehicle_status.h>
 
  #include <systemlib/systemlib.h>
  
@@ -30,15 +31,19 @@ __EXPORT int wai_quad_pos_main(int argc, char *argv[]);
 int wai_quad_pos_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
 
+struct vehicle_status_s state;
+struct sensor_combined_s raw;
+struct quad_formation_msg_s qmsg;
+
 static bool thread_running = false;
 static bool thread_should_exit = false;
 // static bool init_pos_set = false;
 static int daemon_task;
 
-float z_baro_ajusted;
+float z_baro_ajust;
 
 int8_t max_no_of_quads = 10;
-int8_t no_of_quads;
+int8_t no_of_quads = max_no_of_quads;			// Initial guess
 
 int16_t x_init [10];
 int16_t y_init [10];
@@ -53,6 +58,8 @@ int wai_quad_pos_thread_main(int argc, char *argv[])
 
 	int qmsg_sub_fd = orb_subscribe(ORB_ID(quad_formation_msg));
 	int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
+	int state_sub = orb_subscribe(ORB_ID(vehicle_status));
+	
 	orb_set_interval(qmsg_sub_fd, 100);
 	orb_set_interval(sensor_sub_fd,100);
 
@@ -87,14 +94,21 @@ int wai_quad_pos_thread_main(int argc, char *argv[])
 				orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
 
 				float z_baro = (float)raw.baro_alt_meter;
-				z_baro_ajusted = z_baro;
 
-				// if(!init_pos_set && qmsg.cmd_id == QUAD_MSG_CMD_START) {
+				/* read all relevant states */
+				struct vehicle_status_s state;
+				orb_copy(ORB_ID(vehicle_status), state_sub, &state);
 
-				// 	for (int i = 0; i < no_of_quads - 1; ++i){
-				// 		// Find the minimum difference between the barometer data and the vicon position data
-				// 	}		
-				// }
+				if (state.armimg_state == ARMING_STATE_STANDBY){
+						z_baro_ajust = z_baro;
+					}
+
+				if (!init_pos_set && qmsg.cmd_id == QUAD_MSG_CMD_START) {
+					for (int i = 0; i < no_of_quads - 1; ++i){
+						// Find the minimum difference between the barometer data and the vicon position data
+						alt_diff[i] = (z_baro - z_baro_ajusted) - qmsg.z[i]
+					}		
+				}
 			}
 
 			// Update Quadrotor position from vicon data
@@ -104,7 +118,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[])
 
 				for (int i = 0; i < max_no_of_quads; ++i){
 					if((float)qmsg.z[i] == -1){
-						no_of_quads = max_no_of_quads - 1;
+						no_of_quads = no_of_quads - 1;
 					}
 				}
 
