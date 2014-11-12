@@ -167,13 +167,13 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 						for (int i = 0; i < no_of_quads; ++i){
 							z_zero[i] = (float)qmsg.z[i];					
 						}
-						float alt = z_SMA - z_baro_ajust);
+						float alt = z_SMA - z_baro_ajust;
 						mavlink_log_info(mavlink_fd,"[wai] ALT: %.3f meter", (double)alt);
 					}
 
 					else if (!init_pos_set && qmsg.cmd_id == QUAD_MSG_CMD_START) {
 						// mavlink_log_info(mavlink_fd,"[wai] Entered alt compare");
-						float alt = z_SMA - z_baro_ajust);
+						float alt = z_SMA - z_baro_ajust;
 						mavlink_log_info(mavlink_fd,"[wai] ALT: %.3f meter", (double)alt;
 						// Increase the thrust until the threshold is met (function)
 
