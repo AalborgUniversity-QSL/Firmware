@@ -76,6 +76,8 @@
 #include <commander/px4_custom_mode.h>
 #include <geo/geo.h>
 
+#include <mavlink/mavlink_log.h>
+
 __BEGIN_DECLS
 
 #include "mavlink_bridge_header.h"
@@ -250,6 +252,9 @@ MavlinkReceiver::handle_message_command_quad_formation(mavlink_message_t *msg) {
 
         struct quad_formation_msg_s quad_msg;
         memset(&quad_msg, 0, sizeof(quad_msg));
+        
+        static int mavlink_fd;
+        mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
 
         for (int i = 0; i < 10; i++) {
                 quad_msg.x[i] = msg_mavlink.x[i];
@@ -262,6 +267,8 @@ MavlinkReceiver::handle_message_command_quad_formation(mavlink_message_t *msg) {
         for (int i = 0; i < 10; i++) {
                 quad_msg.z[i] = msg_mavlink.z[i];
         }
+        mavlink_log_info(mavlink_fd, "[mavlink_receiver] qmsg z[0]: %.3f", (double)quad_msg.z[0]);
+        mavlink_log_info(mavlink_fd, "[mavlink_receiver] mmsg z[0]: %.3f", (double)msg_mavlink.z[0]);
 
         quad_msg.target_system = msg_mavlink.target_system;
         quad_msg.cmd_id = msg_mavlink.cmd_id;
