@@ -35,12 +35,6 @@ static bool thread_running = false;
 static bool thread_should_exit = false;
 static int daemon_task;
 
-
-// int16_t x_init [10];
-// int16_t y_init [10];
-// int16_t z_init [10];
-
- 
 int wai_quad_pos_thread_main(int argc, char *argv[]){
 
 	static bool init_pos_set = false;
@@ -56,7 +50,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 	float alt_diff[max_no_of_quads];
 	float SMA[10] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
 	float z_SMA = 0;
-	float alt_detect_threshold = 0.7f;
+	float alt_detect_threshold = 1;
 	float z_zero_quad;
 
 	float init_pos_x, init_pos_y, init_pos_z;
@@ -74,9 +68,9 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 	int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
 	int state_sub = orb_subscribe(ORB_ID(vehicle_status));
 
-	orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
-	orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
-	orb_copy(ORB_ID(vehicle_status), state_sub, &state);
+	// orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
+	// orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
+	// orb_copy(ORB_ID(vehicle_status), state_sub, &state);
 
 	orb_set_interval(qmsg_sub_fd, 100);
 	orb_set_interval(sensor_sub_fd,100);
@@ -129,7 +123,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 					init_pos_y = qmsg.y[min_error_no];
 					init_pos_z = qmsg.z[min_error_no] - z_zero_quad;
 				}
-				mavlink_log_info(mavlink_fd,"[wai] no:%d \t pos: [%.3f,%.3f,%.3f]",no_of_quads,(double)init_pos_x,(double)init_pos_y,(double)init_pos_z);
+				// mavlink_log_info(mavlink_fd,"[wai] no:%d \t pos: [%.3f,%.3f,%.3f]",no_of_quads,(double)init_pos_x,(double)init_pos_y,(double)init_pos_z);
 
 
 			}
@@ -158,25 +152,32 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 					}
 
 					z_SMA = z_SMA/(float)MA_order;
+
+					// mavlink_log_info(mavlink_fd,"[wai] ALT: %.2f meter", (double)z_SMA);
 					/*--------------------------------------------------------------------------------------*/
 
 					/* read all relevant states */
 					orb_copy(ORB_ID(vehicle_status), state_sub, &state);
+					orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
 
 					// Update the initial altitude while in standby
 					if (state.arming_state == ARMING_STATE_STANDBY){
 						z_baro_ajust = z_SMA;
 
 						for (int i = 0; i < no_of_quads; ++i){
-							z_zero[i] = (float)qmsg.z[i];							
+							z_zero[i] = (float)qmsg.z[i];					
 						}
+						float alt = z_SMA - z_baro_ajust);
+						mavlink_log_info(mavlink_fd,"[wai] ALT: %.3f meter", (double)alt);
 					}
 
-					else if (qmsg.cmd_id == QUAD_MSG_CMD_START) {
-
+					else if (!init_pos_set && qmsg.cmd_id == QUAD_MSG_CMD_START) {
+						// mavlink_log_info(mavlink_fd,"[wai] Entered alt compare");
+						float alt = z_SMA - z_baro_ajust);
+						mavlink_log_info(mavlink_fd,"[wai] ALT: %.3f meter", (double)alt;
 						// Increase the thrust until the threshold is met (function)
 
-						if (z_SMA >= alt_detect_threshold){
+						if ((z_SMA - z_baro_ajust) >= alt_detect_threshold){
 
 							for (int i = 1; i < no_of_quads; ++i){
 								// Find the minimum difference between the barometer data and the Vicon position data
