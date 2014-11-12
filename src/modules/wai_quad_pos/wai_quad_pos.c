@@ -84,7 +84,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
         };
 
         while(true) {
-                int ret_sens = poll(fd, 2, 250); 
+                int ret_sens = poll(fd_sens, 2, 250); 
                 if (ret_sens < 0) {
                         warnx("poll sp error");
                 }
@@ -103,7 +103,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                 else if (fd_sens[1].revents & POLLIN) {
                         orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
 
-                        /* Filter the raw barometer data with a Moving Average filter with an order of MA_order */
+                        /* Filter the raw barometer data with a Simple Moving Average filter with an order of MA_order */
                         z_baro = (float)raw.baro_alt_meter;
                         
                         for (int i = ((int)MA_order - 1); i >= 0; --i){
@@ -122,7 +122,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                         z_SMA = z_SMA/(float)MA_order;
                 }
 
-                int ret_sys = poll(fd, 1, 0);
+                int ret_sys = poll(fd_sys, 1, 0);
                 if (ret_sys < 0) {
                         warnx("poll sp error");
                 }
