@@ -57,8 +57,11 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
         float z_zero[10];
 
         struct quad_formation_msg_s qmsg;
+        memset(&qmsg, 0, sizeof(qmsg));
         struct sensor_combined_s raw;
+        memset(&raw, 0, sizeof(raw));
         struct vehicle_status_s state;
+        memset(&state, 0, sizeof(state));
 
         warnx("[wai] Started ");
 
@@ -68,79 +71,63 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
         int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
         int state_sub_fd = orb_subscribe(ORB_ID(vehicle_status));
 
-        // orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
-        // orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
-        // orb_copy(ORB_ID(vehicle_status), state_sub, &state);
-
         orb_set_interval(qmsg_sub_fd, 100);
         orb_set_interval(sensor_sub_fd,100);
 
-        struct pollfd fd[] = {
+        struct pollfd fd_sens[] = {
                 { .fd = qmsg_sub_fd,   .events = POLLIN },
                 { .fd = sensor_sub_fd, .events = POLLIN },
+        };
+
+        struct pollfd fd_sys[] = {
                 { .fd = state_sub_fd, .events = POLLIN },
         };
 
-        int error_counter = 0;
-
         while(true) {
-                // wait for sensor update of 2 descriptor for 1000 ms
-                int poll_ret = poll(fd, 2, 1000);
-
-                if (poll_ret == 0) {
-                        mavlink_log_info(mavlink_fd, "[wai@mavlink] No pos recived");
-                } 
-                else if (poll_ret < 0) {
-                        /* this is seriously bad - should be an emergency */
-                        if (error_counter < 10 || error_counter % 50 == 0) {
-                                /* use a counter to prevent flooding (and slowing us down) */
-                                printf("[wai] ERROR return value from poll(): %d\n", poll_ret);
-                        }
-                        error_counter++;
+                int ret_sens = poll(fd, 2, 250); 
+                if (ret_sens < 0) {
+                        warnx("poll sp error");
                 }
-                else {
-                        // Update Quadrotor position from vicon data
-                        if (fd[0].revents & POLLIN) {
-                                orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
+                else if (fd_sens[0].revents & POLLIN) {
+                        orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
 
-                                // Find the total no of quads
-                                no_of_quads = max_no_of_quads;
+                        // Find the total no of quads
+                        no_of_quads = max_no_of_quads;
 
-                                for (int i = 0; i < max_no_of_quads; ++i){
-                                        if((float)qmsg.z[i] == -1){
-                                                no_of_quads = no_of_quads - 1;
-                                        }
+                        for (int i = 0; i < max_no_of_quads; ++i){
+                                if((float)qmsg.z[i] == -1){
+                                        no_of_quads = no_of_quads - 1;
+                                }
+                        }
+                }
+                else if (fd_sens[1].revents & POLLIN) {
+                        orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
+
+                        /* Filter the raw barometer data with a Moving Average filter with an order of MA_order */
+                        z_baro = (float)raw.baro_alt_meter;
+                        
+                        for (int i = ((int)MA_order - 1); i >= 0; --i){
+                                if(i > 0){
+                                        SMA[i] = SMA[i-1];
+                                }
+                                else {
+                                        SMA[i] = z_baro;
                                 }
                         }
 
-                        // Find a matching coordinate set from increasing the altitude of the quad (Waving to point out where I am)
-                        if (fd[1].revents & POLLIN) {
-                                orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
-
-                                /* Filter the raw barometer data with a Moving Average filter with an order of MA_order */
-                                z_baro = (float)raw.baro_alt_meter;
-                                
-                                for (int i = ((int)MA_order - 1); i >= 0; --i){
-                                        if(i > 0){
-                                                SMA[i] = SMA[i-1];
-                                        }
-                                        else {
-                                                SMA[i] = z_baro;
-                                        }
-                                }
-
-                                for (int i = 0; i < MA_order; ++i){
-                                        z_SMA = z_SMA + SMA[i];
-                                }
-
-                                z_SMA = z_SMA/(float)MA_order;
-
-                                /*--------------------------------------------------------------------------------------*/
+                        for (int i = 0; i < MA_order; ++i){
+                                z_SMA = z_SMA + SMA[i];
                         }
 
-                        if (fd[2].revents & POLLIN) {
-                                orb_copy(ORB_ID(vehicle_status), state_sub_fd, &state);
-                        }
+                        z_SMA = z_SMA/(float)MA_order;
+                }
+
+                int ret_sys = poll(fd, 1, 0);
+                if (ret_sys < 0) {
+                        warnx("poll sp error");
+                }
+                else if (fd_sys[0].revents & POLLIN) {
+                        orb_copy(ORB_ID(vehicle_status), state_sub_fd, &state);
                 }
 
                 if (init_pos_set) {
@@ -148,7 +135,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
                         for (int i = 0; i < no_of_quads; ++i){
                                 pos_error[i] = sqrt(pow((init_pos_x - qmsg.x[i]),2) + pow((init_pos_y - qmsg.y[i]),2) + pow((init_pos_z - qmsg.z[i]),2));
-                                
+
                                 if (i > 0 && pos_error[i] < pos_error[i-1]){
                                         min_error_no = i;                                               
                                 }
@@ -159,7 +146,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                         init_pos_z = qmsg.z[min_error_no] - z_zero_quad;
                 }
 
-                if (!init_pos_set){
+                else if (!init_pos_set){
                         mavlink_log_info(mavlink_fd,"entered alt...")
                         // Update the initial altitude while in standby
                         if (state.arming_state == ARMING_STATE_STANDBY){
