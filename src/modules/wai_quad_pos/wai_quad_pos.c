@@ -88,38 +88,41 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                 if (ret_sens < 0) {
                         warnx("poll sp error");
                 }
-                else if (fd_sens[0].revents & POLLIN) {
-                        orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
+                else {
+                        if (fd_sens[0].revents & POLLIN) {
+                                orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
 
-                        // Find the total no of quads
-                        no_of_quads = max_no_of_quads;
+                                // Find the total no of quads
+                                no_of_quads = max_no_of_quads;
 
-                        for (int i = 0; i < max_no_of_quads; ++i){
-                                if((float)qmsg.z[i] == -1){
-                                        no_of_quads = no_of_quads - 1;
+                                for (int i = 0; i < max_no_of_quads; ++i){
+                                        if((float)qmsg.z[i] == -1){
+                                                no_of_quads = no_of_quads - 1;
+                                        }
                                 }
                         }
-                }
-                else if (fd_sens[1].revents & POLLIN) {
-                        orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
+                        if (fd_sens[1].revents & POLLIN) {
+                                float sum = 0;
+                                orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
 
-                        /* Filter the raw barometer data with a Simple Moving Average filter with an order of MA_order */
-                        z_baro = (float)raw.baro_alt_meter;
-                        
-                        for (int i = ((int)MA_order - 1); i >= 0; --i){
-                                if(i > 0){
-                                        SMA[i] = SMA[i-1];
+                                /* Filter the raw barometer data with a Simple Moving Average filter with an order of MA_order */
+                                z_baro = (float)raw.baro_alt_meter;
+                                
+                                for (int i = (MA_order - 1); i >= 0; --i){
+                                        if(i > 0){
+                                                SMA[i] = SMA[i-1];
+                                        }
+                                        else {
+                                                SMA[i] = z_baro;
+                                        }
                                 }
-                                else {
-                                        SMA[i] = z_baro;
+
+                                for (int i = 0; i < MA_order; ++i){
+                                        sum = sum + SMA[i];
                                 }
-                        }
 
-                        for (int i = 0; i < MA_order; ++i){
-                                z_SMA = z_SMA + SMA[i];
+                                z_SMA = sum/(float)MA_order;
                         }
-
-                        z_SMA = z_SMA/(float)MA_order;
                 }
 
                 int ret_sys = poll(fd_sys, 1, 0);
@@ -130,6 +133,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                         orb_copy(ORB_ID(vehicle_status), state_sub_fd, &state);
                 }
 
+                // Find the next Vicon data set
                 if (init_pos_set) {
                         float pos_error[no_of_quads];
 
@@ -146,8 +150,10 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                         init_pos_z = qmsg.z[min_error_no] - z_zero_quad;
                 }
 
+                // initialize the Quadroter
                 else if (!init_pos_set){
-                        mavlink_log_info(mavlink_fd,"entered alt...")
+                        mavlink_log_info(mavlink_fd,"entered alt...");
+
                         // Update the initial altitude while in standby
                         if (state.arming_state == ARMING_STATE_STANDBY){
                                 mavlink_log_info(mavlink_fd,"standby")
@@ -156,20 +162,21 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                                 for (int i = 0; i < no_of_quads; ++i){
                                         z_zero[i] = (float)qmsg.z[i];                                   
                                 }
-                                mavlink_log_info(mavlink_fd,"[wai] alt_vic:%.3f \t alt_baro:%.3f \t no:%d",(double)z_zero[0],(double)z_baro_ajust,no_of_quads);
+                                // mavlink_log_info(mavlink_fd,"[wai] alt_vic:%.3f \t alt_baro:%.3f \t no:%d",(double)z_zero[0],(double)z_baro_ajust,no_of_quads);
                         }
 
-                        else if (qmsg.cmd_id == QUAD_MSG_CMD_START) {
+                        else if (state.arming_state == ARMING_STATE_ARMED && qmsg.cmd_id == QUAD_MSG_CMD_START) {
 
                                 // Increase the thrust until the threshold is met (function)
 
-                                if ((z_SMA - z_baro_ajust) >= alt_detect_threshold){
-
-                                        for (int i = 1; i < no_of_quads; ++i){
+                                if ((z_SMA - z_baro_ajust) >= alt_detect_threshold) {
+                                        for (int i = 0; i < no_of_quads; ++i){
                                                 // Find the minimum difference between the barometer data and the Vicon position data
                                                 alt_diff[i] = (z_SMA - z_baro_ajust) - (float)qmsg.z[i];
-
-                                                if(alt_diff[i] < alt_diff[min_error_no]){
+                                                if (i == 0){
+                                                        min_error_no = i;        
+                                                } 
+                                                else if (i > 0 && alt_diff[i] < alt_diff[min_error_no]){
                                                         min_error_no = i;
                                                 }
                                         }
@@ -184,6 +191,9 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                                         // mavlink_log_info(mavlink_fd,"[wai] no:%d \t pos: [%.3f,%.3f,%.3f]",no_of_quads,(double)init_pos_x,(double)init_pos_y,(double)init_pos_z);
 
                                 }
+                        }
+                        else if (qmsg.cmd_id == QUAD_MSG_CMD_STOP) {
+                                init_pos_set = false;
                         }
                 }
         }
