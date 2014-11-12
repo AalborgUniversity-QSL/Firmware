@@ -55,7 +55,7 @@ struct output_s {
 __EXPORT int quad_att_control_main(int argc, char *argv[]);
 int att_control_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
-float filterMA(float *old1, float *old2, float new);
+float filterMA(float *old1, float *old2, float *old3, float *old4, float new);
 
 static bool thread_should_exit = false;
 static bool thread_running = false;
@@ -101,6 +101,8 @@ int att_control_thread_main(int argc, char *argv[]) {
 
         float old1 = 0.0, 
               old2 = 0.0,
+              old3 = 0.0,
+              old4 = 0.0,
               alt = 0.0;
 
         struct attError_s error;
@@ -108,7 +110,7 @@ int att_control_thread_main(int argc, char *argv[]) {
         struct output_s out;
         memset(&out, 0, sizeof(out));
         
-        float p = 0.3;
+        float p = 0.1;
 
         while (!thread_should_exit) {
                 int ret_sp = poll(fd_sp, 1, 500);
@@ -150,10 +152,10 @@ int att_control_thread_main(int argc, char *argv[]) {
                         error.pitch = sp.pitch - v_att.pitch;
                         error.yaw = sp.yaw - v_att.yaw;
 
-                        alt = filterMA(&old1, &old2, raw.baro_alt_meter);
+                        alt = filterMA(&old1, &old2, &old3, &old4, raw.baro_alt_meter);
 
                         if ((double)alt < (double)0.5) {
-                                out.thrust += (float)0.05;
+                                out.thrust = (float)0.4;
                                 out.roll = (float)p * (float)error.roll;
                                 out.pitch = (float)p * (float)error.pitch;
                                 out.yaw = (float)p * (float)error.yaw;
@@ -166,7 +168,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
 
                         } else if ((double)alt > (double)0.5) {
-                                out.thrust += (float)0.05;
+                                out.thrust = (float)0.2;
                                 out.roll = (float)p * (float)error.roll;
                                 out.pitch = (float)p * (float)error.pitch;
                                 out.yaw = (float)p * (float)error.yaw;
@@ -180,7 +182,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         }
                                                 
                 } else if (sp.cmd == QUAD_ATT_CMD_STOP) {
-                        out.thrust = (float)0.2;
+                        out.thrust = (float)0.1;
                         out.roll = (float)p * (float)error.roll;
                         out.pitch = (float)p * (float)error.pitch;
                         out.yaw = (float)p * (float)error.yaw;
@@ -197,10 +199,12 @@ int att_control_thread_main(int argc, char *argv[]) {
         }
 }
 
-float filterMA(float *old1, float *old2, float new) {
-        int N = 3,
-            res = 0;
-        res = (*old1 + *old2 + new)/N;
+float filterMA(float *old1, float *old2, float *old3, float *old4, float new) {
+        float N = 5.f,
+              res = 0.f;
+        res = (*old1 + *old2 + *old3 + *old4 + new)/N;
+        *old4 = *old3;
+        *old3 = *old2;
         *old2 = *old1;
         *old1 = res;
         return res;
