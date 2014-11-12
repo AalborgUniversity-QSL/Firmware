@@ -28,6 +28,7 @@
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/quad_att_sp.h>
+#include <uORB/topics/quad_formation_msg.h>
 #include <uORB/topics/vehicle_attitude.h>
 
 #include <geo/geo.h>
@@ -69,16 +70,19 @@ int att_control_thread_main(int argc, char *argv[]) {
         mavlink_log_info(mavlink_fd, "[quad_att__control] started");
         
         /* Subscription */
-        struct sensor_combined_s raw;
-        memset(&raw, 0, sizeof(raw));
+        /* struct sensor_combined_s raw; */
+        /* memset(&raw, 0, sizeof(raw)); */
         struct quad_att_sp_s sp;
         memset(&sp, 0, sizeof(sp));
         struct vehicle_attitude_s v_att;
         memset(&v_att, 0, sizeof(v_att));
+        struct quad_formation_msg_s qmsg;
+        memset(&qmsg, 0, sizeof(qmsg));
 
-        int sensor_sub = orb_subscribe(ORB_ID(sensor_combined));
+        /* int sensor_sub = orb_subscribe(ORB_ID(sensor_combined)); */
         int quad_sp_sub = orb_subscribe(ORB_ID(quad_att_sp));
         int v_att_sub = orb_subscribe(ORB_ID(vehicle_attitude));
+        int qmsg_sub = orb_subscribe(ORB_ID(quad_formation_msg));
 
         /* Published */
         struct actuator_controls_s actuators;
@@ -89,21 +93,24 @@ int att_control_thread_main(int argc, char *argv[]) {
 	}
         orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
 
-        struct pollfd fds[] = { 
-                { .fd = sensor_sub,   .events = POLLIN },
-        };
+        /* struct pollfd fds[] = {  */
+        /*         { .fd = sensor_sub,   .events = POLLIN }, */
+        /* }; */
         struct pollfd fd_sp[] = { 
                 { .fd = quad_sp_sub,   .events = POLLIN },
         };
         struct pollfd fd_v_att[] = { 
                 { .fd = v_att_sub,   .events = POLLIN },
         };
+        struct pollfd fd_qmsg[] = { 
+            { .fd = qmsg_sub,   .events = POLLIN },
+        };
 
-        float old1 = 0.0, 
-              old2 = 0.0,
-              old3 = 0.0,
-              old4 = 0.0,
-              alt = 0.0;
+        /* float old1 = 0.0,  */
+        /*       old2 = 0.0, */
+        /*       old3 = 0.0, */
+        /*       old4 = 0.0, */
+        float alt = 0.0;
 
         struct attError_s error;
         memset(&error, 0, sizeof(error));
@@ -130,13 +137,15 @@ int att_control_thread_main(int argc, char *argv[]) {
                         /* if (attConRet < 0) */
                         /*         mavlink_log_info(mavlink_fd, "[quad_att__control] attControl failed to start"); */
                         
-                        int ret_sensor = poll(fds, 1, 250);
-                        if (ret_sensor < 0) {
-                                warnx("poll error");
-                        } else if (ret_sensor == 0) {
+                        int ret_qmsg = poll(fd_qmsg, 1, 500);
+                        if (ret_qmsg < 0) {
+                                warnx("poll sp error");
+                        } else if (ret_qmsg == 0) {
                                 /* no return value - nothing has happened */
-                        } else if (fds[0].revents & POLLIN) {
-                                orb_copy(ORB_ID(sensor_combined), sensor_sub, &raw);
+                        } else if (fd_qmsg[0].revents & POLLIN) {
+                                orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
+                        } else {
+                                /* nothing happened */
                         }
                         
                         int ret_v_att = poll(fd_v_att, 1, 250);
@@ -152,10 +161,12 @@ int att_control_thread_main(int argc, char *argv[]) {
                         error.pitch = sp.pitch - v_att.pitch;
                         error.yaw = sp.yaw - v_att.yaw;
 
-                        alt = filterMA(&old1, &old2, &old3, &old4, raw.baro_alt_meter);
+                        alt = qmsg.z[0];
+                        printf("altitude: %f\n", (double)alt);
+                        mavlink_log_info(mavlink_fd, "[quad_att__control] %.3f", (double)alt);
 
-                        if ((double)alt < (double)0.5) {
-                                out.thrust = (float)0.4;
+                        if ((double)alt < (double)500) {
+                                out.thrust += (float)0.05;
                                 out.roll = (float)p * (float)error.roll;
                                 out.pitch = (float)p * (float)error.pitch;
                                 out.yaw = (float)p * (float)error.yaw;
@@ -167,8 +178,8 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                 orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
 
-                        } else if ((double)alt > (double)0.5) {
-                                out.thrust = (float)0.2;
+                        } else if ((double)alt >= (double)500) {
+                                out.thrust -= (float)0.05;
                                 out.roll = (float)p * (float)error.roll;
                                 out.pitch = (float)p * (float)error.pitch;
                                 out.yaw = (float)p * (float)error.yaw;
