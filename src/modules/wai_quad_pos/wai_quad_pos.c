@@ -129,6 +129,9 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 					init_pos_y = qmsg.y[min_error_no];
 					init_pos_z = qmsg.z[min_error_no] - z_zero_quad;
 				}
+				mavlink_log_info(mavlink_fd,"[wai] no:%d \t pos: [%.3f,%.3f,%.3f]",no_of_quads,(double)init_pos_x,(double)init_pos_y,(double)init_pos_z);
+
+
 			}
 
 			// Find a matching coordinate set from increasing the altitude of the quad (Waving to point out where I am)
@@ -190,6 +193,9 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 							z_zero_quad = z_zero[min_error_no];
 
 							init_pos_set = true;
+
+							mavlink_log_info(mavlink_fd,"[wai] no:%d \t pos: [%.3f,%.3f,%.3f]",no_of_quads,(double)init_pos_x,(double)init_pos_y,(double)init_pos_z);
+
 						}
 					}
 				}
