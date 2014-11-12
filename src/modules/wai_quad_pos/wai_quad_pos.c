@@ -158,6 +158,8 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 					}
 
 					z_SMA = z_SMA/(float)MA_order;
+
+					mavlink_log_info(mavlink_fd,"[wai] ALT: %.3f meter", (double)z_SMA);
 					/*--------------------------------------------------------------------------------------*/
 
 					/* read all relevant states */
@@ -173,10 +175,11 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 					}
 
 					else if (qmsg.cmd_id == QUAD_MSG_CMD_START) {
+						mavlink_log_info(mavlink_fd,"[wai] Entered alt compare");
 
 						// Increase the thrust until the threshold is met (function)
 
-						if (z_SMA >= alt_detect_threshold){
+						if ((z_SMA - z_baro_ajust) >= alt_detect_threshold){
 
 							for (int i = 1; i < no_of_quads; ++i){
 								// Find the minimum difference between the barometer data and the Vicon position data
