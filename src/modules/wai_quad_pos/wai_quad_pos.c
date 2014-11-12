@@ -49,6 +49,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 	static int no_of_quads = 10;			// Initial guess
 	static int mavlink_fd;
 	static int MA_order = 10;
+	static int min_error_no = 0;
 
 	float z_baro_ajust = 0;
 	float z_baro;
@@ -56,8 +57,9 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 	float SMA[10] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
 	float z_SMA = 0;
 	float alt_detect_threshold = 0.7f;
+	float z_zero_quad;
 
-	float pos_x, pos_y, pos_z;
+	float init_pos_x, init_pos_y, init_pos_z;
 	float z_zero[10];
 
 	struct quad_formation_msg_s qmsg;
@@ -113,9 +115,20 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 					}
 				}
 
-				// if (init_pos_set) {
-					
-				// }
+				if (init_pos_set) {
+					float pos_error[no_of_quads];
+
+					for (int i = 0; i < no_of_quads; ++i){
+						pos_error[i] = sqrt(pow((init_pos_x - qmsg.x[i]),2) + pow((init_pos_y - qmsg.y[i]),2) + pow((init_pos_z - qmsg.z[i]),2));
+						
+						if (i > 0 && pos_error[i] < pos_error[i-1]){
+							min_error_no = i;						
+						}
+					}
+					init_pos_x = qmsg.x[min_error_no];
+					init_pos_y = qmsg.y[min_error_no];
+					init_pos_z = qmsg.z[min_error_no] - z_zero_quad;
+				}
 			}
 
 			// Find a matching coordinate set from increasing the altitude of the quad (Waving to point out where I am)
@@ -142,12 +155,12 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 					}
 
 					z_SMA = z_SMA/(float)MA_order;
-
 					/*--------------------------------------------------------------------------------------*/
 
 					/* read all relevant states */
 					orb_copy(ORB_ID(vehicle_status), state_sub, &state);
 
+					// Update the initial altitude while in standby
 					if (state.arming_state == ARMING_STATE_STANDBY){
 						z_baro_ajust = z_SMA;
 
@@ -161,7 +174,6 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 						// Increase the thrust until the threshold is met (function)
 
 						if (z_SMA >= alt_detect_threshold){
-							int min_error_no = 0;
 
 							for (int i = 1; i < no_of_quads; ++i){
 								// Find the minimum difference between the barometer data and the Vicon position data
@@ -172,9 +184,10 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 								}
 							}
 
-							pos_x = (float)qmsg.x[min_error_no];
-							pos_y = (float)qmsg.y[min_error_no];
-							pos_z = (float)qmsg.z[min_error_no];
+							init_pos_x = (float)qmsg.x[min_error_no];
+							init_pos_y = (float)qmsg.y[min_error_no];
+							init_pos_z = (float)qmsg.z[min_error_no];
+							z_zero_quad = z_zero[min_error_no];
 
 							init_pos_set = true;
 						}
