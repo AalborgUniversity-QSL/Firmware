@@ -28,6 +28,7 @@ enum QUAD_MSG_CMD {
 };
 
 struct quad_formation_msg_s {
+        uint64_t timestamp;                     /**< Timestamp in microseconds since boot*/
         float x[10];           ///< x-axis (int16_t[10])
         float y[10];           ///< y-axis (int16_t[10])
         float z[10];           ///< z-axis (int16_t[10]) = -1 if coordinate is Not Available

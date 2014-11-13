@@ -74,12 +74,12 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
         orb_set_interval(qmsg_sub_fd, 100);
         orb_set_interval(sensor_sub_fd,100);
 
-        struct pollfd fd_sens[] = {
+        struct pollfd fd_sens[2] = {
                 { .fd = qmsg_sub_fd,   .events = POLLIN },
                 { .fd = sensor_sub_fd, .events = POLLIN },
         };
 
-        struct pollfd fd_sys[] = {
+        struct pollfd fd_sys[1] = {
                 { .fd = state_sub_fd, .events = POLLIN },
         };
 
