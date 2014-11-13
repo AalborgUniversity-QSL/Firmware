@@ -67,7 +67,7 @@ int hover_test_thread_main(int argc, char *argv[]) {
         /* struct pollfd fd_qmsg[] = {  */
         /*         { .fd = qmsg_sub,   .events = POLLIN }, */
         /* }; */
-        
+        bool updated = false;
         while(!thread_should_exit) {
                 /* printf("[hover_test] while loop \n"); */
                 /* int ret_qmsg = poll(fd_qmsg, 1, 250); */
@@ -76,7 +76,11 @@ int hover_test_thread_main(int argc, char *argv[]) {
 		/* } else if (ret_qmsg == 0) { */
 		/* 	/\* printf("[hover_test] nothing received\n"); *\/ */
 		/* } else if (fd_qmsg[0].revents & POLLIN) { */
+                orb_check(qmsg_sub, &updated);
+                if (updated){
                         orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
+                        updated = false;
+                }
 //                        qmsg.z[0] = 5.0;
                         /* printf("[hover_test] z = %.3f\n", (double)qmsg.z[0]); */
                         if (qmsg.cmd_id == QUAD_MSG_CMD_START) {
