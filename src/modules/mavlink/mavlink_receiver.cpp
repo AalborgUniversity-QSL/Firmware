@@ -257,6 +257,12 @@ MavlinkReceiver::handle_message_command_quad_formation(mavlink_message_t *msg) {
         mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
 
         for (int i = 0; i < 10; i++) {
+            printf("x[%i]: %.3f\t", i, (double)msg_mavlink.x[i]);
+            printf("y[%i]: %.3f\t", i, (double)msg_mavlink.y[i]);
+            printf("z[%i]: %.3f\n", i, (double)msg_mavlink.z[i]);
+        }
+
+        for (int i = 0; i < 10; i++) {
                 quad_msg.x[i] = msg_mavlink.x[i];
         }
         
