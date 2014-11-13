@@ -252,9 +252,6 @@ MavlinkReceiver::handle_message_command_quad_formation(mavlink_message_t *msg) {
 
         struct quad_formation_msg_s quad_msg;
         memset(&quad_msg, 0, sizeof(quad_msg));
-        
-        static int mavlink_fd;
-        mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
 
         for (int i = 0; i < 10; i++) {
             printf("x[%i]: %.3f\t", i, (double)msg_mavlink.x[i]);
