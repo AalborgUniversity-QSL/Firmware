@@ -100,6 +100,8 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                                                 no_of_quads = no_of_quads - 1;
                                         }
                                 }
+
+                                mavlink_log_info(mavlink_fd,"no: %u \t pos:{%.3f;%.3f;%.3f}",(int)no_of_quads, (double)qmsg.x[0],(double)qmsg.y[0],(double)qmsg.z[0]);
                         }
                         if (fd_sens[1].revents & POLLIN) {
                                 float sum = 0;
@@ -157,7 +159,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                         // Update the initial altitude while in standby
                         if (state.arming_state == ARMING_STATE_STANDBY){
                                 mavlink_log_info(mavlink_fd,"standby")
-                                z_baro_ajust = z_SMA;
+                                z_baro_ajust = z_SMA;git
 
                                 for (int i = 0; i < no_of_quads; ++i){
                                         z_zero[i] = (float)qmsg.z[i];                                   
@@ -188,7 +190,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
                                         init_pos_set = true;
 
-                                        // mavlink_log_info(mavlink_fd,"[wai] no:%d \t pos: [%.3f,%.3f,%.3f]",no_of_quads,(double)init_pos_x,(double)init_pos_y,(double)init_pos_z);
+                                        mavlink_log_info(mavlink_fd,"[wai] no:%d \t pos: [%.3f,%.3f,%.3f]",no_of_quads,(double)init_pos_x,(double)init_pos_y,(double)init_pos_z);
 
                                 }
                         }
