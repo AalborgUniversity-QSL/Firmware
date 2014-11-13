@@ -159,7 +159,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                         // Update the initial altitude while in standby
                         if (state.arming_state == ARMING_STATE_STANDBY){
                                 mavlink_log_info(mavlink_fd,"standby")
-                                z_baro_ajust = z_SMA;git
+                                z_baro_ajust = z_SMA;
 
                                 for (int i = 0; i < no_of_quads; ++i){
                                         z_zero[i] = (float)qmsg.z[i];                                   
