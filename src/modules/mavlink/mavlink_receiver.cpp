@@ -76,8 +76,6 @@
 #include <commander/px4_custom_mode.h>
 #include <geo/geo.h>
 
-#include <mavlink/mavlink_log.h>
-
 __BEGIN_DECLS
 
 #include "mavlink_bridge_header.h"

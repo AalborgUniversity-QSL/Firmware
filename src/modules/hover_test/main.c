@@ -85,6 +85,11 @@ int hover_test_thread_main(int argc, char *argv[]) {
                                         printf("y[%i]: %.3f\t", i, (double)qmsg.y[i]);
                                         printf("z[%i]: %.3f\n", i, (double)qmsg.z[i]);
                                 }
+                                for (int i = 0; i < 10; i++) {
+                                        mavlink_log_info(mavlink_fd, "x[%i]: %.3f\t", i, (double)qmsg.x[i]);
+                                        mavlink_log_info(mavlink_fd, "y[%i]: %.3f\t", i, (double)qmsg.y[i]);
+                                        mavlink_log_info(mavlink_fd, "z[%i]: %.3f\n", i, (double)qmsg.z[i]);
+                                }
 
                                 /* printf("[hover_test] start\n"); */
                                 /* sp.cmd = QUAD_ATT_CMD_START; */
