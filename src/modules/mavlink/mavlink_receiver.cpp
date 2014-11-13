@@ -270,8 +270,6 @@ MavlinkReceiver::handle_message_command_quad_formation(mavlink_message_t *msg) {
         for (int i = 0; i < 10; i++) {
                 quad_msg.z[i] = msg_mavlink.z[i];
         }
-        mavlink_log_info(mavlink_fd, "[mavlink_receiver] qmsg z[0]: %.3f", (double)quad_msg.z[0]);
-        mavlink_log_info(mavlink_fd, "[mavlink_receiver] mmsg z[0]: %.3f", (double)msg_mavlink.z[0]);
 
         quad_msg.target_system = msg_mavlink.target_system;
         quad_msg.cmd_id = msg_mavlink.cmd_id;
