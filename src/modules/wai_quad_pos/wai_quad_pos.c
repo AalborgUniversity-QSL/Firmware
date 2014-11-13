@@ -71,15 +71,15 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
         int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
         int state_sub_fd = orb_subscribe(ORB_ID(vehicle_status));
 
-        orb_set_interval(qmsg_sub_fd, 100);
-        orb_set_interval(sensor_sub_fd,100);
+        orb_set_interval(qmsg_sub_fd, 500);
+        orb_set_interval(sensor_sub_fd,500);
 
-        struct pollfd fd_sens[2] = {
+        struct pollfd fd_sens[] = {
                 { .fd = qmsg_sub_fd,   .events = POLLIN },
                 { .fd = sensor_sub_fd, .events = POLLIN },
         };
 
-        struct pollfd fd_sys[1] = {
+        struct pollfd fd_sys[] = {
                 { .fd = state_sub_fd, .events = POLLIN },
         };
 
@@ -102,7 +102,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                                 }
 
                                 // mavlink_log_info(mavlink_fd,"no: %d \t pos:{%.3f;%.3f;%.3f}",no_of_quads, (double)qmsg.x[0],(double)qmsg.y[0],(double)qmsg.z[0]);
-                                mavlink_log_info(mavlink_fd,"Recived Vicon data");
+                                printf(mavlink_fd,"Recived Vicon data");
                         }
                         if (fd_sens[1].revents & POLLIN) {
                                 float sum = 0;
