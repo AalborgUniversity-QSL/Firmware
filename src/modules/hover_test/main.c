@@ -78,7 +78,7 @@ int hover_test_thread_main(int argc, char *argv[]) {
 		/* } else if (fd_qmsg[0].revents & POLLIN) { */
                         orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
 //                        qmsg.z[0] = 5.0;
-                        printf("[hover_test] z = %.3f\n", (double)qmsg.z[0]);
+                        /* printf("[hover_test] z = %.3f\n", (double)qmsg.z[0]); */
                         if (qmsg.cmd_id == QUAD_MSG_CMD_START) {
                                 for (int i = 0; i < 10; i++) {
                                         printf("x[%i]: %.3f\t", i, (double)qmsg.x[i]);
