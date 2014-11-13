@@ -84,7 +84,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
         };
 
         while(true) {
-                int ret_sens = poll(fd_sens, 2, 250); 
+                int ret_sens = poll(fd_sens, 2, 1000); 
                 if (ret_sens < 0) {
                         warnx("poll sp error");
                 }
@@ -101,7 +101,8 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                                         }
                                 }
 
-                                mavlink_log_info(mavlink_fd,"no: %u \t pos:{%.3f;%.3f;%.3f}",(int)no_of_quads, (double)qmsg.x[0],(double)qmsg.y[0],(double)qmsg.z[0]);
+                                // mavlink_log_info(mavlink_fd,"no: %d \t pos:{%.3f;%.3f;%.3f}",no_of_quads, (double)qmsg.x[0],(double)qmsg.y[0],(double)qmsg.z[0]);
+                                mavlink_log_info(mavlink_fd,"Recived Vicon data");
                         }
                         if (fd_sens[1].revents & POLLIN) {
                                 float sum = 0;
@@ -154,11 +155,11 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
                 // initialize the Quadroter
                 else if (!init_pos_set){
-                        mavlink_log_info(mavlink_fd,"entered alt...");
+                        // mavlink_log_info(mavlink_fd,"entered alt...");
 
                         // Update the initial altitude while in standby
                         if (state.arming_state == ARMING_STATE_STANDBY){
-                                mavlink_log_info(mavlink_fd,"standby")
+                                mavlink_log_info(mavlink_fd,"standby");
                                 z_baro_ajust = z_SMA;
 
                                 for (int i = 0; i < no_of_quads; ++i){
@@ -170,6 +171,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                         else if (state.arming_state == ARMING_STATE_ARMED && qmsg.cmd_id == QUAD_MSG_CMD_START) {
 
                                 // Increase the thrust until the threshold is met (function)
+                                mavlink_log_info(mavlink_fd,"start alt_diff detect");
 
                                 if ((z_SMA - z_baro_ajust) >= alt_detect_threshold) {
                                         for (int i = 0; i < no_of_quads; ++i){
