@@ -56,26 +56,28 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
         // float init_pos_x, init_pos_y, init_pos_z;
         // float z_zero[10];
 
-        // struct quad_formation_msg_s qmsg;
-        // memset(&qmsg, 0, sizeof(qmsg));
+        int k = 0;
+
+        struct quad_formation_msg_s qmsg;
+        memset(&qmsg, 0, sizeof(qmsg));
         struct sensor_combined_s raw;
         memset(&raw, 0, sizeof(raw));
-        // struct vehicle_status_s state;
-        // memset(&state, 0, sizeof(state));
+        struct vehicle_status_s state;
+        memset(&state, 0, sizeof(state));
 
         warnx("[wai] Started ");
 
         mavlink_fd = open(MAVLINK_LOG_DEVICE,0);
 
-        // int qmsg_sub_fd = orb_subscribe(ORB_ID(quad_formation_msg));
+        int qmsg_sub_fd = orb_subscribe(ORB_ID(quad_formation_msg));
         int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
         // int state_sub_fd = orb_subscribe(ORB_ID(vehicle_status));
 
-        // orb_set_interval(qmsg_sub_fd, 100);
+        orb_set_interval(qmsg_sub_fd, 100);
         orb_set_interval(sensor_sub_fd, 100);
 
-        struct pollfd fd_sens[1] = {
-            // { .fd = qmsg_sub_fd,   .events = POLLIN },
+        struct pollfd fd_sens[2] = {
+            { .fd = qmsg_sub_fd,   .events = POLLIN },
             { .fd = sensor_sub_fd, .events = POLLIN },
         };
 
@@ -91,22 +93,26 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                     // mavlink_log_info(mavlink_fd,"no poll Recived");
                 }
                 else {
-                        // if (fd_sens[0].revents & POLLIN) {
-                        //         orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
-
-                        //         // Find the total no of quads
-                        //         // no_of_quads = max_no_of_quads;
-
-                        //         // for (int i = 0; i < max_no_of_quads; ++i){
-                        //         //         if((float)qmsg.z[i] == -1){
-                        //         //                 no_of_quads = no_of_quads - 1;
-                        //         //         }
-                        //         // }
-
-                        //         // mavlink_log_info(mavlink_fd,"no: %d \t pos:{%.3f;%.3f;%.3f}",no_of_quads, (double)qmsg.x[0],(double)qmsg.y[0],(double)qmsg.z[0]);
-                        //         mavlink_log_info(mavlink_fd,"Recived Vicon data");
-                        // }
                         if (fd_sens[0].revents & POLLIN) {
+                                orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
+
+                                // Find the total no of quads
+                                // no_of_quads = max_no_of_quads;
+
+                                // for (int i = 0; i < max_no_of_quads; ++i){
+                                //         if((float)qmsg.z[i] == -1){
+                                //                 no_of_quads = no_of_quads - 1;
+                                //         }
+                                // }
+
+                                // mavlink_log_info(mavlink_fd,"no: %d \t pos:{%.3f;%.3f;%.3f}",no_of_quads, (double)qmsg.x[0],(double)qmsg.y[0],(double)qmsg.z[0]);
+                                k++;
+                                if(k == 10){
+                                    mavlink_log_info(mavlink_fd,"Recived Vicon data x 10");
+                                    k = 0;
+                                }
+                        }
+                        if (fd_sens[1].revents & POLLIN) {
                                 // float sum = 0;
                                 orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
 
