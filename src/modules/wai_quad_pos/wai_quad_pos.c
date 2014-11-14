@@ -84,7 +84,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
         // };
 
         while(true) {
-                int ret_sens = poll(fd_sens, 2, 1); 
+                int ret_sens = poll(fd_sens, 1, 1000); 
                 if (ret_sens < 0) {
                         warnx("poll sp error");
                 } else if (ret_sens == 0){
