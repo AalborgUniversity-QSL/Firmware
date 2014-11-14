@@ -260,44 +260,17 @@ MavlinkReceiver::handle_message_command_quad_formation(mavlink_message_t *msg) {
         // for (int i = 0; i < 10; i++) {
         //         quad_msg.x[i] = msg_mavlink.x[i];
         // }
-        quad_msg.x[0] = msg_mavlink.x[0];
-        quad_msg.x[1] = msg_mavlink.x[1];
-        quad_msg.x[2] = msg_mavlink.x[2];
-        quad_msg.x[3] = msg_mavlink.x[3];
-        quad_msg.x[4] = msg_mavlink.x[4];
-        quad_msg.x[5] = msg_mavlink.x[5];
-        quad_msg.x[6] = msg_mavlink.x[6];
-        quad_msg.x[7] = msg_mavlink.x[7];
-        quad_msg.x[8] = msg_mavlink.x[8];
-        quad_msg.x[9] = msg_mavlink.x[9];
+        quad_msg.x = msg_mavlink.x;
         
         // for (int i = 0; i < 10; i++) {
         //         quad_msg.y[i] = msg_mavlink.y[i];
         // }
-        quad_msg.y[0] = msg_mavlink.y[0];
-        quad_msg.y[1] = msg_mavlink.y[1];
-        quad_msg.y[2] = msg_mavlink.y[2];
-        quad_msg.y[3] = msg_mavlink.y[3];
-        quad_msg.y[4] = msg_mavlink.y[4];
-        quad_msg.y[5] = msg_mavlink.y[5];
-        quad_msg.y[6] = msg_mavlink.y[6];
-        quad_msg.y[7] = msg_mavlink.y[7];
-        quad_msg.y[8] = msg_mavlink.y[8];
-        quad_msg.y[9] = msg_mavlink.y[9];
+        quad_msg.y = msg_mavlink.y;
 
         // for (int i = 0; i < 10; i++) {
         //         quad_msg.z[i] = msg_mavlink.z[i];
         // }
-        quad_msg.z[0] = msg_mavlink.z[0];
-        quad_msg.z[1] = msg_mavlink.z[1];
-        quad_msg.z[2] = msg_mavlink.z[2];
-        quad_msg.z[3] = msg_mavlink.z[3];
-        quad_msg.z[4] = msg_mavlink.z[4];
-        quad_msg.z[5] = msg_mavlink.z[5];
-        quad_msg.z[6] = msg_mavlink.z[6];
-        quad_msg.z[7] = msg_mavlink.z[7];
-        quad_msg.z[8] = msg_mavlink.z[8];
-        quad_msg.z[9] = msg_mavlink.z[9];
+        quad_msg.z = msg_mavlink.z;
 
         quad_msg.timestamp = hrt_absolute_time();
         quad_msg.target_system = msg_mavlink.target_system;

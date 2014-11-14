@@ -133,8 +133,8 @@ MODULES		+= lib/launchdetection
 #
 MODULES		+= modules/q_formation_control
 MODULES         += modules/wai_quad_pos
-MODULES		+= modules/quad_att_control
-MODULES		+= modules/hover_test
+#MODULES		+= modules/quad_att_control
+#MODULES		+= modules/hover_test
 
 #
 # OBC challenge
