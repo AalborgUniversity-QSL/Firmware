@@ -67,48 +67,50 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
         mavlink_fd = open(MAVLINK_LOG_DEVICE,0);
 
-        int qmsg_sub_fd = orb_subscribe(ORB_ID(quad_formation_msg));
+        // int qmsg_sub_fd = orb_subscribe(ORB_ID(quad_formation_msg));
         int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
-        int state_sub_fd = orb_subscribe(ORB_ID(vehicle_status));
+        // int state_sub_fd = orb_subscribe(ORB_ID(vehicle_status));
 
-        orb_set_interval(qmsg_sub_fd, 100);
+        // orb_set_interval(qmsg_sub_fd, 100);
         orb_set_interval(sensor_sub_fd, 100);
 
-        struct pollfd fd_sens[] = {
-                { .fd = qmsg_sub_fd,   .events = POLLIN },
-                { .fd = sensor_sub_fd, .events = POLLIN },
+        struct pollfd fd_sens[1] = {
+            // { .fd = qmsg_sub_fd,   .events = POLLIN },
+            { .fd = sensor_sub_fd, .events = POLLIN },
         };
 
-        struct pollfd fd_sys[] = {
-                { .fd = state_sub_fd, .events = POLLIN },
-        };
+        // struct pollfd fd_sys[1] = {
+        //         { .fd = state_sub_fd, .events = POLLIN },
+        // };
 
         while(true) {
                 int ret_sens = poll(fd_sens, 2, 1); 
                 if (ret_sens < 0) {
                         warnx("poll sp error");
                 } else if (ret_sens == 0){
-                    mavlink_log_info(mavlink_fd,"no poll Recived");
+                    // mavlink_log_info(mavlink_fd,"no poll Recived");
                 }
                 else {
+                        // if (fd_sens[0].revents & POLLIN) {
+                        //         orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
+
+                        //         // Find the total no of quads
+                        //         // no_of_quads = max_no_of_quads;
+
+                        //         // for (int i = 0; i < max_no_of_quads; ++i){
+                        //         //         if((float)qmsg.z[i] == -1){
+                        //         //                 no_of_quads = no_of_quads - 1;
+                        //         //         }
+                        //         // }
+
+                        //         // mavlink_log_info(mavlink_fd,"no: %d \t pos:{%.3f;%.3f;%.3f}",no_of_quads, (double)qmsg.x[0],(double)qmsg.y[0],(double)qmsg.z[0]);
+                        //         mavlink_log_info(mavlink_fd,"Recived Vicon data");
+                        // }
                         if (fd_sens[0].revents & POLLIN) {
-                                orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
-
-                                // Find the total no of quads
-                                // no_of_quads = max_no_of_quads;
-
-                                // for (int i = 0; i < max_no_of_quads; ++i){
-                                //         if((float)qmsg.z[i] == -1){
-                                //                 no_of_quads = no_of_quads - 1;
-                                //         }
-                                // }
-
-                                // mavlink_log_info(mavlink_fd,"no: %d \t pos:{%.3f;%.3f;%.3f}",no_of_quads, (double)qmsg.x[0],(double)qmsg.y[0],(double)qmsg.z[0]);
-                                mavlink_log_info(mavlink_fd,"Recived Vicon data");
-                        }
-                        if (fd_sens[1].revents & POLLIN) {
                                 // float sum = 0;
                                 orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
+
+                                mavlink_log_info(mavlink_fd,"baro_updated");
 
                                 /* Filter the raw barometer data with a Simple Moving Average filter with an order of MA_order */
                                 // z_baro = (float)raw.baro_alt_meter;
@@ -130,13 +132,13 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                         }
                 }
 
-                int ret_sys = poll(fd_sys, 1, 0);
-                if (ret_sys < 0) {
-                        warnx("poll sp error");
-                }
-                else if (fd_sys[0].revents & POLLIN) {
-                        orb_copy(ORB_ID(vehicle_status), state_sub_fd, &state);
-                }
+                // int ret_sys = poll(fd_sys, 1, 0);
+                // if (ret_sys < 0) {
+                //         warnx("poll sp error");
+                // }
+                // else if (fd_sys[0].revents & POLLIN) {
+                //         orb_copy(ORB_ID(vehicle_status), state_sub_fd, &state);
+                // }
 
                 // // Find the next Vicon data set
                 // if (init_pos_set) {
