@@ -58,17 +58,17 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
         struct quad_formation_msg_s qmsg;
         memset(&qmsg, 0, sizeof(qmsg));
-        struct sensor_combined_s raw;
-        memset(&raw, 0, sizeof(raw));
-        struct vehicle_status_s state;
-        memset(&state, 0, sizeof(state));
+        // struct sensor_combined_s raw;
+        // memset(&raw, 0, sizeof(raw));
+        // struct vehicle_status_s state;
+        // memset(&state, 0, sizeof(state));
 
         warnx("[wai] Started ");
 
         mavlink_fd = open(MAVLINK_LOG_DEVICE,0);
 
         // int qmsg_sub_fd = orb_subscribe(ORB_ID(quad_formation_msg));
-        int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
+        extern int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
         // int state_sub_fd = orb_subscribe(ORB_ID(vehicle_status));
 
         // orb_set_interval(qmsg_sub_fd, 100);

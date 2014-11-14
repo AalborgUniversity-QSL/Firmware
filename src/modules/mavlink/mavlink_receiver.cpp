@@ -251,27 +251,10 @@ MavlinkReceiver::handle_message_command_quad_formation(mavlink_message_t *msg) {
         struct quad_formation_msg_s quad_msg;
         memset(&quad_msg, 0, sizeof(quad_msg));
 
-        // for (int i = 0; i < 10; i++) {
-        //     printf("x[%i]: %.3f\t", i, (double)msg_mavlink.x[i]);
-        //     printf("y[%i]: %.3f\t", i, (double)msg_mavlink.y[i]);
-        //     printf("z[%i]: %.3f\n", i, (double)msg_mavlink.z[i]);
-        // }
-
-        // for (int i = 0; i < 10; i++) {
-        //         quad_msg.x[i] = msg_mavlink.x[i];
-        // }
-        quad_msg.x = msg_mavlink.x;
         
-        // for (int i = 0; i < 10; i++) {
-        //         quad_msg.y[i] = msg_mavlink.y[i];
-        // }
+        quad_msg.x = msg_mavlink.x;
         quad_msg.y = msg_mavlink.y;
-
-        // for (int i = 0; i < 10; i++) {
-        //         quad_msg.z[i] = msg_mavlink.z[i];
-        // }
         quad_msg.z = msg_mavlink.z;
-
         quad_msg.timestamp = hrt_absolute_time();
         quad_msg.target_system = msg_mavlink.target_system;
         quad_msg.cmd_id = msg_mavlink.cmd_id;

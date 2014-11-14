@@ -15,10 +15,8 @@
 #include <stdbool.h>
 #include "../uORB.h"
 
-/**
- * @addtogroup topics
- * @{
- */
+/* register this as object request broker structure */
+ORB_DECLARE(quad_formation_msg);
 
 enum QUAD_MSG_CMD {
         QUAD_MSG_CMD_START = 42,
@@ -36,12 +34,5 @@ struct quad_formation_msg_s {
         uint8_t pos_no;          ///< Coordinate set number
         uint64_t timestamp;
 };
-
-/**
- * @}
- */
-
-/* register this as object request broker structure */
-ORB_DECLARE(quad_formation_msg);
 
 #endif
