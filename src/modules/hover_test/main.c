@@ -40,6 +40,7 @@
 __EXPORT int hover_test_main(int argc, char *argv[]);
 int hover_test_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
+int printData(int *pqmsg_sub);
 
 /* Global variables */
 static bool thread_should_exit = false;
@@ -80,21 +81,13 @@ int hover_test_thread_main(int argc, char *argv[]) {
 		} else if (fd_qmsg[0].revents & POLLIN) {
                 /* orb_check(qmsg_sub, &updated); */
                 /* if (updated){ */
-                /*         orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg); */
+          
                 /*         updated = false; */
                 /* } */
 //                        qmsg.z[0] = 5.0;
                         /* printf("[hover_test] z = %.3f\n", (double)qmsg.z[0]); */
 
-                        struct quad_formation_msg_s qmsg;
-
-                        printf("x: %.3f\n", (double)qmsg.x);
-                        printf("y: %.3f\n", (double)qmsg.y);
-                        printf("z: %.3f\n", (double)qmsg.z);
-                        printf("target_system: %i\n", qmsg.target_system);
-                        printf("cmd_id: %i\n", qmsg.cmd_id);
-                        printf("pos_no: %i\n", qmsg.pos_no);
-                        printf("timestamp: %i\n", qmsg.timestamp);
+                        printData(&qmsg_sub);
 
                         /* if (qmsg.cmd_id == 42) { */
                         /*         printf("x: %.3f\t", (double)qmsg.x); */
@@ -111,6 +104,20 @@ int hover_test_thread_main(int argc, char *argv[]) {
                         /* } */
                 }
         }
+}
+
+int printData(int *pqmsg_sub) {
+        struct quad_formation_msg_s qmsg;
+        orb_copy(ORB_ID(quad_formation_msg), *pqmsg_sub, &qmsg);
+
+        printf("x: %.3f\n", (double)qmsg.x);
+        printf("y: %.3f\n", (double)qmsg.y);
+        printf("z: %.3f\n", (double)qmsg.z);
+        printf("target_system: %i\n", qmsg.target_system);
+        printf("cmd_id: %i\n", qmsg.cmd_id);
+        printf("pos_no: %i\n", qmsg.pos_no);
+        printf("timestamp: %i\n", qmsg.timestamp);
+        return 0;
 }
 
 static void usage(const char *reason) {
