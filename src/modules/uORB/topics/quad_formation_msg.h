@@ -28,9 +28,9 @@ enum QUAD_MSG_CMD {
 };
 
 struct quad_formation_msg_s {
-        float x;           ///< x-axis (int16_t[10])
-        float y;           ///< y-axis (int16_t[10])
-        float z;           ///< z-axis (int16_t[10]) = -1 if coordinate is Not Available
+        float x;           ///< x-axis
+        float y;           ///< y-axis
+        float z;           ///< z-axis -1 if coordinate is Not Available
         uint8_t target_system;   ///<  The target_system is defined in enum QUAD_FORMATION_ID
         uint8_t cmd_id;          ///< Command ID is defined in enum QUAD_CMD
         uint8_t pos_no;          ///< Coordinate set number

@@ -85,14 +85,9 @@ int hover_test_thread_main(int argc, char *argv[]) {
                         /* printf("[hover_test] z = %.3f\n", (double)qmsg.z[0]); */
                         if (qmsg.cmd_id == QUAD_MSG_CMD_START) {
                                 for (int i = 0; i < 10; i++) {
-                                        printf("x[%i]: %.3f\t", i, (double)qmsg.x[i]);
-                                        printf("y[%i]: %.3f\t", i, (double)qmsg.y[i]);
-                                        printf("z[%i]: %.3f\n", i, (double)qmsg.z[i]);
-                                }
-                                for (int i = 0; i < 10; i++) {
-                                        mavlink_log_info(mavlink_fd, "x[%i]: %.3f\t", i, (double)qmsg.x[i]);
-                                        mavlink_log_info(mavlink_fd, "y[%i]: %.3f\t", i, (double)qmsg.y[i]);
-                                        mavlink_log_info(mavlink_fd, "z[%i]: %.3f\n", i, (double)qmsg.z[i]);
+                                        printf("x: %.3f\t", (double)qmsg.x);
+                                        printf("y: %.3f\t", (double)qmsg.y);
+                                        printf("z: %.3f\n", (double)qmsg.z);
                                 }
 
                                 /* printf("[hover_test] start\n"); */
