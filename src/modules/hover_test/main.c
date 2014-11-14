@@ -86,22 +86,26 @@ int hover_test_thread_main(int argc, char *argv[]) {
                 /* } */
 //                        qmsg.z[0] = 5.0;
                         /* printf("[hover_test] z = %.3f\n", (double)qmsg.z[0]); */
+                        /* orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg); */
+/*                         if (qmsg.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_STOP) { */
+                                printData(&qmsg_sub);
 
-                        printData(&qmsg_sub);
+/*                                 printf("x: %.3f\n", (double)qmsg.x); */
+/*                                 printf("y: %.3f\n", (double)qmsg.y); */
+/*                                 printf("z: %.3f\n", (double)qmsg.z); */
+/*                                 printf("target_system: %i\n", qmsg.target_system); */
+/*                                 printf("cmd_id: %i\n", qmsg.cmd_id); */
+/*                                 printf("pos_no: %i\n", qmsg.pos_no); */
+/*                                 printf("timestamp: %i\n", qmsg.timestamp); */
 
-                        /* if (qmsg.cmd_id == 42) { */
-                        /*         printf("x: %.3f\t", (double)qmsg.x); */
-                        /*         printf("y: %.3f\t", (double)qmsg.y); */
-                        /*         printf("z: %.3f\n", (double)qmsg.z); */
-
-                        /*         /\* printf("[hover_test] start\n"); *\/ */
-                        /*         /\* sp.cmd = QUAD_ATT_CMD_START; *\/ */
-                        /*         /\* orb_publish(ORB_ID(quad_att_sp), quad_att_sp_pub, &sp); *\/ */
-                        /* } else if (qmsg.cmd_id == QUAD_MSG_CMD_STOP){ */
-                        /*         /\* printf("[hover_test] stop\n"); *\/ */
-                        /*         /\* sp.cmd = QUAD_ATT_CMD_STOP; *\/ */
-                        /*         /\* orb_publish(ORB_ID(quad_att_sp), quad_att_sp_pub, &sp); *\/ */
-                        /* } */
+/*                                 /\* printf("[hover_test] start\n"); *\/ */
+/*                                 /\* sp.cmd = QUAD_ATT_CMD_START; *\/ */
+/*                                 /\* orb_publish(ORB_ID(quad_att_sp), quad_att_sp_pub, &sp); *\/ */
+/*                         } else if (qmsg.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_STOP){ */
+/*                                 /\* printf("[hover_test] stop\n"); *\/ */
+/*                                 /\* sp.cmd = QUAD_ATT_CMD_STOP; *\/ */
+/*                                 /\* orb_publish(ORB_ID(quad_att_sp), quad_att_sp_pub, &sp); *\/ */
+/*                         } */
                 }
         }
 }
