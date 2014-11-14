@@ -70,8 +70,6 @@ int att_control_thread_main(int argc, char *argv[]) {
         mavlink_log_info(mavlink_fd, "[quad_att__control] started");
         
         /* Subscription */
-        /* struct sensor_combined_s raw; */
-        /* memset(&raw, 0, sizeof(raw)); */
         struct quad_att_sp_s sp;
         memset(&sp, 0, sizeof(sp));
         struct vehicle_attitude_s v_att;
@@ -79,7 +77,6 @@ int att_control_thread_main(int argc, char *argv[]) {
         struct quad_formation_msg_s qmsg;
         memset(&qmsg, 0, sizeof(qmsg));
 
-        /* int sensor_sub = orb_subscribe(ORB_ID(sensor_combined)); */
         int quad_sp_sub = orb_subscribe(ORB_ID(quad_att_sp));
         int v_att_sub = orb_subscribe(ORB_ID(vehicle_attitude));
         int qmsg_sub = orb_subscribe(ORB_ID(quad_formation_msg));
@@ -93,23 +90,10 @@ int att_control_thread_main(int argc, char *argv[]) {
 	}
         orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
 
-        /* struct pollfd fds[] = {  */
-        /*         { .fd = sensor_sub,   .events = POLLIN }, */
-        /* }; */
         struct pollfd fd_sp[] = { 
                 { .fd = quad_sp_sub,   .events = POLLIN },
         };
-        struct pollfd fd_v_att[] = { 
-                { .fd = v_att_sub,   .events = POLLIN },
-        };
-        struct pollfd fd_qmsg[] = { 
-            { .fd = qmsg_sub,   .events = POLLIN },
-        };
 
-        /* float old1 = 0.0,  */
-        /*       old2 = 0.0, */
-        /*       old3 = 0.0, */
-        /*       old4 = 0.0, */
         float alt = 0.0;
 
         struct attError_s error;
@@ -120,48 +104,38 @@ int att_control_thread_main(int argc, char *argv[]) {
         float p = 0.1;
 
         while (!thread_should_exit) {
-                int ret_sp = poll(fd_sp, 1, 500);
+                int ret_sp = poll(fd_sp, 1, 250);
                 if (ret_sp < 0) {
 			warnx("poll sp error");
 		} else if (ret_sp == 0) {
 			/* no return value - nothing has happened */
 		} else if (fd_sp[0].revents & POLLIN) {
-                        orb_copy(ORB_ID(quad_att_sp), quad_sp_sub, &sp);
+                        struct quad_formation_msg_s tmp_sp;
+                        orb_copy(ORB_ID(quad_att_sp), quad_sp_sub, &tmp_sp);
+                        memcpy(&sp, &tmp_sp, sizeof(tmp_sp));
                 } else {
                         /* nothing happened */
                 }
 
-                if (sp.cmd == QUAD_ATT_CMD_START) {
-                        /* int attConRet = attControl((double)sp.roll, (double)sp.pitch, (double)sp.yaw, (double)sp.thrust); */
-                                
-                        /* if (attConRet < 0) */
-                        /*         mavlink_log_info(mavlink_fd, "[quad_att__control] attControl failed to start"); */
-                        
-                        int ret_qmsg = poll(fd_qmsg, 1, 500);
-                        if (ret_qmsg < 0) {
-                                warnx("poll sp error");
-                        } else if (ret_qmsg == 0) {
-                                /* no return value - nothing has happened */
-                        } else if (fd_qmsg[0].revents & POLLIN) {
-                                orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
-                        } else {
-                                /* nothing happened */
-                        }
-                        
-                        int ret_v_att = poll(fd_v_att, 1, 250);
-                        if (ret_v_att < 0) {
-                                warnx("poll error");
-                        } else if (ret_v_att == 0) {
-                                /* no return value - nothing has happened */
-                        } else if (fd_v_att[0].revents & POLLIN) {
+                if (sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_START) {
+                        bool v_att_updated;
+                        orb_check(v_att_sub, &v_att_updated);
+                        bool qmsg_updated;
+                        orb_check(qmsg_sub, &qmsg_updated);
+
+                        orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
+
+                        if (v_att_updated)
                                 orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
-                        }
+
+                        if (qmsg_updated)
+                                orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
                         
                         error.roll = sp.roll - v_att.roll;
                         error.pitch = sp.pitch - v_att.pitch;
                         error.yaw = sp.yaw - v_att.yaw;
 
-                        alt = qmsg.z[0];
+                        alt = qmsg.z;
                         printf("altitude: %f\n", (double)alt);
                         mavlink_log_info(mavlink_fd, "[quad_att__control] %.3f", (double)alt);
 
@@ -192,7 +166,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
                         }
                                                 
-                } else if (sp.cmd == QUAD_ATT_CMD_STOP) {
+                } else if (sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP) {
                         out.thrust = (float)0.1;
                         out.roll = (float)p * (float)error.roll;
                         out.pitch = (float)p * (float)error.pitch;
@@ -210,16 +184,6 @@ int att_control_thread_main(int argc, char *argv[]) {
         }
 }
 
-float filterMA(float *old1, float *old2, float *old3, float *old4, float new) {
-        float N = 5.f,
-              res = 0.f;
-        res = (*old1 + *old2 + *old3 + *old4 + new)/N;
-        *old4 = *old3;
-        *old3 = *old2;
-        *old2 = *old1;
-        *old1 = res;
-        return res;
-}
 
 /* int controller() { */
 /*         return 0; */
