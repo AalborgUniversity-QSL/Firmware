@@ -68,7 +68,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
         mavlink_fd = open(MAVLINK_LOG_DEVICE,0);
 
         // int qmsg_sub_fd = orb_subscribe(ORB_ID(quad_formation_msg));
-        extern int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
+        int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
         // int state_sub_fd = orb_subscribe(ORB_ID(vehicle_status));
 
         // orb_set_interval(qmsg_sub_fd, 100);
