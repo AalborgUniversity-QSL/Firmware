@@ -118,15 +118,10 @@ int att_control_thread_main(int argc, char *argv[]) {
                 }
 
                 if (sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_START) {
-                        bool v_att_updated;
-                        orb_check(v_att_sub, &v_att_updated);
                         bool qmsg_updated;
                         orb_check(qmsg_sub, &qmsg_updated);
 
                         orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
-
-                        if (v_att_updated)
-                                orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
 
                         if (qmsg_updated)
                                 orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
