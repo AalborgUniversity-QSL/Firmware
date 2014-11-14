@@ -56,10 +56,10 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
         // float init_pos_x, init_pos_y, init_pos_z;
         // float z_zero[10];
 
-        struct quad_formation_msg_s qmsg;
-        memset(&qmsg, 0, sizeof(qmsg));
-        // struct sensor_combined_s raw;
-        // memset(&raw, 0, sizeof(raw));
+        // struct quad_formation_msg_s qmsg;
+        // memset(&qmsg, 0, sizeof(qmsg));
+        struct sensor_combined_s raw;
+        memset(&raw, 0, sizeof(raw));
         // struct vehicle_status_s state;
         // memset(&state, 0, sizeof(state));
 
