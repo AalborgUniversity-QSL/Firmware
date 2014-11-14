@@ -10,26 +10,33 @@
  *
  */
  
- #include <nuttx/config.h>
- #include <unistd.h>
- #include <stdio.h>
- #include <errno.h>
- #include <poll.h>
- #include <math.h>
- #include <time.h>
+#include <nuttx/config.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <math.h>
+#include <poll.h>
+#include <time.h>
 
- #include <mavlink/mavlink_log.h>
+#include <systemlib/param/param.h>
 
- #include <uORB/uORB.h>
- #include <uORB/topics/sensor_combined.h>
- #include <uORB/topics/quad_formation_msg.h>
- #include <uORB/topics/vehicle_status.h>
+#include <mavlink/mavlink_log.h>
 
- #include <systemlib/systemlib.h>
+#include <uORB/uORB.h>
+#include <uORB/topics/sensor_combined.h>
+#include <uORB/topics/quad_formation_msg.h>
+#include <uORB/topics/vehicle_status.h>
+
+#include <systemlib/systemlib.h>
+#include <systemlib/err.h>
  
 __EXPORT int wai_quad_pos_main(int argc, char *argv[]);
 int wai_quad_pos_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
+void check_sys_update(int *topic_sub);
 
 static bool thread_running = false;
 static bool thread_should_exit = false;
@@ -37,183 +44,100 @@ static int daemon_task;
 
 int wai_quad_pos_thread_main(int argc, char *argv[]){
 
-        // static bool init_pos_set = false;
-
-        // static int max_no_of_quads = 10;
-        // static int no_of_quads = 10;                    // Initial guess
         static int mavlink_fd;
-        // static int MA_order = 10;
-        // static int min_error_no = 0;
 
-        // float z_baro_ajust = 0;
-        // float z_baro;
-        // float alt_diff[max_no_of_quads];
-        // float SMA[10] = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
-        // float z_SMA = 0;
-        // float alt_detect_threshold = 1;
-        // float z_zero_quad;
-
-        // float init_pos_x, init_pos_y, init_pos_z;
-        // float z_zero[10];
-
-        int k = 0;
-
-        struct quad_formation_msg_s qmsg;
-        memset(&qmsg, 0, sizeof(qmsg));
-        struct sensor_combined_s raw;
-        memset(&raw, 0, sizeof(raw));
-        struct vehicle_status_s state;
-        memset(&state, 0, sizeof(state));
+        struct sensor_combined_s alt;
+        memset(&alt, 0, sizeof(alt));
+        struct quad_formation_msg_s quad;
+        memset(&quad, 0, sizeof(quad));
 
         warnx("[wai] Started ");
+        mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
 
-        mavlink_fd = open(MAVLINK_LOG_DEVICE,0);
+        int alt_sub = orb_subscribe(ORB_ID(sensor_combined));
+        int vhe_sub = orb_subscribe(ORB_ID(vehicle_status));
+        int quad_sub = orb_subscribe(ORB_ID(quad_formation_msg));
 
-        int qmsg_sub_fd = orb_subscribe(ORB_ID(quad_formation_msg));
-        int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
-        // int state_sub_fd = orb_subscribe(ORB_ID(vehicle_status));
 
-        orb_set_interval(qmsg_sub_fd, 100);
-        orb_set_interval(sensor_sub_fd, 100);
+        while (true) {
 
-        struct pollfd fd_sens[2] = {
-            { .fd = qmsg_sub_fd,   .events = POLLIN },
-            { .fd = sensor_sub_fd, .events = POLLIN },
-        };
+                struct pollfd fds[] = {
+                        { .fd = alt_sub, .events = POLLIN },
+                        // { .fd = quad_sub, .events = POLLIN }
+                };
 
-        // struct pollfd fd_sys[1] = {
-        //         { .fd = state_sub_fd, .events = POLLIN },
-        // };
+                int pret = poll(fds, 1, 1000);
+                orb_set_interval(alt_sub, 500);
+                // orb_set_interval(quad_sub, 1000);
 
-        while(true) {
-                int ret_sens = poll(fd_sens, 1, 1000); 
-                if (ret_sens < 0) {
-                        warnx("poll sp error");
-                } else if (ret_sens == 0){
-                    // mavlink_log_info(mavlink_fd,"no poll Recived");
+                if (pret == 0){
+
+                }
+                else if (pret < 0) {
+                        warnx("poll cmd error");
                 }
                 else {
-                        if (fd_sens[0].revents & POLLIN) {
-                                orb_copy(ORB_ID(quad_formation_msg), qmsg_sub_fd, &qmsg);
+                        if (fds[0].revents & POLLIN) {
+                                struct sensor_combined_s raw;
+                                memset(&raw, 0, sizeof(raw));
+                                orb_copy(ORB_ID(sensor_combined), alt_sub, &raw);
 
-                                // Find the total no of quads
-                                // no_of_quads = max_no_of_quads;
+                                alt.baro_alt_meter = raw.baro_alt_meter;
 
-                                // for (int i = 0; i < max_no_of_quads; ++i){
-                                //         if((float)qmsg.z[i] == -1){
-                                //                 no_of_quads = no_of_quads - 1;
-                                //         }
-                                // }
-
-                                // mavlink_log_info(mavlink_fd,"no: %d \t pos:{%.3f;%.3f;%.3f}",no_of_quads, (double)qmsg.x[0],(double)qmsg.y[0],(double)qmsg.z[0]);
-                                k++;
-                                if(k == 10){
-                                    mavlink_log_info(mavlink_fd,"Recived Vicon data x 10");
-                                    k = 0;
-                                }
+                                // mavlink_log_info(mavlink_fd,"alt: %.3f", (double)alt.baro_alt_meter);
                         }
-                        if (fd_sens[1].revents & POLLIN) {
-                                // float sum = 0;
-                                orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
+                        // if (fds[1].revents & POLLIN) {
+                        //         struct quad_formation_msg_s pos;
+                        //         memset(&pos, 0, sizeof(pos));
+                        //         orb_copy(ORB_ID(quad_formation_msg), quad_sub, &pos);
 
-                                mavlink_log_info(mavlink_fd,"baro_updated");
+                        //         quad.cmd_id = pos.cmd_id;
+                        //         mavlink_log_info(mavlink_fd,"alt: %d", quad.cmd_id);
 
-                                /* Filter the raw barometer data with a Simple Moving Average filter with an order of MA_order */
-                                // z_baro = (float)raw.baro_alt_meter;
-                                
-                                // for (int i = (MA_order - 1); i >= 0; --i){
-                                //         if(i > 0){
-                                //                 SMA[i] = SMA[i-1];
-                                //         }
-                                //         else {
-                                //                 SMA[i] = z_baro;
-                                //         }
-                                // }
+                        // }
 
-                                // for (int i = 0; i < MA_order; ++i){
-                                //         sum = sum + SMA[i];
-                                // }
-
-                                // z_SMA = sum/(float)MA_order;
-                        }
                 }
 
-                // int ret_sys = poll(fd_sys, 1, 0);
-                // if (ret_sys < 0) {
-                //         warnx("poll sp error");
-                // }
-                // else if (fd_sys[0].revents & POLLIN) {
-                //         orb_copy(ORB_ID(vehicle_status), state_sub_fd, &state);
-                // }
+                // check_sys_update(&vhe_sub);
+                bool updated;
+                struct vehicle_status_s st;
 
-                // // Find the next Vicon data set
-                // if (init_pos_set) {
-                //         float pos_error[no_of_quads];
+                orb_check(vhe_sub, &updated);
 
-                //         for (int i = 0; i < no_of_quads; ++i){
-                //                 pos_error[i] = sqrt(pow((init_pos_x - qmsg.x[i]),2) + pow((init_pos_y - qmsg.y[i]),2) + pow((init_pos_z - qmsg.z[i]),2));
+                if (updated){
+                        orb_copy(ORB_ID(vehicle_status), vhe_sub, &st);
+                        // mavlink_log_info(mavlink_fd,"Armed");
+                }
 
-                //                 if (i > 0 && pos_error[i] < pos_error[i-1]){
-                //                         min_error_no = i;                                               
-                //                 }
-                //         }
+                bool updated2;
+                struct quad_formation_msg_s pos;
 
-                //         init_pos_x = qmsg.x[min_error_no];
-                //         init_pos_y = qmsg.y[min_error_no];
-                //         init_pos_z = qmsg.z[min_error_no] - z_zero_quad;
-                // }
+                orb_check(quad_sub, &updated2);
 
-                // // initialize the Quadroter
-                // else if (!init_pos_set){
-                //         // mavlink_log_info(mavlink_fd,"entered alt...");
-
-                //         // Update the initial altitude while in standby
-                //         if (state.arming_state == ARMING_STATE_STANDBY){
-                //                 mavlink_log_info(mavlink_fd,"standby");
-                //                 z_baro_ajust = z_SMA;
-
-                //                 for (int i = 0; i < no_of_quads; ++i){
-                //                         z_zero[i] = (float)qmsg.z[i];                                   
-                //                 }
-                //                 // mavlink_log_info(mavlink_fd,"[wai] alt_vic:%.3f \t alt_baro:%.3f \t no:%d",(double)z_zero[0],(double)z_baro_ajust,no_of_quads);
-                //         }
-
-                //         else if (state.arming_state == ARMING_STATE_ARMED && qmsg.cmd_id == 42) {
-
-                //                 // Increase the thrust until the threshold is met (function)
-                //                 mavlink_log_info(mavlink_fd,"start alt_diff detect");
-
-                //                 if ((z_SMA - z_baro_ajust) >= alt_detect_threshold) {
-                //                         for (int i = 0; i < no_of_quads; ++i){
-                //                                 // Find the minimum difference between the barometer data and the Vicon position data
-                //                                 alt_diff[i] = (z_SMA - z_baro_ajust) - (float)qmsg.z[i];
-                //                                 if (i == 0){
-                //                                         min_error_no = i;        
-                //                                 } 
-                //                                 else if (i > 0 && alt_diff[i] < alt_diff[min_error_no]){
-                //                                         min_error_no = i;
-                //                                 }
-                //                         }
-
-                //                         init_pos_x = (float)qmsg.x[min_error_no];
-                //                         init_pos_y = (float)qmsg.y[min_error_no];
-                //                         init_pos_z = (float)qmsg.z[min_error_no];
-                //                         z_zero_quad = z_zero[min_error_no];
-
-                //                         init_pos_set = true;
-
-                //                         mavlink_log_info(mavlink_fd,"[wai] no:%d \t pos: [%.3f,%.3f,%.3f]",no_of_quads,(double)init_pos_x,(double)init_pos_y,(double)init_pos_z);
-
-                //                 }
-                //         }
-                //         else if (qmsg.cmd_id == QUAD_MSG_CMD_STOP) {
-                //                 init_pos_set = false;
-                //         }
-                // }
+                if (updated2){
+                        orb_copy(ORB_ID(quad_formation_msg), quad_sub, &pos);
+                        mavlink_log_info(mavlink_fd,"Recived Vicon -> x: %.3f",(double)pos.x);
+                }
         }
 
         return 0;
 }
+
+void check_sys_update(int *topic_sub){
+        bool updated;
+        struct vehicle_status_s st;
+
+        orb_check(*topic_sub, &updated);
+
+        if (updated){
+                orb_copy(ORB_ID(vehicle_status), *topic_sub, &st);
+                // mavlink_log_info(mavlink_fd,"vehicle state");
+        }
+}
+
+
+
+
 
 
 
