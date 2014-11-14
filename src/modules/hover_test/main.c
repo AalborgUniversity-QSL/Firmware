@@ -50,55 +50,66 @@ int hover_test_thread_main(int argc, char *argv[]) {
 
         warnx("[hover_test] started\n");
 
-        static int mavlink_fd;
-        mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
-        mavlink_log_info(mavlink_fd, "[hover_test] startet.\n");
+        /* static int mavlink_fd; */
+        /* mavlink_fd = open(MAVLINK_LOG_DEVICE, 0); */
+        /* mavlink_log_info(mavlink_fd, "[hover_test] startet.\n"); */
 
-        struct quad_formation_msg_s qmsg;
-        memset(&qmsg, 0, sizeof(qmsg));
+        /* struct quad_formation_msg_s qmsg; */
+        /* memset(&qmsg, 0, sizeof(qmsg)); */
         /* struct quad_att_sp_s sp; */
         /* memset(&sp, 0, sizeof(sp)); */
 
         int qmsg_sub = orb_subscribe(ORB_ID(quad_formation_msg));
-        orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
-
+//        orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
+        printf("1");
         /* orb_advert_t quad_att_sp_pub = orb_advertise(ORB_ID(quad_att_sp), &sp); */
 
-        /* struct pollfd fd_qmsg[] = {  */
-        /*         { .fd = qmsg_sub,   .events = POLLIN }, */
-        /* }; */
-        bool updated = false;
+        struct pollfd fd_qmsg[] = {
+                { .fd = qmsg_sub,   .events = POLLIN },
+        };
+//        bool updated;
+//        int k = 0;
         while(!thread_should_exit) {
+
                 /* printf("[hover_test] while loop \n"); */
-                /* int ret_qmsg = poll(fd_qmsg, 1, 250); */
-                /* if (ret_qmsg < 0) { */
-		/* 	warnx("poll cmd error"); */
-		/* } else if (ret_qmsg == 0) { */
-		/* 	/\* printf("[hover_test] nothing received\n"); *\/ */
-		/* } else if (fd_qmsg[0].revents & POLLIN) { */
-                orb_check(qmsg_sub, &updated);
-                if (updated){
-                        orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
-                        updated = false;
-                }
+                int ret_qmsg = poll(fd_qmsg, 1, 1000);
+                if (ret_qmsg < 0) {
+			warnx("poll cmd error");
+		} else if (ret_qmsg == 0) {
+			printf("[hover_test] nothing received\n");
+		} else if (fd_qmsg[0].revents & POLLIN) {
+                /* orb_check(qmsg_sub, &updated); */
+                /* if (updated){ */
+                /*         orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg); */
+                /*         updated = false; */
+                /* } */
 //                        qmsg.z[0] = 5.0;
                         /* printf("[hover_test] z = %.3f\n", (double)qmsg.z[0]); */
-                        if (qmsg.cmd_id == QUAD_MSG_CMD_START) {
-                                for (int i = 0; i < 10; i++) {
-                                        printf("x: %.3f\t", (double)qmsg.x);
-                                        printf("y: %.3f\t", (double)qmsg.y);
-                                        printf("z: %.3f\n", (double)qmsg.z);
-                                }
 
-                                /* printf("[hover_test] start\n"); */
-                                /* sp.cmd = QUAD_ATT_CMD_START; */
-                                /* orb_publish(ORB_ID(quad_att_sp), quad_att_sp_pub, &sp); */
-                        } else if (qmsg.cmd_id == QUAD_MSG_CMD_STOP){
-                                /* printf("[hover_test] stop\n"); */
-                                /* sp.cmd = QUAD_ATT_CMD_STOP; */
-                                /* orb_publish(ORB_ID(quad_att_sp), quad_att_sp_pub, &sp); */
-                        }
-//                }
+                        struct quad_formation_msg_s qmsg;
+
+                        printf("x: %.3f\n", (double)qmsg.x);
+                        printf("y: %.3f\n", (double)qmsg.y);
+                        printf("z: %.3f\n", (double)qmsg.z);
+                        printf("target_system: %i\n", qmsg.target_system);
+                        printf("cmd_id: %i\n", qmsg.cmd_id);
+                        printf("pos_no: %i\n", qmsg.pos_no);
+                        printf("timestamp: %i\n", qmsg.timestamp);
+
+                        /* if (qmsg.cmd_id == 42) { */
+                        /*         printf("x: %.3f\t", (double)qmsg.x); */
+                        /*         printf("y: %.3f\t", (double)qmsg.y); */
+                        /*         printf("z: %.3f\n", (double)qmsg.z); */
+
+                        /*         /\* printf("[hover_test] start\n"); *\/ */
+                        /*         /\* sp.cmd = QUAD_ATT_CMD_START; *\/ */
+                        /*         /\* orb_publish(ORB_ID(quad_att_sp), quad_att_sp_pub, &sp); *\/ */
+                        /* } else if (qmsg.cmd_id == QUAD_MSG_CMD_STOP){ */
+                        /*         /\* printf("[hover_test] stop\n"); *\/ */
+                        /*         /\* sp.cmd = QUAD_ATT_CMD_STOP; *\/ */
+                        /*         /\* orb_publish(ORB_ID(quad_att_sp), quad_att_sp_pub, &sp); *\/ */
+                        /* } */
+                }
         }
 }
 
