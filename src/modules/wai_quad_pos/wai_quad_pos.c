@@ -36,7 +36,8 @@
 __EXPORT int wai_quad_pos_main(int argc, char *argv[]);
 int wai_quad_pos_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
-void check_sys_update(int *topic_sub);
+// struct quad_formation_msg_s update_quad_topic(void);
+
 
 static bool thread_running = false;
 static bool thread_should_exit = false;
@@ -46,99 +47,58 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
         static int mavlink_fd;
 
-        struct sensor_combined_s alt;
-        memset(&alt, 0, sizeof(alt));
-        struct quad_formation_msg_s quad;
-        memset(&quad, 0, sizeof(quad));
+        struct sensor_combined_s raw;
+        memset(&raw, 0, sizeof(raw));
+        struct quad_formation_msg_s pos;
+        memset(&pos, 0, sizeof(pos));
+        struct vehicle_status_s st;
+        memset(&st, 0, sizeof(st));
 
         warnx("[wai] Started ");
+        mavlink_log_info(mavlink_fd,"[wai] Started");
         mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
 
         int alt_sub = orb_subscribe(ORB_ID(sensor_combined));
         int vhe_sub = orb_subscribe(ORB_ID(vehicle_status));
         int quad_sub = orb_subscribe(ORB_ID(quad_formation_msg));
 
+        orb_set_interval(alt_sub, 100);
+
 
         while (true) {
 
-                struct pollfd fds[] = {
-                        { .fd = alt_sub, .events = POLLIN },
-                        // { .fd = quad_sub, .events = POLLIN }
-                };
-
+                struct pollfd fds[1];
+                fds[0].fd = alt_sub;
+                fds[0].events = POLLIN;
                 int pret = poll(fds, 1, 1000);
-                orb_set_interval(alt_sub, 500);
-                // orb_set_interval(quad_sub, 1000);
 
-                if (pret == 0){
-
-                }
-                else if (pret < 0) {
+                if (pret < 0) {
                         warnx("poll cmd error");
-                }
-                else {
+                } else if (pret == 0){
+
+                } else {
                         if (fds[0].revents & POLLIN) {
-                                struct sensor_combined_s raw;
-                                memset(&raw, 0, sizeof(raw));
                                 orb_copy(ORB_ID(sensor_combined), alt_sub, &raw);
 
-                                alt.baro_alt_meter = raw.baro_alt_meter;
+                                bool quad_pos_updated;
+                                orb_check(quad_sub, &quad_pos_updated);
 
-                                // mavlink_log_info(mavlink_fd,"alt: %.3f", (double)alt.baro_alt_meter);
+                                if (quad_pos_updated){
+                                        orb_copy(ORB_ID(quad_formation_msg), quad_sub, &pos);
+                                }
+
+                                bool vehicle_status_updated;
+                                orb_check(vhe_sub, &vehicle_status_updated);
+
+                                if (vehicle_status_updated){
+                                        orb_copy(ORB_ID(vehicle_status), vhe_sub, &st);
+                                }
                         }
-                        // if (fds[1].revents & POLLIN) {
-                        //         struct quad_formation_msg_s pos;
-                        //         memset(&pos, 0, sizeof(pos));
-                        //         orb_copy(ORB_ID(quad_formation_msg), quad_sub, &pos);
-
-                        //         quad.cmd_id = pos.cmd_id;
-                        //         mavlink_log_info(mavlink_fd,"alt: %d", quad.cmd_id);
-
-                        // }
-
-                }
-
-                // check_sys_update(&vhe_sub);
-                bool updated;
-                struct vehicle_status_s st;
-
-                orb_check(vhe_sub, &updated);
-
-                if (updated){
-                        orb_copy(ORB_ID(vehicle_status), vhe_sub, &st);
-                        // mavlink_log_info(mavlink_fd,"Armed");
-                }
-
-                bool updated2;
-                struct quad_formation_msg_s pos;
-
-                orb_check(quad_sub, &updated2);
-
-                if (updated2){
-                        orb_copy(ORB_ID(quad_formation_msg), quad_sub, &pos);
-                        mavlink_log_info(mavlink_fd,"Recived Vicon -> x: %.3f",(double)pos.x);
                 }
         }
 
         return 0;
 }
-
-void check_sys_update(int *topic_sub){
-        bool updated;
-        struct vehicle_status_s st;
-
-        orb_check(*topic_sub, &updated);
-
-        if (updated){
-                orb_copy(ORB_ID(vehicle_status), *topic_sub, &st);
-                // mavlink_log_info(mavlink_fd,"vehicle state");
-        }
-}
-
-
-
-
-
 
 
 // User interface for running in shell

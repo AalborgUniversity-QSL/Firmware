@@ -98,7 +98,7 @@ int hover_test_thread_main(int argc, char *argv[]) {
 /*                                 printf("pos_no: %i\n", qmsg.pos_no); */
 /*                                 printf("timestamp: %i\n", qmsg.timestamp); */
 
-/*                                 /\* printf("[hover_test] start\n"); *\/ */
+/*                                  /\* printf("[hover_test] start\n"); *\/ */
 /*                                 /\* sp.cmd = QUAD_ATT_CMD_START; *\/ */
 /*                                 /\* orb_publish(ORB_ID(quad_att_sp), quad_att_sp_pub, &sp); *\/ */
 /*                         } else if (qmsg.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_STOP){ */
