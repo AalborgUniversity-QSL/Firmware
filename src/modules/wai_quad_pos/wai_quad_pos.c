@@ -2,12 +2,10 @@
  * Copyright (c) 2014 Group 731 Aalborg University. All rights reserved.
  * Author:   Group 731 <14gr731@es.aau.dk>
  *************************************************************************/
-/*
- * @file wai_quad_pos.c
- * 
+
+/**
  * Implementation of an quadrotor formation control app for use in the 
  * semester project.
- *
  */
  
 #include <nuttx/config.h>
