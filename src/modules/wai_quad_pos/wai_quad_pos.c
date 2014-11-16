@@ -65,7 +65,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
         orb_set_interval(alt_sub, 100);
 
 
-        while (true) {
+        while (!thread_should_exit) {
 
                 struct pollfd fds[1];
                 fds[0].fd = alt_sub;
