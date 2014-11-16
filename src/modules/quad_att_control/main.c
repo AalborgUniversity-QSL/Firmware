@@ -112,7 +112,7 @@ int att_control_thread_main(int argc, char *argv[]) {
 		} else if (fd_sp[0].revents & POLLIN) {
                         struct quad_formation_msg_s tmp_sp;
                         orb_copy(ORB_ID(quad_att_sp), quad_sp_sub, &tmp_sp);
-                        memcpy(&sp, &tmp_sp, sizeof(tmp_sp));
+                        memcpy(&sp, &tmp_sp, sizeof(tmp_sp)); /* Her er brugt det for struct!!!! BGT */
                 } else {
                         /* nothing happened */
                 }

@@ -51,8 +51,8 @@ int hover_test_thread_main(int argc, char *argv[]) {
 
         warnx("[hover_test] started\n");
 
-        struct quad_formation_msg_s qmsg;
-        memset(&qmsg, 0, sizeof(qmsg));
+        /* struct quad_formation_msg_s qmsg; */
+        /* memset(&qmsg, 0, sizeof(qmsg)); */
         /* struct quad_att_sp_s sp; */
         /* memset(&sp, 0, sizeof(sp)); */
 
@@ -64,7 +64,7 @@ int hover_test_thread_main(int argc, char *argv[]) {
         struct pollfd fd_qmsg[] = {
                 { .fd = qmsg_sub,   .events = POLLIN },
         };
-
+        printf("second printf");
         while(!thread_should_exit) {
                 int ret_qmsg = poll(fd_qmsg, 1, 1000);
                 if (ret_qmsg < 0) {
@@ -72,7 +72,10 @@ int hover_test_thread_main(int argc, char *argv[]) {
 		} else if (ret_qmsg == 0) {
 			printf("[hover_test] nothing received\n");
 		} else if (fd_qmsg[0].revents & POLLIN) {
-                        getData(&qmsg_sub, &qmsg);
+                        struct quad_formation_msg_s qmsg;
+                        orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
+
+                        /* getData(&qmsg_sub, &qmsg); */
                         if (qmsg.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_STOP) {
                                 printf("[hover_test] start\n");
                                 /* sp.cmd = (enum QUAD_ATT_CMD)QUAD_ATT_CMD_START; */
