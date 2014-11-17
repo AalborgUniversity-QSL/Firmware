@@ -9,6 +9,7 @@
  */
  
 #include <nuttx/config.h>
+#include <nuttx/sched.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,7 +61,8 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
         // int vhe_sub = orb_subscribe(ORB_ID(vehicle_status));
         int quad_sub = orb_subscribe(ORB_ID(quad_formation_msg));
 
-        // int i = 0;
+        orb_set_interval(quad_sub,1000);
+
         uint64_t last_run = 0;
         float t_diff = 0;
 
@@ -80,17 +82,22 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                         if (fds[0].revents & POLLIN) {
                                 // orb_copy(ORB_ID(sensor_combined), alt_sub, &raw);
 
-                                bool quad_pos_updated;
-                                orb_check(quad_sub, &quad_pos_updated);
+                                // bool quad_pos_updated;
+                                // orb_check(quad_sub, &quad_pos_updated);
 
-                                if (quad_pos_updated){
-                                        orb_copy(ORB_ID(quad_formation_msg), quad_sub, &pos);
-                                        // i++;
-                                        t_diff = (pos.timestamp - last_run)/1000000.0f;
-                                        last_run = pos.timestamp;
+                                // if (quad_pos_updated){
+                                //         orb_copy(ORB_ID(quad_formation_msg), quad_sub, &pos);
+                                //         t_diff = (pos.timestamp - last_run)/1000000.0f;
+                                //         last_run = pos.timestamp;
 
-                                        mavlink_log_info(mavlink_fd,"rate: %.3f",(double)t_diff);
-                                }
+                                //         printf("rate: %.3f \n",(double)t_diff);
+                                // }
+
+                                orb_copy(ORB_ID(quad_formation_msg), quad_sub, &pos);
+                                t_diff = (pos.timestamp - last_run)/1000000.0f;
+                                last_run = pos.timestamp;
+
+                                printf("rate: %.3f \n",(double)t_diff);
 
                                 // bool vehicle_status_updated;
                                 // orb_check(vhe_sub, &vehicle_status_updated);
@@ -101,7 +108,6 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                         }
                 }
         }
-
         return 0;
 }
 
@@ -130,7 +136,7 @@ int wai_quad_pos_main(int argc, char *argv[]) {
                 thread_should_exit = false;
                 daemon_task = task_spawn_cmd("wai_quad_pos",
                                              SCHED_DEFAULT,
-                                             SCHED_PRIORITY_MAX - 20,
+                                             SCHED_PRIORITY_DEFAULT,
                                              2048,
                                              wai_quad_pos_thread_main,
                                              (argv) ? (const char **)&argv[2] : (const char **)NULL);
