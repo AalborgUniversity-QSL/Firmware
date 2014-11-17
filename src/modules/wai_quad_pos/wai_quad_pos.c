@@ -61,7 +61,8 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
         int quad_sub = orb_subscribe(ORB_ID(quad_formation_msg));
 
         // int i = 0;
-        uint64_t timestamp = hrt_absolute_time();
+        uint64_t last_run = 0;
+        float t_diff = 0;
 
 
         while (!thread_should_exit) {
@@ -85,10 +86,10 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                                 if (quad_pos_updated){
                                         orb_copy(ORB_ID(quad_formation_msg), quad_sub, &pos);
                                         // i++;
-                                        rate = pos.timestamp
-                                        time_old
+                                        t_diff = (pos.timestamp - last_run)/1000000.0f;
+                                        last_run = pos.timestamp;
 
-                                        mavlink_log_info(mavlink_fd,"no: %d",timestamp);
+                                        mavlink_log_info(mavlink_fd,"rate: %.3f",(double)t_diff);
                                 }
 
                                 // bool vehicle_status_updated;
