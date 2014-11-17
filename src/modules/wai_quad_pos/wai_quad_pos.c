@@ -45,28 +45,29 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
         static int mavlink_fd;
 
-        struct sensor_combined_s raw;
-        memset(&raw, 0, sizeof(raw));
+        // struct sensor_combined_s raw;
+        // memset(&raw, 0, sizeof(raw));
         struct quad_formation_msg_s pos;
         memset(&pos, 0, sizeof(pos));
-        struct vehicle_status_s st;
-        memset(&st, 0, sizeof(st));
+        // struct vehicle_status_s st;
+        // memset(&st, 0, sizeof(st));
 
         warnx("[wai] Started ");
         mavlink_log_info(mavlink_fd,"[wai] Started");
         mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
 
-        int alt_sub = orb_subscribe(ORB_ID(sensor_combined));
-        int vhe_sub = orb_subscribe(ORB_ID(vehicle_status));
+        // int alt_sub = orb_subscribe(ORB_ID(sensor_combined));
+        // int vhe_sub = orb_subscribe(ORB_ID(vehicle_status));
         int quad_sub = orb_subscribe(ORB_ID(quad_formation_msg));
 
-        orb_set_interval(alt_sub, 100);
+        // int i = 0;
+        uint64_t timestamp = hrt_absolute_time();
 
 
         while (!thread_should_exit) {
 
                 struct pollfd fds[1];
-                fds[0].fd = alt_sub;
+                fds[0].fd = quad_sub;
                 fds[0].events = POLLIN;
                 int pret = poll(fds, 1, 1000);
 
@@ -76,21 +77,26 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
                 } else {
                         if (fds[0].revents & POLLIN) {
-                                orb_copy(ORB_ID(sensor_combined), alt_sub, &raw);
+                                // orb_copy(ORB_ID(sensor_combined), alt_sub, &raw);
 
                                 bool quad_pos_updated;
                                 orb_check(quad_sub, &quad_pos_updated);
 
                                 if (quad_pos_updated){
                                         orb_copy(ORB_ID(quad_formation_msg), quad_sub, &pos);
+                                        // i++;
+                                        rate = pos.timestamp
+                                        time_old
+
+                                        mavlink_log_info(mavlink_fd,"no: %d",timestamp);
                                 }
 
-                                bool vehicle_status_updated;
-                                orb_check(vhe_sub, &vehicle_status_updated);
+                                // bool vehicle_status_updated;
+                                // orb_check(vhe_sub, &vehicle_status_updated);
 
-                                if (vehicle_status_updated){
-                                        orb_copy(ORB_ID(vehicle_status), vhe_sub, &st);
-                                }
+                                // if (vehicle_status_updated){
+                                //         orb_copy(ORB_ID(vehicle_status), vhe_sub, &st);
+                                // }
                         }
                 }
         }
