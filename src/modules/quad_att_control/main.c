@@ -90,9 +90,9 @@ int att_control_thread_main(int argc, char *argv[]) {
 	}
         orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
 
-        struct pollfd fd_sp[] = { 
-                { .fd = quad_sp_sub,   .events = POLLIN },
-        };
+        struct pollfd fd_sp[1];
+        fd_sp[0].fd = quad_sp_sub;
+        fd_sp[0].events = POLLIN;
 
         float alt = 0.0;
 
@@ -110,9 +110,8 @@ int att_control_thread_main(int argc, char *argv[]) {
 		} else if (ret_sp == 0) {
 			/* no return value - nothing has happened */
 		} else if (fd_sp[0].revents & POLLIN) {
-                        struct quad_formation_msg_s tmp_sp;
-                        orb_copy(ORB_ID(quad_att_sp), quad_sp_sub, &tmp_sp);
-                        memcpy(&sp, &tmp_sp, sizeof(tmp_sp)); /* Her er brugt det for struct!!!! BGT */
+                        orb_copy(ORB_ID(quad_att_sp), quad_sp_sub, &sp);
+                        printf("yes, vi fik et SP poll\n");
                 } else {
                         /* nothing happened */
                 }
@@ -131,10 +130,9 @@ int att_control_thread_main(int argc, char *argv[]) {
                         error.yaw = sp.yaw - v_att.yaw;
 
                         alt = qmsg.z;
-                        printf("altitude: %f\n", (double)alt);
-                        mavlink_log_info(mavlink_fd, "[quad_att__control] %.3f", (double)alt);
+                        printf("altitude: %.3f\n", (double)alt);
 
-                        if ((double)alt < (double)500) {
+                        if ((double)alt < (double)1000) {
                                 out.thrust += (float)0.05;
                                 out.roll = (float)p * (float)error.roll;
                                 out.pitch = (float)p * (float)error.pitch;
@@ -147,7 +145,7 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                 orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
 
-                        } else if ((double)alt >= (double)500) {
+                        } else if ((double)alt >= (double)1000) {
                                 out.thrust -= (float)0.05;
                                 out.roll = (float)p * (float)error.roll;
                                 out.pitch = (float)p * (float)error.pitch;
@@ -162,7 +160,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         }
                                                 
                 } else if (sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP) {
-                        out.thrust = (float)0.1;
+                        out.thrust = (float)0.0;
                         out.roll = (float)p * (float)error.roll;
                         out.pitch = (float)p * (float)error.pitch;
                         out.yaw = (float)p * (float)error.yaw;

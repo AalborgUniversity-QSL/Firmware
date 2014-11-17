@@ -51,51 +51,42 @@ int hover_test_thread_main(int argc, char *argv[]) {
 
         warnx("[hover_test] started\n");
 
-        /* struct quad_formation_msg_s qmsg; */
-        /* memset(&qmsg, 0, sizeof(qmsg)); */
-        /* struct quad_att_sp_s sp; */
-        /* memset(&sp, 0, sizeof(sp)); */
+        struct quad_formation_msg_s qmsg;
+        memset(&qmsg, 0, sizeof(qmsg));
+        struct quad_att_sp_s sp;
+        memset(&sp, 0, sizeof(sp));
 
         int qmsg_sub = orb_subscribe(ORB_ID(quad_formation_msg));
-        /* orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg); */
+        orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
 
-        /* orb_advert_t quad_att_sp_pub = orb_advertise(ORB_ID(quad_att_sp), &sp); */
+        orb_advert_t quad_att_sp_pub = orb_advertise(ORB_ID(quad_att_sp), &sp);
 
-        struct pollfd fd_qmsg[] = {
-                { .fd = qmsg_sub,   .events = POLLIN },
-        };
-        printf("second printf");
+        struct pollfd fds[1];
+        fds[0].fd = qmsg_sub;
+        fds[0].events = POLLIN;
+
         while(!thread_should_exit) {
-                int ret_qmsg = poll(fd_qmsg, 1, 1000);
+
+                int ret_qmsg = poll(fds, 1, 1000);
+
                 if (ret_qmsg < 0) {
 			warnx("poll cmd error");
 		} else if (ret_qmsg == 0) {
 			printf("[hover_test] nothing received\n");
-		} else if (fd_qmsg[0].revents & POLLIN) {
-                        struct quad_formation_msg_s qmsg;
+		} else if (fds[0].revents & POLLIN) {
                         orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
 
-                        /* getData(&qmsg_sub, &qmsg); */
-                        if (qmsg.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_STOP) {
+                        if (qmsg.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_START) {
                                 printf("[hover_test] start\n");
-                                /* sp.cmd = (enum QUAD_ATT_CMD)QUAD_ATT_CMD_START; */
-                                /* orb_publish(ORB_ID(quad_att_sp), quad_att_sp_pub, &sp); */
+                                sp.cmd = (enum QUAD_ATT_CMD)QUAD_ATT_CMD_START;
+                                orb_publish(ORB_ID(quad_att_sp), quad_att_sp_pub, &sp);
                         } else if (qmsg.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_STOP){
                                 printf("[hover_test] stop\n");
-                                /* sp.cmd = (enum QUAD_ATT_CMD)QUAD_ATT_CMD_STOP; */
-                                /* orb_publish(ORB_ID(quad_att_sp), quad_att_sp_pub, &sp); */
+                                sp.cmd = (enum QUAD_ATT_CMD)QUAD_ATT_CMD_STOP;
+                                orb_publish(ORB_ID(quad_att_sp), quad_att_sp_pub, &sp);
                         }
                 }
         }
-}
-
-int getData(int *pqmsg_sub, struct quad_formation_msg_s *pqmsg) {
-        printf("func 1");
-        struct quad_formation_msg_s qmsg;
-        orb_copy(ORB_ID(quad_formation_msg), *pqmsg_sub, &qmsg);
-        memcpy(pqmsg, &qmsg, sizeof(qmsg));
-
-        return 0;
 }
 
 static void usage(const char *reason) {
