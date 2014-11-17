@@ -63,8 +63,8 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
         orb_set_interval(quad_sub,1000);
 
-        uint64_t last_run = 0;
-        float t_diff = 0;
+        // uint64_t last_run = 0;
+        // float t_diff = 0;
 
 
         while (!thread_should_exit) {
@@ -72,7 +72,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                 struct pollfd fds[1];
                 fds[0].fd = quad_sub;
                 fds[0].events = POLLIN;
-                int pret = poll(fds, 1, 1000);
+                int pret = poll(fds, 1, 1500);
 
                 if (pret < 0) {
                         warnx("poll cmd error");
@@ -94,10 +94,10 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                                 // }
 
                                 orb_copy(ORB_ID(quad_formation_msg), quad_sub, &pos);
-                                t_diff = (pos.timestamp - last_run)/1000000.0f;
-                                last_run = pos.timestamp;
+                                // t_diff = (pos.timestamp - last_run)/1000000.0f;
+                                // last_run = pos.timestamp;
 
-                                printf("rate: %.3f \n",(double)t_diff);
+                                printf("recived\n");
 
                                 // bool vehicle_status_updated;
                                 // orb_check(vhe_sub, &vehicle_status_updated);
