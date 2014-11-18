@@ -56,7 +56,6 @@ struct output_s {
 __EXPORT int quad_att_control_main(int argc, char *argv[]);
 int att_control_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
-float filterMA(float *old1, float *old2, float *old3, float *old4, float new);
 
 static bool thread_should_exit = false;
 static bool thread_running = false;
