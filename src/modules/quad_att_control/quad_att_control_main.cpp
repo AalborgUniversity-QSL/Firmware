@@ -102,11 +102,11 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                         orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
 
-                        int eulerRes = convEuler2Quat(&v_att, &spQuaternion);
+                        int eulerRes = convEuler2Quat(&v_att, &spQuat);
                         if (eulerRes < 0)
-                                /* Do something */
+                                /* Disaster do something */;
 
-
+                        calcSpQuat(&v_att, &estQuat);
 
                         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);                                                
 
@@ -119,7 +119,7 @@ int att_control_thread_main(int argc, char *argv[]) {
         }
 }
 
- int convEuler2Quat(struct vehicle_attitude_s *att, struct quaternion_s *sp) {
+int convEuler2Quat(struct vehicle_attitude_s *att, struct quaternion_s *sp) {
         
 }
 
