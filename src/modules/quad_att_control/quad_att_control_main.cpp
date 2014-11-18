@@ -18,26 +18,23 @@
 #include <poll.h>
 #include <time.h>
 #include <drivers/drv_hrt.h>
-
 #include <mavlink/mavlink_log.h>
-
 #include <uORB/uORB.h>
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/quad_att_sp.h>
 #include <uORB/topics/quad_formation_msg.h>
 #include <uORB/topics/vehicle_attitude.h>
-
 #include <geo/geo.h>
-
 #include <systemlib/param/param.h>
 #include <systemlib/pid/pid.h>
 #include <systemlib/perf_counter.h>
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
+#include <lib/mathlib/mathlib.h>
 
 /* Function prototypes */
-__EXPORT int quad_att_control_main(int argc, char *argv[]);
+extern "C" __EXPORT int quad_att_control_main(int argc, char *argv[]);
 int att_control_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
 
@@ -74,14 +71,7 @@ int att_control_thread_main(int argc, char *argv[]) {
 	}
         orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
 
-        float alt = 0.0;
-
-        struct attError_s error;
-        memset(&error, 0, sizeof(error));
-        struct output_s out;
-        memset(&out, 0, sizeof(out));
-        
-        float p = 0.1;
+        math::Quaternion q_est;
 
         while (!thread_should_exit) {
                 bool sp_updated;
@@ -99,13 +89,9 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                         orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
 
-                        int eulerRes = convEuler2Quat(&v_att, &spQuat);
-                        if (eulerRes < 0)
-                                /* Disaster do something */;
+                        q_est.from_euler(v_att.roll, v_att.pitch, v_att.yaw); // construct feedback quaternion
 
-                        calcSpQuat(&v_att, &estQuat);
-
-                        orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);                                                
+                        orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);                           
 
                 } else if (sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP) {
 
@@ -114,10 +100,6 @@ int att_control_thread_main(int argc, char *argv[]) {
                         /* Nothhing to do */
                 }
         }
-}
-
-int convEuler2Quat(struct vehicle_attitude_s *att, struct quaternion_s *sp) {
-        
 }
 
 static void usage(const char *reason) {
