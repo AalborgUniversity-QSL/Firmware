@@ -250,13 +250,11 @@ MavlinkReceiver::handle_message_command_quad_formation(mavlink_message_t *msg) {
 
         struct quad_formation_msg_s quad_msg;
         memset(&quad_msg, 0, sizeof(quad_msg));
-
-        warnx("Recived message Vicon");
         
         quad_msg.x = msg_mavlink.x;
         quad_msg.y = msg_mavlink.y;
         quad_msg.z = msg_mavlink.z;
-        // quad_msg.timestamp = hrt_absolute_time();
+        quad_msg.timestamp = hrt_absolute_time();
         quad_msg.target_system = msg_mavlink.target_system;
         quad_msg.cmd_id = (enum QUAD_MSG_CMD)msg_mavlink.cmd_id;
         quad_msg.pos_no = msg_mavlink.pos_no;
@@ -1426,7 +1424,7 @@ MavlinkReceiver::receive_start(Mavlink *parent)
 
 	struct sched_param param;
 	(void)pthread_attr_getschedparam(&receiveloop_attr, &param);
-	param.sched_priority = SCHED_PRIORITY_MAX - 20; /*<- default priority = SHED_PREORITY_MAX - 40 */
+	param.sched_priority = SCHED_PRIORITY_MAX - 40;
 	(void)pthread_attr_setschedparam(&receiveloop_attr, &param);
 
 	pthread_attr_setstacksize(&receiveloop_attr, 2900);

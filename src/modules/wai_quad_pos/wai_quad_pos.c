@@ -28,6 +28,7 @@
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/quad_formation_msg.h>
 #include <uORB/topics/vehicle_status.h>
+#include <uORB/topics/vehicle_vicon_position.h>
 
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
@@ -48,10 +49,12 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
         // struct sensor_combined_s raw;
         // memset(&raw, 0, sizeof(raw));
-        struct quad_formation_msg_s pos;
-        memset(&pos, 0, sizeof(pos));
+        // struct quad_formation_msg_s pos;
+        // memset(&pos, 0, sizeof(pos));
         // struct vehicle_status_s st;
         // memset(&st, 0, sizeof(st));
+        struct vehicle_vicon_position_s vicon;
+        memset(&vicon, 0, sizeof(vicon));
 
         warnx("[wai] Started ");
         mavlink_log_info(mavlink_fd,"[wai] Started");
@@ -59,25 +62,27 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
         // int alt_sub = orb_subscribe(ORB_ID(sensor_combined));
         // int vhe_sub = orb_subscribe(ORB_ID(vehicle_status));
-        int quad_sub = orb_subscribe(ORB_ID(quad_formation_msg));
+        // int quad_sub = orb_subscribe(ORB_ID(quad_formation_msg));
+        int vicon_sub = orb_subscribe(ORB_ID(vehicle_vicon_position));
 
-        orb_set_interval(quad_sub,1000);
+        // orb_set_interval(quad_sub,1000);
 
         // uint64_t last_run = 0;
         // float t_diff = 0;
+        int i = 0;
 
 
         while (!thread_should_exit) {
 
                 struct pollfd fds[1];
-                fds[0].fd = quad_sub;
+                fds[0].fd = vicon_sub;
                 fds[0].events = POLLIN;
-                int pret = poll(fds, 1, 1500);
+                int pret = poll(fds, 1, 100);
 
                 if (pret < 0) {
                         warnx("poll cmd error");
                 } else if (pret == 0){
-
+                    printf("package recived: %d\n", i);
                 } else {
                         if (fds[0].revents & POLLIN) {
                                 // orb_copy(ORB_ID(sensor_combined), alt_sub, &raw);
@@ -93,11 +98,13 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                                 //         printf("rate: %.3f \n",(double)t_diff);
                                 // }
 
-                                orb_copy(ORB_ID(quad_formation_msg), quad_sub, &pos);
+                                printf("før\n");
+                                orb_copy(ORB_ID(vehicle_vicon_position), vicon_sub, &vicon);
                                 // t_diff = (pos.timestamp - last_run)/1000000.0f;
                                 // last_run = pos.timestamp;
+                                mavlink_log_info(mavlink_fd,"recived: {%.3f; %.3f; %.3f}\n",(double)vicon.x, (double)vicon.y, (double)vicon.z);
 
-                                printf("recived\n");
+                                i++;
 
                                 // bool vehicle_status_updated;
                                 // orb_check(vhe_sub, &vehicle_status_updated);
@@ -137,7 +144,7 @@ int wai_quad_pos_main(int argc, char *argv[]) {
                 daemon_task = task_spawn_cmd("wai_quad_pos",
                                              SCHED_DEFAULT,
                                              SCHED_PRIORITY_DEFAULT,
-                                             2048,
+                                             4096,
                                              wai_quad_pos_thread_main,
                                              (argv) ? (const char **)&argv[2] : (const char **)NULL);
                 thread_running = true;
