@@ -1652,13 +1652,13 @@ Sensors::rc_poll()
 		_rc.signal_lost = signal_lost;
 		_rc.timestamp = rc_input.timestamp_last_signal;
 
-		/* publish rc_channels topic even if signal is invalid, for debug */
-		if (_rc_pub > 0) {
-			orb_publish(ORB_ID(rc_channels), _rc_pub, &_rc);
+		// /* publish rc_channels topic even if signal is invalid, for debug */
+		// if (_rc_pub > 0) {
+		// 	orb_publish(ORB_ID(rc_channels), _rc_pub, &_rc);
 
-		} else {
-			_rc_pub = orb_advertise(ORB_ID(rc_channels), &_rc);
-		}
+		// } else {
+		// 	_rc_pub = orb_advertise(ORB_ID(rc_channels), &_rc);
+		// }
 
 		if (!signal_lost) {
 			struct manual_control_setpoint_s manual;
@@ -1687,13 +1687,13 @@ Sensors::rc_poll()
 			manual.acro_switch = get_rc_sw2pos_position(ACRO, _parameters.rc_acro_th, _parameters.rc_acro_inv);
 			manual.offboard_switch = get_rc_sw2pos_position(OFFBOARD, _parameters.rc_offboard_th, _parameters.rc_offboard_inv);
 
-			/* publish manual_control_setpoint topic */
-			if (_manual_control_pub > 0) {
-				orb_publish(ORB_ID(manual_control_setpoint), _manual_control_pub, &manual);
+			// /* publish manual_control_setpoint topic */
+			// if (_manual_control_pub > 0) {
+			// 	orb_publish(ORB_ID(manual_control_setpoint), _manual_control_pub, &manual);
 
-			} else {
-				_manual_control_pub = orb_advertise(ORB_ID(manual_control_setpoint), &manual);
-			}
+			// } else {
+			// 	_manual_control_pub = orb_advertise(ORB_ID(manual_control_setpoint), &manual);
+			// }
 
 			/* copy from mapped manual control to control group 3 */
 			struct actuator_controls_s actuator_group_3;
@@ -1710,13 +1710,13 @@ Sensors::rc_poll()
 			actuator_group_3.control[6] = manual.aux2;
 			actuator_group_3.control[7] = manual.aux3;
 
-			/* publish actuator_controls_3 topic */
-			if (_actuator_group_3_pub > 0) {
-				orb_publish(ORB_ID(actuator_controls_3), _actuator_group_3_pub, &actuator_group_3);
+			// /* publish actuator_controls_3 topic */
+			// if (_actuator_group_3_pub > 0) {
+			// 	orb_publish(ORB_ID(actuator_controls_3), _actuator_group_3_pub, &actuator_group_3);
 
-			} else {
-				_actuator_group_3_pub = orb_advertise(ORB_ID(actuator_controls_3), &actuator_group_3);
-			}
+			// } else {
+			// 	_actuator_group_3_pub = orb_advertise(ORB_ID(actuator_controls_3), &actuator_group_3);
+			// }
 		}
 	}
 }
