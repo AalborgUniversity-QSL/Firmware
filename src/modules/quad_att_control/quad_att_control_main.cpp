@@ -3,7 +3,7 @@
  * Author:   Group 731 <14gr731@es.aau.dk>
  *************************************************************************/
 /*
- * @file main.c
+ * @file quad_att_control_main.cpp
  * 
  * Implementation of an quadrotor attitude control app for use in the 
  * semester project.
@@ -39,24 +39,11 @@
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
 
-struct attError_s {
-        float roll;
-        float pitch;
-        float yaw;
-};
-
-struct output_s {
-        float roll;
-        float pitch;
-        float yaw;
-        float thrust;
-};
-
 /* Function prototypes */
 __EXPORT int quad_att_control_main(int argc, char *argv[]);
 int att_control_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
-float filterMA(float *old1, float *old2, float *old3, float *old4, float new);
+
 
 static bool thread_should_exit = false;
 static bool thread_running = false;
@@ -90,10 +77,6 @@ int att_control_thread_main(int argc, char *argv[]) {
 	}
         orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
 
-        struct pollfd fd_sp[1];
-        fd_sp[0].fd = quad_sp_sub;
-        fd_sp[0].events = POLLIN;
-
         float alt = 0.0;
 
         struct attError_s error;
@@ -104,71 +87,30 @@ int att_control_thread_main(int argc, char *argv[]) {
         float p = 0.1;
 
         while (!thread_should_exit) {
-                int ret_sp = poll(fd_sp, 1, 250);
-                if (ret_sp < 0) {
-			warnx("poll sp error");
-		} else if (ret_sp == 0) {
-			/* no return value - nothing has happened */
-		} else if (fd_sp[0].revents & POLLIN) {
-                        orb_copy(ORB_ID(quad_att_sp), quad_sp_sub, &sp);
-                        printf("yes, vi fik et SP poll\n");
-                } else {
-                        /* nothing happened */
-                }
+                bool sp_updated;
+                orb_check(quad_sp_sub, &sp_updated);
+
+                if (sp_updated)
+                    orb_copy(ORB_ID(quad_att_sp), quad_sp_sub, &sp);
 
                 if (sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_START) {
                         bool qmsg_updated;
                         orb_check(qmsg_sub, &qmsg_updated);
 
+                        if (qmsg_updated)
+                            orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
+
                         orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
 
-                        if (qmsg_updated)
-                                orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
-                        
-                        error.roll = sp.roll - v_att.roll;
-                        error.pitch = sp.pitch - v_att.pitch;
-                        error.yaw = sp.yaw - v_att.yaw;
+                        int eulerRes = convEuler2Quat(&v_att, &spQuaternion);
+                        if (eulerRes < 0)
+                                /* Do something */
 
-                        alt = qmsg.z;
-                        printf("altitude: %.3f\n", (double)alt);
 
-                        if ((double)alt < (double)1000) {
-                                out.thrust += (float)0.05;
-                                out.roll = (float)p * (float)error.roll;
-                                out.pitch = (float)p * (float)error.pitch;
-                                out.yaw = (float)p * (float)error.yaw;
 
-                                actuators.control[0] = (float)out.roll;
-                                actuators.control[1] = (float)out.pitch;
-                                actuators.control[2] = (float)out.yaw;
-                                actuators.control[3] = (float)out.thrust;
+                        orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);                                                
 
-                                orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
-
-                        } else if ((double)alt >= (double)1000) {
-                                out.thrust -= (float)0.05;
-                                out.roll = (float)p * (float)error.roll;
-                                out.pitch = (float)p * (float)error.pitch;
-                                out.yaw = (float)p * (float)error.yaw;
-
-                                actuators.control[0] = (float)out.roll;
-                                actuators.control[1] = (float)out.pitch;
-                                actuators.control[2] = (float)out.yaw;
-                                actuators.control[3] = (float)out.thrust;
-
-                                orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
-                        }
-                                                
                 } else if (sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP) {
-                        out.thrust = (float)0.0;
-                        out.roll = (float)p * (float)error.roll;
-                        out.pitch = (float)p * (float)error.pitch;
-                        out.yaw = (float)p * (float)error.yaw;
-
-                        actuators.control[0] = (float)out.roll;
-                        actuators.control[1] = (float)out.pitch;
-                        actuators.control[2] = (float)out.yaw;
-                        actuators.control[3] = (float)out.thrust;
 
                         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
                 } else {
@@ -177,27 +119,9 @@ int att_control_thread_main(int argc, char *argv[]) {
         }
 }
 
-
-/* int controller() { */
-/*         return 0; */
-/* } */
-
-/* int attControl(float roll, float pitch, float yaw, float thrust) { */
-/*         float resRoll = 0.0,  */
-/*               resPitch = 0.0,  */
-/*               resYaw = 0.0,  */
-/*               resThrust = 0.0; */
-
+ int convEuler2Quat(struct vehicle_attitude_s *att, struct quaternion_s *sp) {
         
-
-/*         actuators.control[0] = resRoll; */
-/*         actuators.control[1] = resPitch; */
-/*         actuators.control[2] = resYaw; */
-/*         actuators.control[3] = resThrust; */
-
-/*         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators); */
-/*         return 0; */
-/* } */
+}
 
 static void usage(const char *reason) {
         if (reason)
