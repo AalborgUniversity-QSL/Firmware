@@ -71,7 +71,11 @@ int att_control_thread_main(int argc, char *argv[]) {
 	}
         orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
 
+        math::Quaternion q_sp;
         math::Quaternion q_est;
+        math::Quaternion q_err;
+        float q0_abs = 0;
+        int q0_sign = 0;
 
         while (!thread_should_exit) {
                 bool sp_updated;
@@ -90,6 +94,19 @@ int att_control_thread_main(int argc, char *argv[]) {
                         orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
 
                         q_est.from_euler(v_att.roll, v_att.pitch, v_att.yaw); // construct feedback quaternion
+                        for (int i = 1; i < 4; i++) { // Conjugate q_est
+                            q_est.data[i] *= -1.f;
+                        }
+
+                        q_sp.from_euler(sp.roll, sp.pitch, sp.yaw); // construct setpoint quaternion
+                        q_err = q_sp * q_est;
+
+                        q0_abs = fabs(q_err.data[0]);
+                        q0_sign = q_err.data[0]/q0_abs;
+                        for (int i = 1; i < 4; i++) {
+                            q_err.data[i] *= q0_sign;
+                        }
+                        
 
                         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);                           
 
