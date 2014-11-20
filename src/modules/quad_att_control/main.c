@@ -132,10 +132,10 @@ int att_control_thread_main(int argc, char *argv[]) {
                         printf("altitude: %.3f\n", (double)alt);
 
                         if ((double)alt < (double)1000) {
-                                out.thrust = (float)0.6; //(float)0.05;
-                                out.roll = 0.f; //(float)p * (float)error.roll;
-                                out.pitch = 0.f; //(float)p * (float)error.pitch;
-                                out.yaw = 0.f; //(float)p * (float)error.yaw;
+                                out.thrust += (float)0.05;
+                                out.roll = (float)p * (float)error.roll;
+                                out.pitch = (float)p * (float)error.pitch;
+                                out.yaw = (float)p * (float)error.yaw;
 
                                 actuators.control[0] = (float)out.roll;
                                 actuators.control[1] = (float)out.pitch;
@@ -145,15 +145,15 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
 
                         } else if ((double)alt >= (double)1000) {
-                                out.thrust = (float)0.1; //(float)0.05;
-                                out.roll = 0.f; //(float)p * (float)error.roll;
-                                out.pitch = 0.f; //(float)p * (float)error.pitch;
-                                out.yaw = 0.f; //(float)p * (float)error.yaw;
+                                out.thrust -= (float)0.05;
+                                out.roll = (float)p * (float)error.roll;
+                                out.pitch = (float)p * (float)error.pitch;
+                                out.yaw = (float)p * (float)error.yaw;
 
-                                actuators.control[0] = (float)out.roll;
-                                actuators.control[1] = (float)out.pitch;
-                                actuators.control[2] = (float)out.yaw;
-                                actuators.control[3] = (float)out.thrust;
+                                /* actuators.control[0] = (float)out.roll;
+                                 * actuators.control[1] = (float)out.pitch;
+                                 * actuators.control[2] = (float)out.yaw;
+                                 * actuators.control[3] = (float)out.thrust; */
 
                                 orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
                         }
