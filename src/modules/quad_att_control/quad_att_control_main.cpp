@@ -2,12 +2,9 @@
  * Copyright (c) 2014 Group 731 Aalborg University. All rights reserved.
  * Author:   Group 731 <14gr731@es.aau.dk>
  *************************************************************************/
-/*
- * @file quad_att_control_main.cpp
- * 
+/**
  * Implementation of an quadrotor attitude control app for use in the 
  * semester project.
- *
  */
 
 #include <nuttx/config.h>
@@ -21,26 +18,23 @@
 #include <poll.h>
 #include <time.h>
 #include <drivers/drv_hrt.h>
-
 #include <mavlink/mavlink_log.h>
-
 #include <uORB/uORB.h>
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/quad_att_sp.h>
 #include <uORB/topics/quad_formation_msg.h>
 #include <uORB/topics/vehicle_attitude.h>
-
 #include <geo/geo.h>
-
 #include <systemlib/param/param.h>
 #include <systemlib/pid/pid.h>
 #include <systemlib/perf_counter.h>
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
+#include <lib/mathlib/mathlib.h>
 
 /* Function prototypes */
-__EXPORT int quad_att_control_main(int argc, char *argv[]);
+extern "C" __EXPORT int quad_att_control_main(int argc, char *argv[]);
 int att_control_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
 
@@ -77,14 +71,11 @@ int att_control_thread_main(int argc, char *argv[]) {
 	}
         orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
 
-        float alt = 0.0;
-
-        struct attError_s error;
-        memset(&error, 0, sizeof(error));
-        struct output_s out;
-        memset(&out, 0, sizeof(out));
-        
-        float p = 0.1;
+        math::Quaternion q_sp;
+        math::Quaternion q_est;
+        math::Quaternion q_err;
+        float q0_abs = 0;
+        int q0_sign = 0;
 
         while (!thread_should_exit) {
                 bool sp_updated;
@@ -102,13 +93,22 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                         orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
 
-                        int eulerRes = convEuler2Quat(&v_att, &spQuat);
-                        if (eulerRes < 0)
-                                /* Disaster do something */;
+                        q_est.from_euler(v_att.roll, v_att.pitch, v_att.yaw); // construct feedback quaternion
+                        for (int i = 1; i < 4; i++) { // Conjugate q_est
+                            q_est.data[i] *= -1.f;
+                        }
 
-                        calcSpQuat(&v_att, &estQuat);
+                        q_sp.from_euler(sp.roll, sp.pitch, sp.yaw); // construct setpoint quaternion
+                        q_err = q_sp * q_est;
 
-                        orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);                                                
+                        q0_abs = fabs(q_err.data[0]);
+                        q0_sign = q_err.data[0]/q0_abs;
+                        for (int i = 1; i < 4; i++) {
+                            q_err.data[i] *= q0_sign;
+                        }
+                        
+
+                        orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);                           
 
                 } else if (sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP) {
 
@@ -117,10 +117,6 @@ int att_control_thread_main(int argc, char *argv[]) {
                         /* Nothhing to do */
                 }
         }
-}
-
-int convEuler2Quat(struct vehicle_attitude_s *att, struct quaternion_s *sp) {
-        
 }
 
 static void usage(const char *reason) {

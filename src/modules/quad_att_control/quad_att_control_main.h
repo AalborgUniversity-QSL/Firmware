@@ -2,12 +2,9 @@
  * Copyright (c) 2014 Group 731 Aalborg University. All rights reserved.
  * Author:   Group 731 <14gr731@es.aau.dk>
  *************************************************************************/
-/*
- * @file quad_att_control_main.h
- * 
+/**
  * Implementation of an quadrotor attitude control app for use in the 
  * semester project.
- *
  */
 
 struct quaternion_s {
