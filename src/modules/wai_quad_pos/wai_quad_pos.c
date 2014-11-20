@@ -105,11 +105,11 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                                         orb_copy(ORB_ID(vehicle_status), vhe_sub, &st);
                                 }
 
-                                bool vehicle_status_updated;
-                                orb_check(vhe_sub, &vehicle_status_updated);
+                                bool sensor_raw_updated;
+                                orb_check(alt_sub, &sensor_raw_updated);
 
-                                 if (vehicle_status_updated){ 
-                                        orb_copy(ORB_ID(vehicle_status), vhe_sub, &st);
+                                 if (sensor_raw_updated){ 
+                                        orb_copy(ORB_ID(sensor_combined), alt_sub, &raw);
                                 }
                         }
                 }
