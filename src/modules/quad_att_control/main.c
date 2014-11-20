@@ -43,6 +43,7 @@ struct attError_s {
         float roll;
         float pitch;
         float yaw;
+        float thrust;
 };
 
 struct output_s {
@@ -100,7 +101,8 @@ int att_control_thread_main(int argc, char *argv[]) {
         struct output_s out;
         memset(&out, 0, sizeof(out));
         
-        float p = 0.1;
+        float p = 0.01;
+        float zstart = -1;
 
         while (!thread_should_exit) {
                 int ret_sp = poll(fd_sp, 1, 250);
@@ -110,7 +112,7 @@ int att_control_thread_main(int argc, char *argv[]) {
 			/* no return value - nothing has happened */
 		} else if (fd_sp[0].revents & POLLIN) {
                         orb_copy(ORB_ID(quad_att_sp), quad_sp_sub, &sp);
-                        printf("yes, vi fik et SP poll\n");
+                        /* printf("yes, vi fik et SP poll\n"); */
                 } else {
                         /* nothing happened */
                 }
@@ -123,41 +125,44 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                         if (qmsg_updated)
                                 orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
+
+                        alt = qmsg.z;
                         
                         error.roll = sp.roll - v_att.roll;
                         error.pitch = sp.pitch - v_att.pitch;
                         error.yaw = sp.yaw - v_att.yaw;
+                        error.thrust = sp.thrust - alt;
 
-                        alt = qmsg.z;
-                        printf("altitude: %.3f\n", (double)alt);
-
-                        if ((double)alt < (double)1000) {
-                                out.thrust += (float)0.05;
-                                out.roll = (float)p * (float)error.roll;
-                                out.pitch = (float)p * (float)error.pitch;
-                                out.yaw = (float)p * (float)error.yaw;
-
-                                actuators.control[0] = (float)out.roll;
-                                actuators.control[1] = (float)out.pitch;
-                                actuators.control[2] = (float)out.yaw;
-                                actuators.control[3] = (float)out.thrust;
-
-                                orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
-
-                        } else if ((double)alt >= (double)1000) {
-                                out.thrust -= (float)0.05;
-                                out.roll = (float)p * (float)error.roll;
-                                out.pitch = (float)p * (float)error.pitch;
-                                out.yaw = (float)p * (float)error.yaw;
-
-                                /* actuators.control[0] = (float)out.roll;
-                                 * actuators.control[1] = (float)out.pitch;
-                                 * actuators.control[2] = (float)out.yaw;
-                                 * actuators.control[3] = (float)out.thrust; */
-
-                                orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
+                        if ( error.thrust > (float)1000 ) {
+                                error.thrust = 1000;
+                        } else if ( error.thrust < (float)0 ) {
+                                error.thrust = 0;
                         }
-                                                
+                        //error.thrust /= 1000;
+
+                        /* printf("altitude: %.3f\n", (double)alt); */
+                        if ( zstart == -1 )
+                                zstart = alt;
+                        if ( alt < (zstart + 20) ) {
+                                out.thrust += (float)0.001;
+                        } else {
+                                out.thrust = (float)0;                                
+                        }
+
+                        out.roll = (float)p * (float)error.roll;
+                        out.pitch = (float)p * (float)error.pitch;
+                        out.yaw = (float)p * (float)error.yaw;
+                        //out.thrust = (float)error.thrust;
+
+                        mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f y:%.3f t: %.3f", (double)out.roll, (double)out.pitch, (double)out.yaw, (double)out.thrust);
+                       
+                        actuators.control[0] = (float)out.roll;
+                        actuators.control[1] = (float)out.pitch;
+                        actuators.control[2] = (float)out.yaw;
+                        actuators.control[3] = (float)out.thrust;
+
+                        orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
+
                 } else if (sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP) {
                         out.thrust = (float)0.0;
                         out.roll = (float)p * (float)error.roll;

@@ -1,6 +1,5 @@
-mavlink start -d /dev/ttyS1 -b 57600
 sensors start
+hover_test start
+quad_att_control start
 commander start
-mc_att_control start
-attitude_estimator_ekf start
-q_formation_control start
+mavlink start -d /dev/ttyS1 -b 57600
