@@ -137,6 +137,10 @@ void
 MavlinkReceiver::handle_message(mavlink_message_t *msg)
 {
 	switch (msg->msgid) {
+	case MAVLINK_MSG_ID_QUAD_POS: // Hvis det er en besked til quad formation
+                MavlinkReceiver::handle_message_command_quad_formation(msg);
+                break;
+                	
 	case MAVLINK_MSG_ID_COMMAND_LONG:
 		handle_message_command_long(msg);
 		break;
@@ -188,12 +192,11 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 	case MAVLINK_MSG_ID_FILE_TRANSFER_PROTOCOL:
 		MavlinkFTP::get_server()->handle_message(_mavlink, msg);
 		break;
-        case MAVLINK_MSG_ID_QUAD_POS: // Hvis det er en besked til quad formation
-                MavlinkReceiver::handle_message_command_quad_formation(msg);
-                break;
 	default:
 		break;
 	}
+
+
 
 	/*
 	 * Only decode hil messages in HIL mode.

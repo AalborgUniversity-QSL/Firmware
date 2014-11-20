@@ -56,7 +56,7 @@ PARAM_DEFINE_INT32(MAV_SYS_ID, 1);
  * MAVLink component ID
  * @group MAVLink
  */
-PARAM_DEFINE_INT32(MAV_COMP_ID, MAV_COMP_ID_UART_BRIDGE);
+PARAM_DEFINE_INT32(MAV_COMP_ID, 0);
 /**
  * MAVLink type
  * @group MAVLink
