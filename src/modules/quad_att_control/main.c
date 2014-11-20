@@ -100,9 +100,14 @@ int att_control_thread_main(int argc, char *argv[]) {
         memset(&error, 0, sizeof(error));
         struct output_s out;
         memset(&out, 0, sizeof(out));
+        struct attError_s error_old;
+        memset(&error, 0, sizeof(error_old));
+        struct attError_s error_derr;
+        memset(&error, 0, sizeof(error_old));
         
-        float p = 0.01;
-        float zstart = -1;
+        float p = 0.005;
+        /* float zstart = -1; */
+
 
         while (!thread_should_exit) {
                 int ret_sp = poll(fd_sp, 1, 250);
@@ -138,21 +143,21 @@ int att_control_thread_main(int argc, char *argv[]) {
                         } else if ( error.thrust < (float)0 ) {
                                 error.thrust = 0;
                         }
-                        //error.thrust /= 1000;
+                        error.thrust /= (float)10000;
 
                         /* printf("altitude: %.3f\n", (double)alt); */
-                        if ( zstart == -1 )
-                                zstart = alt;
-                        if ( alt < (zstart + 20) ) {
-                                out.thrust += (float)0.001;
-                        } else {
-                                out.thrust = (float)0;                                
-                        }
+                        /* if ( zstart == -1 )
+                         *         zstart = alt;
+                         * if ( alt < (zstart + 20) ) {
+                         *         out.thrust += (float)0.001;
+                         * } else {
+                         *         out.thrust = (float)0;                                
+                         * } */
 
                         out.roll = (float)p * (float)error.roll;
                         out.pitch = (float)p * (float)error.pitch;
                         out.yaw = (float)p * (float)error.yaw;
-                        //out.thrust = (float)error.thrust;
+                        out.thrust = (float)error.thrust + (float)0.45;
 
                         mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f y:%.3f t: %.3f", (double)out.roll, (double)out.pitch, (double)out.yaw, (double)out.thrust);
                        
