@@ -47,32 +47,32 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
         static int mavlink_fd;
 
-        // struct sensor_combined_s raw;
-        // memset(&raw, 0, sizeof(raw));
-        // struct quad_formation_msg_s pos;
-        // memset(&pos, 0, sizeof(pos));
-        // struct vehicle_status_s st;
-        // memset(&st, 0, sizeof(st));
-        struct vehicle_vicon_position_s vicon;
-        memset(&vicon, 0, sizeof(vicon));
+        struct sensor_combined_s raw;
+        memset(&raw, 0, sizeof(raw));
+        struct quad_formation_msg_s pos;
+        memset(&pos, 0, sizeof(pos));
+        struct vehicle_status_s st;
+        memset(&st, 0, sizeof(st));
+        // struct vehicle_vicon_position_s vicon;
+        // memset(&vicon, 0, sizeof(vicon));
 
         warnx("[wai] Started ");
         mavlink_log_info(mavlink_fd,"[wai] Started");
         mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
 
-        // int alt_sub = orb_subscribe(ORB_ID(sensor_combined));
-        // int vhe_sub = orb_subscribe(ORB_ID(vehicle_status));
-        // int quad_sub = orb_subscribe(ORB_ID(quad_formation_msg));
-        int vicon_sub = orb_subscribe(ORB_ID(vehicle_vicon_position));
+        int alt_sub = orb_subscribe(ORB_ID(sensor_combined));
+        int vhe_sub = orb_subscribe(ORB_ID(vehicle_status));
+        int quad_sub = orb_subscribe(ORB_ID(quad_formation_msg));
+        // int vicon_sub = orb_subscribe(ORB_ID(vehicle_vicon_position));
 
-        // orb_set_interval(quad_sub,1000);
+        // orb_set_interval(alt_sub,100);
 
         uint64_t last_run = 0;
         float t_diff = 0;
-        int i = 0;
+        int package_loss = 0;
 
         struct pollfd fds[1];
-        fds[0].fd = vicon_sub;
+        fds[0].fd = quad_sub;
         fds[0].events = POLLIN;
 
         while (!thread_should_exit) {
@@ -82,36 +82,36 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                 if (pret < 0) {
                         warnx("poll cmd error");
                 } else if (pret == 0){
-                    printf("package recived: %d\n", i);
+                        package_loss++;
+                        if(package_loss > 10){
+                                package_loss = 0;
+                                printf("Connection is bad");
+                        }
+
                 } else {
                         if (fds[0].revents & POLLIN) {
-                                // orb_copy(ORB_ID(sensor_combined), alt_sub, &raw);
-
-                                // bool quad_pos_updated;
-                                // orb_check(quad_sub, &quad_pos_updated);
-
-                                // if (quad_pos_updated){
-                                //         orb_copy(ORB_ID(quad_formation_msg), quad_sub, &pos);
-                                //         t_diff = (pos.timestamp - last_run)/1000000.0f;
-                                //         last_run = pos.timestamp;
-
                                 
-                                // }
-                                
-                                orb_copy(ORB_ID(vehicle_vicon_position), vicon_sub, &vicon);
-                                t_diff = (vicon.timestamp - last_run)/1000000.0f;
-                                last_run = vicon.timestamp;
-                                printf("rate: %.3f \n",(double)t_diff);
-                                // printf("recived: {%.3f; %.3f; %.3f}\n",(double)vicon.x, (double)vicon.y, (double)vicon.z);
+                                orb_copy(ORB_ID(quad_formation_msg), quad_sub, &pos);
 
-                                i++;
+                                /*Test sample rate*/
+                                // t_diff = (pos.timestamp - last_run)/1000000.0f;
+                                // last_run = pos.timestamp;
+                                // printf("rate: %.3f \n",(double)t_diff);
 
-                                // bool vehicle_status_updated;
-                                // orb_check(vhe_sub, &vehicle_status_updated);
+                                bool vehicle_status_updated;
+                                orb_check(vhe_sub, &vehicle_status_updated);
 
-                                // if (vehicle_status_updated){
-                                //         orb_copy(ORB_ID(vehicle_status), vhe_sub, &st);
-                                // }
+                                if (vehicle_status_updated){
+                                        orb_copy(ORB_ID(vehicle_status), vhe_sub, &st);
+                                }
+
+
+                                bool vehicle_status_updated;
+                                orb_check(vhe_sub, &vehicle_status_updated);
+
+                                if (vehicle_status_updated){
+                                        orb_copy(ORB_ID(vehicle_status), vhe_sub, &st);
+                                }
                         }
                 }
         }
@@ -143,8 +143,8 @@ int wai_quad_pos_main(int argc, char *argv[]) {
                 thread_should_exit = false;
                 daemon_task = task_spawn_cmd("wai_quad_pos",
                                              SCHED_DEFAULT,
-                                             SCHED_PRIORITY_DEFAULT,
-                                             4096,
+                                             SCHED_PRIORITY_MAX - 6,
+                                             2048,
                                              wai_quad_pos_thread_main,
                                              (argv) ? (const char **)&argv[2] : (const char **)NULL);
                 thread_running = true;
