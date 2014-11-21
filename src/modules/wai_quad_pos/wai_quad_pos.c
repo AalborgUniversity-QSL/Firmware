@@ -47,25 +47,18 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
         static int mavlink_fd;
 
-        struct sensor_combined_s raw;
-        memset(&raw, 0, sizeof(raw));
         struct quad_formation_msg_s pos;
         memset(&pos, 0, sizeof(pos));
         struct vehicle_status_s st;
         memset(&st, 0, sizeof(st));
-        // struct vehicle_vicon_position_s vicon;
-        // memset(&vicon, 0, sizeof(vicon));
 
         warnx("[wai] Started ");
         mavlink_log_info(mavlink_fd,"[wai] Started");
         mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
 
-        int alt_sub = orb_subscribe(ORB_ID(sensor_combined)); 
         int vhe_sub = orb_subscribe(ORB_ID(vehicle_status));
         int quad_sub = orb_subscribe(ORB_ID(quad_formation_msg));
         // int vicon_sub = orb_subscribe(ORB_ID(vehicle_vicon_position));
-
-        orb_set_interval(alt_sub,100);
 
         // uint64_t last_run = 0; 
         // float t_diff = 0; 
@@ -93,7 +86,7 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
                                 
                                 orb_copy(ORB_ID(quad_formation_msg), quad_sub, &pos);
 
-                                /*Test sample rate*/
+                                // Test sample rate
                                 /*t_diff = (pos.timestamp - last_run)/1000000.0f;
                                 last_run = pos.timestamp;
                                 printf("rate: %.3f \n",(double)t_diff);*/
@@ -103,13 +96,6 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
 
                                 if (vehicle_status_updated){
                                         orb_copy(ORB_ID(vehicle_status), vhe_sub, &st);
-                                }
-
-                                bool sensor_raw_updated;
-                                orb_check(alt_sub, &sensor_raw_updated);
-
-                                 if (sensor_raw_updated){ 
-                                        orb_copy(ORB_ID(sensor_combined), alt_sub, &raw);
                                 }
                         }
                 }
