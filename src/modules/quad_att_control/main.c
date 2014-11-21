@@ -106,22 +106,22 @@ int att_control_thread_main(int argc, char *argv[]) {
         memset(&error_old, 0, sizeof(error_old));
         struct attError_s error_der;
         memset(&error_der, 0, sizeof(error_old));
-        /* struct attError_s v_att_offset;
-         * memset(&v_att_offset, 0, sizeof(v_att_offset)); */
+        struct attError_s v_att_offset;
+        memset(&v_att_offset, 0, sizeof(v_att_offset));
         
-        float   Kp = 0.5,
-                Kd = 0.029,
-                Kp_yaw = 0.67,
-                Kd_yaw = 0.34,
-                Kp_thrust = 0.0002,
-                Kd_thrust = 0.00011,
+        float   Kp = 0.12,
+                Kd = 0.016,
+                Kp_yaw = 0.06,
+                Kd_yaw = 0.1,
+                Kp_thrust = 0.000018,
+                Kd_thrust = 0.000034,
                 dt = 0.01,
                 dt_z = 0.1,
-                anti_gravity = 0.40,
+                anti_gravity = 0.45,
                 error_thrust_der = 0,
                 error_thrust_old = 0;
 
-        /* bool first = true; */
+        bool first = true;
 
         while (!thread_should_exit) {
                 int ret_sp = poll(fd_sp, 1, 1);
@@ -164,22 +164,22 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         error_thrust_old = error.thrust;
                                         
                                         if ( out.thrust > (float)1 ) {
-                                                out.thrust = 1.f;
+                                                out.thrust = (float)1;
                                         } else if ( out.thrust < anti_gravity ) {
                                                 out.thrust = anti_gravity;
                                         }
                                 }
                        
-                                /* if ( first == true ) {
-                                 *         v_att_offset.roll = v_att.roll;
-                                 *         v_att_offset.pitch = v_att.pitch;
-                                 *         v_att_offset.yaw = v_att.yaw;
-                                 *         first = false;
-                                 * } */
+                                if ( first == true ) {
+                                        //v_att_offset.roll = v_att.roll;
+                                        //v_att_offset.pitch = v_att.pitch;
+                                        v_att_offset.yaw = v_att.yaw;
+                                        first = false;
+                                }
                         
                                 error.roll = sp.roll - v_att.roll; // + v_att_offset.roll;
                                 error.pitch = sp.pitch - v_att.pitch; // + v_att_offset.pitch;
-                                error.yaw = sp.yaw - v_att.yaw; // + v_att_offset.yaw;
+                                error.yaw = sp.yaw - v_att.yaw + v_att_offset.yaw;
 
                                 error_der.roll = (error.roll - error_old.roll)/dt;
                                 error_der.pitch = (error.pitch - error_old.pitch)/dt;
@@ -189,8 +189,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 error_old.pitch = error.pitch;
                                 error_old.yaw = error.yaw;
 
-                                out.roll = (float)Kp * (float)error.roll + Kd * error_der.roll + Kp * error.pitch + Kd * error.pitch;
-                                out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch - Kp * error.roll - Kd * error_der.roll;
+                                out.roll = (float)Kp * (float)error.roll + Kd * error_der.roll;// + Kp * error.pitch + Kd * error.pitch;
+                                out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch;// - Kp * error.roll - Kd * error_der.roll;
                                 out.yaw = (float)Kp_yaw * (float)error.yaw + Kd_yaw * error_der.yaw;
 
                                 if ( out.roll > (float)1 ) {

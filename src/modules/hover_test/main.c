@@ -67,7 +67,7 @@ int hover_test_thread_main(int argc, char *argv[]) {
 
         while(!thread_should_exit) {
 
-                int ret_qmsg = poll(fds, 1, 1000);
+                int ret_qmsg = poll(fds, 1, 1);
 
                 if (ret_qmsg < 0) {
 			warnx("poll cmd error");
