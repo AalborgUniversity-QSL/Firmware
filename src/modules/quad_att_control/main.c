@@ -94,25 +94,37 @@ int att_control_thread_main(int argc, char *argv[]) {
         fd_sp[0].fd = quad_sp_sub;
         fd_sp[0].events = POLLIN;
 
+        struct pollfd fd_v_att[1];
+        fd_v_att[0].fd = v_att_sub;
+        fd_v_att[0].events = POLLIN;
+
         struct attError_s error;
         memset(&error, 0, sizeof(error));
         struct output_s out;
         memset(&out, 0, sizeof(out));
         struct attError_s error_old;
-        memset(&error, 0, sizeof(error_old));
+        memset(&error_old, 0, sizeof(error_old));
         struct attError_s error_der;
-        memset(&error, 0, sizeof(error_old));
+        memset(&error_der, 0, sizeof(error_old));
+        /* struct attError_s v_att_offset;
+         * memset(&v_att_offset, 0, sizeof(v_att_offset)); */
         
-        float   Kp = 4, 
-                Kd = 0.001,
-                Kp_yaw = 0.01,
-                Kd_yaw = 0.f,
-                dt = 0.1,
-                alt = 0.0,
-                anti_gravity = 0.40;
+        float   Kp = 0.7,
+                Kd = 0.04,
+                Kp_yaw = 0.67,
+                Kd_yaw = 0.34,
+                Kp_thrust = 0.0002,
+                Kd_thrust = 0.00011,
+                dt = 0.01,
+                dt_z = 0.1,
+                anti_gravity = 0.40,
+                error_thrust_der = 0,
+                error_thrust_old = 0;
+
+        /* bool first = true; */
 
         while (!thread_should_exit) {
-                int ret_sp = poll(fd_sp, 1, 250);
+                int ret_sp = poll(fd_sp, 1, 1);
                 if (ret_sp < 0) {
 			warnx("poll sp error");
 		} else if (ret_sp == 0) {
@@ -125,49 +137,83 @@ int att_control_thread_main(int argc, char *argv[]) {
                 }
 
                 if (sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_START) {
-                        bool qmsg_updated;
-                        orb_check(qmsg_sub, &qmsg_updated);
 
-                        orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
+                        int ret_v_att = poll(fd_v_att, 1, 1);
+                        if (ret_v_att < 0) {
+                                warnx("poll sp error");
+                        } else if (ret_v_att == 0) {
+                                /* no return value - nothing has happened */
+                        } else if (fd_v_att[0].revents & POLLIN) {
+                                orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
 
-                        if (qmsg_updated)
-                                orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
+                                bool qmsg_updated;
+                                orb_check(qmsg_sub, &qmsg_updated);
+                                if (qmsg_updated) {
+                                        orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
 
-                        alt = qmsg.z;
-                        
-                        error.roll = sp.roll - v_att.roll;
-                        error.pitch = sp.pitch - v_att.pitch;
-                        error.yaw = sp.yaw - v_att.yaw;
-                        error.thrust = sp.thrust - alt;
+                                        error.thrust = sp.thrust - qmsg.z;
 
-                        error_der.roll = (error.roll - error_old.roll)/dt;
-                        error_der.pitch = (error.pitch - error_old.pitch)/dt;
-                        error_der.yaw = (error.yaw - error_old.yaw)/dt;
-
-                        if ( error.thrust > (float)1000 ) {
-                                error.thrust = 1000;
-                        } else if ( error.thrust < (float)0 ) {
-                                error.thrust = 0;
-                        }
-                        error.thrust /= (float)10000;                        
-
-                        out.roll = (float)Kp * (float)error.roll + Kd * error_der.roll;
-                        out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch;
-                        out.yaw = (float)Kp_yaw * (float)error.yaw + Kd_yaw * error_der.yaw;
-                        out.thrust = (float)error.thrust + anti_gravity;
-
-                        error_old.roll = error.roll;
-                        error_old.pitch = error.pitch;
-                        error_old.yaw = error.yaw;
-
-                        mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f y:%.3f t: %.3f", (double)out.roll, (double)out.pitch, (double)out.yaw, (double)out.thrust);
+                                        if ( error.thrust > (float)1000 ) {
+                                                error.thrust = 1000;
+                                        } else if ( error.thrust < (float)0 ) {
+                                                error.thrust = 0;
+                                        }
+                                        /* error.thrust /= (float)1000; */
+                                        error_thrust_der = (error.thrust - error_thrust_old)/dt_z;
+                                        out.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error_thrust_der + anti_gravity;
+                                        error_thrust_old = error.thrust;
+                                        
+                                        if ( out.thrust > (float)1 ) {
+                                                out.thrust = 1.f;
+                                        } else if ( out.thrust < anti_gravity ) {
+                                                out.thrust = anti_gravity;
+                                        }
+                                }
                        
-                        actuators.control[0] = (float)out.roll;
-                        actuators.control[1] = (float)out.pitch;
-                        actuators.control[2] = (float)out.yaw;
-                        actuators.control[3] = (float)out.thrust;
+                                /* if ( first == true ) {
+                                 *         v_att_offset.roll = v_att.roll;
+                                 *         v_att_offset.pitch = v_att.pitch;
+                                 *         v_att_offset.yaw = v_att.yaw;
+                                 *         first = false;
+                                 * } */
+                        
+                                error.roll = sp.roll - v_att.roll; // + v_att_offset.roll;
+                                error.pitch = sp.pitch - v_att.pitch; // + v_att_offset.pitch;
+                                error.yaw = sp.yaw - v_att.yaw; // + v_att_offset.yaw;
 
-                        orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
+                                error_der.roll = (error.roll - error_old.roll)/dt;
+                                error_der.pitch = (error.pitch - error_old.pitch)/dt;
+                                error_der.yaw = (error.yaw - error_old.yaw)/dt;
+
+                                error_old.roll = error.roll;
+                                error_old.pitch = error.pitch;
+                                error_old.yaw = error.yaw;
+
+                                out.roll = (float)Kp * (float)error.roll + Kd * error_der.roll;
+                                out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch;
+                                out.yaw = (float)Kp_yaw * (float)error.yaw + Kd_yaw * error_der.yaw;
+
+                                if ( out.roll > (float)1 ) {
+                                        out.roll = 1.f;
+                                } else if ( out.roll < (float)-1 ) {
+                                        out.roll = -1;
+                                }
+
+                                if ( out.pitch > (float)1 ) {
+                                        out.pitch = 1.f;
+                                } else if ( out.pitch < (float)-1 ) {
+                                        out.pitch = -1;
+                                }
+
+                                if ( out.yaw > (float)1 ) {
+                                        out.yaw = 1.f;
+                                } else if ( out.yaw < (float)-1 ) {
+                                        out.yaw = -1;
+                                }
+                       
+                        } else {
+                                /* nothing happened */
+                        }       
 
                 } else if (sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP) {
                         out.thrust = 0.f;
@@ -175,15 +221,17 @@ int att_control_thread_main(int argc, char *argv[]) {
                         out.pitch = 0.f;
                         out.yaw = 0.f;
 
-                        actuators.control[0] = (float)out.roll;
-                        actuators.control[1] = (float)out.pitch;
-                        actuators.control[2] = (float)out.yaw;
-                        actuators.control[3] = (float)out.thrust;
-
-                        orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
                 } else {
                         /* Nothhing to do */
                 }
+                actuators.control[0] = (float)out.roll;
+                actuators.control[1] = (float)out.pitch;
+                actuators.control[2] = (float)out.yaw;
+                actuators.control[3] = (float)out.thrust;
+
+                mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f y:%.3f t:%.3f", (double)out.roll, (double)out.pitch, (double)out.yaw, (double)out.thrust);
+
+                orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
         }
 }
 
@@ -210,7 +258,7 @@ int quad_att_control_main(int argc, char *argv[]) {
 		thread_should_exit = false;
 		daemon_task = task_spawn_cmd("att_control",
                                              SCHED_DEFAULT,
-                                             SCHED_PRIORITY_MAX - 20,
+                                             SCHED_PRIORITY_MAX - 5,
                                              2048,
                                              att_control_thread_main,
                                              (argv) ? (const char **)&argv[2] : (const char **)NULL);
