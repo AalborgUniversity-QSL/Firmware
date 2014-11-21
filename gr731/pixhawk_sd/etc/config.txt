@@ -1,6 +1,6 @@
 # Generic Quadcopter +
 set VEHICLE_TYPE mc
-set MIXER FMU_quad_+
+set MIXER FMU_quad_x
 # PX4IO PWM output will be used by default
 set PWM_OUTPUTS 1234    # Change parameters for the first 4 outputs
 set PWM_RATE 400        # Set PWM rate to 400 Hz for better performance
