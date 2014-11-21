@@ -53,6 +53,18 @@ struct output_s {
         float thrust;
 };
 
+struct pos_s {
+        float x;
+        float y;
+        float z;
+};
+
+struct pos_error_s {
+        float x;
+        float y;
+        float z;
+};
+
 /* Function prototypes */
 __EXPORT int quad_att_control_main(int argc, char *argv[]);
 int att_control_thread_main(int argc, char *argv[]);
@@ -108,6 +120,10 @@ int att_control_thread_main(int argc, char *argv[]) {
         memset(&error_der, 0, sizeof(error_old));
         struct attError_s v_att_offset;
         memset(&v_att_offset, 0, sizeof(v_att_offset));
+        struct pos_s pos_offset;
+        memset(&pos_offset, 0, sizeof(pos_offset));
+        struct pos_error_s pos_error;
+        memset(&pos_error, 0, sizeof(pos_error));
         
         float   Kp = 0.12,
                 Kd = 0.016,
@@ -115,11 +131,17 @@ int att_control_thread_main(int argc, char *argv[]) {
                 Kd_yaw = 0.1,
                 Kp_thrust = 0.000018,
                 Kd_thrust = 0.000034,
+                Kp_pos = 0.0000125,
+                Kd_pos = 0.000014,
                 dt = 0.01,
                 dt_z = 0.1,
                 anti_gravity = 0.45,
                 error_thrust_der = 0,
-                error_thrust_old = 0;
+                error_thrust_old = 0,
+                error_x_der  = 0,
+                error_x_old = 0,
+                error_y_der = 0,
+                error_y_old = 0;
 
         bool first = true;
 
@@ -151,14 +173,21 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 if (qmsg_updated) {
                                         orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
 
-                                        error.thrust = sp.thrust - qmsg.z;
+                                        if ( first == true ) {
+                                                v_att_offset.yaw = v_att.yaw;
+                                                pos_offset.x = qmsg.x;
+                                                pos_offset.y = qmsg.y;
+                                                first = false;
+                                        }
+
+                                        error.thrust = sp.z - qmsg.z;
 
                                         if ( error.thrust > (float)1000 ) {
                                                 error.thrust = 1000;
                                         } else if ( error.thrust < (float)0 ) {
                                                 error.thrust = 0;
                                         }
-                                        /* error.thrust /= (float)1000; */
+
                                         error_thrust_der = (error.thrust - error_thrust_old)/dt_z;
                                         out.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error_thrust_der + anti_gravity;
                                         error_thrust_old = error.thrust;
@@ -168,17 +197,19 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         } else if ( out.thrust < anti_gravity ) {
                                                 out.thrust = anti_gravity;
                                         }
+                                        
+                                        pos_error.x = pos_offset.x - qmsg.x;
+                                        pos_error.y = pos_offset.y - qmsg.y;
+                                        
+                                        error_x_der = (pos_error.x - error_x_old)/dt_z;
+                                        error_y_der = (pos_error.y - error_y_old)/dt_z;
+
+                                        error_x_old = pos_error.x;
+                                        error_y_old = pos_error.y;
                                 }
                        
-                                if ( first == true ) {
-                                        //v_att_offset.roll = v_att.roll;
-                                        //v_att_offset.pitch = v_att.pitch;
-                                        v_att_offset.yaw = v_att.yaw;
-                                        first = false;
-                                }
-                        
-                                error.roll = sp.roll - v_att.roll; // + v_att_offset.roll;
-                                error.pitch = sp.pitch - v_att.pitch; // + v_att_offset.pitch;
+                                error.roll = sp.roll - v_att.roll;
+                                error.pitch = sp.pitch - v_att.pitch;
                                 error.yaw = sp.yaw - v_att.yaw + v_att_offset.yaw;
 
                                 error_der.roll = (error.roll - error_old.roll)/dt;
@@ -189,8 +220,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 error_old.pitch = error.pitch;
                                 error_old.yaw = error.yaw;
 
-                                out.roll = (float)Kp * (float)error.roll + Kd * error_der.roll;// + Kp * error.pitch + Kd * error.pitch;
-                                out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch;// - Kp * error.roll - Kd * error_der.roll;
+                                out.roll = (float)Kp * (float)error.roll + Kd * error_der.roll - Kp_pos * pos_error.y - Kd_pos * error_y_der;
+                                out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch - Kp_pos * pos_error.x - Kd_pos * error_x_der;
                                 out.yaw = (float)Kp_yaw * (float)error.yaw + Kd_yaw * error_der.yaw;
 
                                 if ( out.roll > (float)1 ) {
