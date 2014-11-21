@@ -220,8 +220,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 error_old.pitch = error.pitch;
                                 error_old.yaw = error.yaw;
 
-                                out.roll = (float)Kp * (float)error.roll + Kd * error_der.roll - Kp_pos * pos_error.x - Kd_pos * error_x_der;
-                                out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch - Kp_pos * pos_error.y - Kd_pos * error_y_der;
+                                out.roll = (float)Kp * (float)error.roll + Kd * error_der.roll - Kp_pos * pos_error.y - Kd_pos * error_y_der;
+                                out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch - Kp_pos * pos_error.x - Kd_pos * error_x_der;
                                 out.yaw = (float)Kp_yaw * (float)error.yaw + Kd_yaw * error_der.yaw;
 
                                 if ( out.roll > (float)1 ) {
