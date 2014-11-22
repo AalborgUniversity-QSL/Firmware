@@ -200,8 +200,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                                                 v_att_offset.yaw = v_att.yaw;
                                                 pos_offset.x = qmsg.x;
                                                 pos_offset.y = qmsg.y;
-                                                first = false;
                                                 t0 = time;
+                                                first = false;
                                         }
 
                                         error.thrust = sp.z - qmsg.z;
@@ -220,6 +220,11 @@ int att_control_thread_main(int argc, char *argv[]) {
                                                 out.thrust = (float)1;
                                         } else if ( out.thrust < anti_gravity ) {
                                                 out.thrust = anti_gravity;
+                                        }
+
+                                        if ( (t0 + (float)5) < (float)time ) {
+                                                out.thrust = anti_gravity;
+                                                mavlink_log_info(mavlink_fd, "[quad_att] t0:%.2f\t time: %.2f", (double)t0, (double)time);
                                         }
                                         
                                         pos_error.x = pos_offset.x - qmsg.x;
@@ -277,11 +282,6 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                 if ( (float)fabs(out.yaw) > yaw_max )
                                         out.yaw = yaw_max * (out.yaw / (float)fabs(out.yaw));
-
-                                if ( (t0 + (float)5) < (float)time ) {
-                                        out.thrust = anti_gravity;
-                                        mavlink_log_info(mavlink_fd, "[quad_att] t0:%.2f\t time: %.2f", (double)t0, (double)time);
-                                }
                        
                         } else {
                                 /* nothing happened */
