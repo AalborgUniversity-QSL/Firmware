@@ -99,7 +99,7 @@ int att_control_thread_main(int argc, char *argv[]) {
         
         for (unsigned i = 0; i < NUM_ACTUATOR_CONTROLS; i++) {
                 actuators.control[i] = 0.0f;
-	}
+        }
         orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
 
         struct pollfd fd_sp[1];
@@ -148,10 +148,10 @@ int att_control_thread_main(int argc, char *argv[]) {
         while (!thread_should_exit) {
                 int ret_sp = poll(fd_sp, 1, 1);
                 if (ret_sp < 0) {
-			warnx("poll sp error");
-		} else if (ret_sp == 0) {
-			/* no return value - nothing has happened */
-		} else if (fd_sp[0].revents & POLLIN) {
+                        warnx("poll sp error");
+                } else if (ret_sp == 0) {
+                        /* no return value - nothing has happened */
+                } else if (fd_sp[0].revents & POLLIN) {
                         orb_copy(ORB_ID(quad_att_sp), quad_sp_sub, &sp);
                         /* printf("yes, vi fik et SP poll\n"); */
                 } else {
@@ -277,43 +277,43 @@ static void usage(const char *reason) {
 
 int quad_att_control_main(int argc, char *argv[]) {
         if (argc < 1)
-		usage("missing argument");
+                usage("missing argument");
 
-	if (!strcmp(argv[1], "start")) {
+        if (!strcmp(argv[1], "start")) {
 
-		if (thread_running) {
-			printf("att_control already running\n");
+                if (thread_running) {
+                        printf("att_control already running\n");
 
-			exit(0);
-		}
+                        exit(0);
+                }
 
-		thread_should_exit = false;
-		daemon_task = task_spawn_cmd("att_control",
+                thread_should_exit = false;
+                daemon_task = task_spawn_cmd("att_control",
                                              SCHED_DEFAULT,
                                              SCHED_PRIORITY_MAX - 5,
                                              2048,
                                              att_control_thread_main,
                                              (argv) ? (const char **)&argv[2] : (const char **)NULL);
-		thread_running = true;
-		exit(0);
-	}
+                thread_running = true;
+                exit(0);
+        }
 
-	if (!strcmp(argv[1], "stop")) {
-		thread_should_exit = true;
-		exit(0);
-	}
+        if (!strcmp(argv[1], "stop")) {
+                thread_should_exit = true;
+                exit(0);
+        }
 
-	if (!strcmp(argv[1], "status")) {
-		if (thread_running) {
-			printf("\tatt_control is running\n");
+        if (!strcmp(argv[1], "status")) {
+                if (thread_running) {
+                        printf("\tatt_control is running\n");
 
-		} else {
-			printf("\tatt_control not started\n");
-		}
+                } else {
+                        printf("\tatt_control not started\n");
+                }
 
-		exit(0);
-	}
+                exit(0);
+        }
 
-	usage("unrecognized command");
-	exit(1);
+        usage("unrecognized command");
+        exit(1);
 }
