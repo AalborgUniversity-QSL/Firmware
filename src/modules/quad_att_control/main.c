@@ -131,8 +131,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                 Kd_yaw = 0.1,
                 Kp_thrust = 0.000018,
                 Kd_thrust = 0.000034,
-                Kp_pos = 0.0000125,
-                Kd_pos = 0.000014,
+                Kp_pos = 0.000125,
+                Kd_pos = 0.00014,
                 dt = 0.01,
                 dt_z = 0.1,
                 anti_gravity = 0.45,
@@ -182,11 +182,11 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                         error.thrust = sp.z - qmsg.z;
 
-                                        if ( error.thrust > (float)1000 ) {
-                                                error.thrust = 1000;
-                                        } else if ( error.thrust < (float)0 ) {
-                                                error.thrust = 0;
-                                        }
+                                        // if ( error.thrust > (float)1000 ) {
+                                        //         error.thrust = 1000;
+                                        // } else if ( error.thrust < (float)0 ) {
+                                        //         error.thrust = 0;
+                                        // }
 
                                         error_thrust_der = (error.thrust - error_thrust_old)/dt_z;
                                         out.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error_thrust_der + anti_gravity;
@@ -220,8 +220,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 error_old.pitch = error.pitch;
                                 error_old.yaw = error.yaw;
 
-                                out.roll = (float)Kp * (float)error.roll + Kd * error_der.roll - Kp_pos * pos_error.y - Kd_pos * error_y_der;
-                                out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch - Kp_pos * pos_error.x - Kd_pos * error_x_der;
+                                out.roll =  - Kp_pos * pos_error.y - Kd_pos * error_y_der + (float)Kp * (float)error.roll + Kd * error_der.roll;
+                                out.pitch = - Kp_pos * pos_error.x - Kd_pos * error_x_der + (float)Kp * (float)error.pitch + Kd * error_der.pitch ;
                                 out.yaw = (float)Kp_yaw * (float)error.yaw + Kd_yaw * error_der.yaw;
 
                                 if ( out.roll > (float)1 ) {
@@ -260,8 +260,9 @@ int att_control_thread_main(int argc, char *argv[]) {
                 actuators.control[2] = (float)out.yaw;
                 actuators.control[3] = (float)out.thrust;
 
-                /* mavlink_log_info(mavlink_fd, "[quad_att] x:%.3f y:%.3f z:%.3f", (double)qmsg.x, (double)qmsg.y, (double)qmsg.z);
-                 * mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f yaw:%.3f", (double)v_att.roll, (double)v_att.pitch, (double)v_att.yaw); */
+                // mavlink_log_info(mavlink_fd, "[quad_att] x:%.3f y:%.3f z:%.3f", (double)qmsg.x, (double)qmsg.y, (double)qmsg.z);
+                // mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f yaw:%.3f", (double)v_att.roll, (double)v_att.pitch, (double)v_att.yaw); 
+		mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f y:%.3f T:%.3f", (double)out.roll, (double)out.pitch, (double)out.yaw, (double)out.thrust); 
 
                 orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
         }
