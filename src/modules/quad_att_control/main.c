@@ -231,10 +231,10 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 pos_pitch = - Kp_pos * pos_error.x - Kd_pos * error_x_der;
 
                                 if ((float)fabs(pos_roll) > (float)pos_max)
-                                        pos_roll = pos_max * (pos_roll/(float)fabs(pos_roll));
+                                        pos_roll = pos_max * (pos_roll / (float)fabs(pos_roll));
 
                                 if ((float)fabs(pos_pitch) > (float)pos_max)
-                                        pos_pitch = pos_max * (pos_pitch/(float)fabs(pos_pitch));
+                                        pos_pitch = pos_max * (pos_pitch / (float)fabs(pos_pitch));
 
                                 out.roll =  (float)Kp * (float)error.roll + Kd * error_der.roll + pos_roll;
                                 out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch + pos_pitch;
