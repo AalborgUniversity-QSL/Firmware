@@ -131,18 +131,21 @@ int att_control_thread_main(int argc, char *argv[]) {
                 Kd_yaw = 0.12,
                 Kp_thrust = 0.000025,
                 Kd_thrust = 0.000040,
-                // Kp_pos = 0.00006,//125,
-                // Kd_pos = 0.0001,
+                Kp_pos = 0.00006,//125,
+                Kd_pos = 0.0001,
                 dt = 0.01,
                 dt_z = 0.1,
                 anti_gravity = 0.45,
                 error_thrust_der = 0,
                 error_thrust_old = 0,
-                // error_x_der  = 0,
-                // error_x_old = 0,
-                // error_y_der = 0,
-                // error_y_old = 0,
-                abs_yaw = 0;
+                error_x_der  = 0,
+                error_x_old = 0,
+                error_y_der = 0,
+                error_y_old = 0,
+                abs_yaw = 0,
+                pos_max = 0.1,
+                pos_roll = 0,
+                pos_pitch = 0;
 
         bool first = true;
 
@@ -202,14 +205,14 @@ int att_control_thread_main(int argc, char *argv[]) {
                                                 out.thrust = anti_gravity;
                                         }
                                         
-                                        // pos_error.x = pos_offset.x - qmsg.x;
-                                        // pos_error.y = pos_offset.y - qmsg.y;
+                                        pos_error.x = pos_offset.x - qmsg.x;
+                                        pos_error.y = pos_offset.y - qmsg.y;
                                         
-                                        // error_x_der = (pos_error.x - error_x_old)/dt_z;
-                                        // error_y_der = (pos_error.y - error_y_old)/dt_z;
+                                        error_x_der = (pos_error.x - error_x_old)/dt_z;
+                                        error_y_der = (pos_error.y - error_y_old)/dt_z;
 
-                                        // error_x_old = pos_error.x;
-                                        // error_y_old = pos_error.y;
+                                        error_x_old = pos_error.x;
+                                        error_y_old = pos_error.y;
                                 }
                        
                                 error.roll = sp.roll - v_att.roll;
@@ -224,8 +227,17 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 error_old.pitch = error.pitch;
                                 error_old.yaw = error.yaw;
 
-                                out.roll =  /*- Kp_pos * pos_error.y - Kd_pos * error_y_der + */(float)Kp * (float)error.roll + Kd * error_der.roll;
-                                out.pitch = /*- Kp_pos * pos_error.x - Kd_pos * error_x_der + */(float)Kp * (float)error.pitch + Kd * error_der.pitch;
+                                pos_roll = - Kp_pos * pos_error.y - Kd_pos * error_y_der;
+                                pos_pitch = - Kp_pos * pos_error.x - Kd_pos * error_x_der;
+
+                                if ((float)fabs(pos_roll) > (float)pos_max)
+                                        pos_roll = pos_max * (pos_roll/(float)fabs(pos_roll));
+
+                                if ((float)fabs(pos_pitch) > (float)pos_max)
+                                        pos_pitch = pos_max * (pos_pitch/(float)fabs(pos_pitch));
+
+                                out.roll =  (float)Kp * (float)error.roll + Kd * error_der.roll + pos_roll;
+                                out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch + pos_pitch;
                                 out.yaw = (float)Kp_yaw * (float)error.yaw + Kd_yaw * error_der.yaw;
 
                                 if ( out.roll > (float)1 ) {
