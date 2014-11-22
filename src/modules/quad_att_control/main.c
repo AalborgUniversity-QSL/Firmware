@@ -127,11 +127,11 @@ int att_control_thread_main(int argc, char *argv[]) {
         
         float   Kp = 0.11,
                 Kd = 0.016,
-                Kp_yaw = 0.08,//0.018,
+                Kp_yaw = 0.08,
                 Kd_yaw = 0.12,
                 Kp_thrust = 0.000025,
                 Kd_thrust = 0.000040,
-                Kp_pos = 0.00006,//125,
+                Kp_pos = 0.00006,
                 Kd_pos = 0.0001,
                 dt = 0.01,
                 dt_z = 0.1,
@@ -145,7 +145,12 @@ int att_control_thread_main(int argc, char *argv[]) {
                 abs_yaw = 0,
                 pos_max = 0.1,
                 pos_roll = 0,
-                pos_pitch = 0;
+                pos_pitch = 0,
+                rp_max = 0.6,
+                yaw_max = 0.6,
+                d_time = 0,
+                time = 0,
+                time_old = 0;
 
         bool first = true;
 
@@ -179,7 +184,13 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 orb_check(qmsg_sub, &qmsg_updated);
                                 if (qmsg_updated) {
                                         orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
-
+                                        
+                                        /* Calculating time between qmsg from gnd */
+                                        time = (hrt_absolute_time() / (float)1000000);
+                                        d_time = time - time_old;
+                                        mavlink_log_info(mavlink_fd, "[quad_att] delta time:%.3f", (double)d_time);
+                                        time_old = time;
+                                        
                                         if ( first == true ) {
                                                 v_att_offset.yaw = v_att.yaw;
                                                 pos_offset.x = qmsg.x;
@@ -230,33 +241,24 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 pos_roll = - Kp_pos * pos_error.y - Kd_pos * error_y_der;
                                 pos_pitch = - Kp_pos * pos_error.x - Kd_pos * error_x_der;
 
-                                if ((float)fabs(pos_roll) > (float)pos_max)
+                                if ((float)fabs(pos_roll) > pos_max)
                                         pos_roll = pos_max * (pos_roll / (float)fabs(pos_roll));
 
-                                if ((float)fabs(pos_pitch) > (float)pos_max)
+                                if ((float)fabs(pos_pitch) > pos_max)
                                         pos_pitch = pos_max * (pos_pitch / (float)fabs(pos_pitch));
 
                                 out.roll =  (float)Kp * (float)error.roll + Kd * error_der.roll + pos_roll;
                                 out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch + pos_pitch;
                                 out.yaw = (float)Kp_yaw * (float)error.yaw + Kd_yaw * error_der.yaw;
 
-                                if ( out.roll > (float)1 ) {
-                                        out.roll = 1.f;
-                                } else if ( out.roll < (float)-1 ) {
-                                        out.roll = -1;
-                                }
+                                if ( (float)fabs(out.roll) > rp_max )
+                                        out.roll = rp_max * (out.roll / (float)fabs(out.roll));
 
-                                if ( out.pitch > (float)1 ) {
-                                        out.pitch = 1.f;
-                                } else if ( out.pitch < (float)-1 ) {
-                                        out.pitch = -1;
-                                }
+                                if ( (float)fabs(out.pitch) > rp_max )
+                                        out.pitch = rp_max * (out.pitch / (float)fabs(out.pitch));
 
-                                if ( out.yaw > (float)1 ) {
-                                        out.yaw = 1.f;
-                                } else if ( out.yaw < (float)-1 ) {
-                                        out.yaw = -1;
-                                }
+                                if ( (float)fabs(out.yaw) > yaw_max )
+                                        out.yaw = yaw_max * (out.yaw / (float)fabs(out.yaw));
                        
                         } else {
                                 /* nothing happened */
