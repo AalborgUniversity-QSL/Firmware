@@ -141,7 +141,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                 error_x_der  = 0,
                 error_x_old = 0,
                 error_y_der = 0,
-                error_y_old = 0;
+                error_y_old = 0,
+                abs_yaw = 0;
 
         bool first = true;
 
@@ -168,6 +169,9 @@ int att_control_thread_main(int argc, char *argv[]) {
                         } else if (fd_v_att[0].revents & POLLIN) {
                                 orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
 
+                                abs_yaw = fabs(v_att.yaw);
+                                v_att.yaw = ((float)3.141592 - abs_yaw) * (v_att.yaw / abs_yaw);
+                                
                                 bool qmsg_updated;
                                 orb_check(qmsg_sub, &qmsg_updated);
                                 if (qmsg_updated) {
@@ -210,7 +214,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                        
                                 error.roll = sp.roll - v_att.roll;
                                 error.pitch = sp.pitch - v_att.pitch;
-                                error.yaw = sp.yaw - v_att.yaw + v_att_offset.yaw;
+                                error.yaw = sp.yaw -v_att.yaw + v_att_offset.yaw;
 
                                 error_der.roll = (error.roll - error_old.roll)/dt;
                                 error_der.pitch = (error.pitch - error_old.pitch)/dt;
