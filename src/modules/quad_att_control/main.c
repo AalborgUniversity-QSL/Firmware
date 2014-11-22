@@ -257,7 +257,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 }
                 actuators.control[0] = (float)out.roll;
                 actuators.control[1] = (float)out.pitch;
-                actuators.control[2] = (float)out.yaw;
+                actuators.control[2] = (float)0;//(float)out.yaw;
                 actuators.control[3] = (float)out.thrust;
 
                 // mavlink_log_info(mavlink_fd, "[quad_att] x:%.3f y:%.3f z:%.3f", (double)qmsg.x, (double)qmsg.y, (double)qmsg.z);
