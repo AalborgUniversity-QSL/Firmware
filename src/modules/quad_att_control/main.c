@@ -133,8 +133,6 @@ int att_control_thread_main(int argc, char *argv[]) {
                 Kd_thrust = 0.000040,
                 Kp_pos = 0.00006,
                 Kd_pos = 0.0001,
-                dt = 0.01,
-                dt_z = 0.1,
                 anti_gravity = 0.45,
                 error_thrust_der = 0,
                 error_thrust_old = 0,
@@ -146,14 +144,17 @@ int att_control_thread_main(int argc, char *argv[]) {
                 pos_max = 0.1,
                 pos_roll = 0,
                 pos_pitch = 0,
-                rp_max = 0.6,
-                yaw_max = 0.6,
-                d_time = 0,
+                rp_max = 0.4,   /* roll and pitch maximum output */
+                yaw_max = 0.4,  /* yaw maximum output */
+                dt = 0.01,
+                dt_z = 0.1,
                 time = 0,
-                time_old = 0;
+                time_old = 0,
+                time_att = 0,
+                time_att_old = 0;
 
         bool    first = true,
-                output = false;
+                output = true;
 
         while (!thread_should_exit) {
                 int ret_sp = poll(fd_sp, 1, 1);
@@ -188,8 +189,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         
                                         /* Calculating time between qmsg from gnd */
                                         time = (hrt_absolute_time() / (float)1000000);
-                                        d_time = time - time_old;
-                                        mavlink_log_info(mavlink_fd, "[quad_att] delta time:%.3f", (double)d_time);
+                                        dt_z = time - time_old;
+                                        /* mavlink_log_info(mavlink_fd, "[quad_att] delta time:%.3f, rate [Hz]: %.3f", (double)dt_z, (double)(1 / dt_z)); */
                                         time_old = time;
                                         
                                         if ( first == true ) {
@@ -231,6 +232,10 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 error.pitch = sp.pitch - v_att.pitch;
                                 error.yaw = sp.yaw -v_att.yaw + v_att_offset.yaw;
 
+                                time_att = (hrt_absolute_time() / (float)1000000);
+                                dt = time_att - time_att_old;
+                                time_att_old = time_att;
+
                                 error_der.roll = (error.roll - error_old.roll)/dt;
                                 error_der.pitch = (error.pitch - error_old.pitch)/dt;
                                 error_der.yaw = (error.yaw - error_old.yaw)/dt;
@@ -239,19 +244,23 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 error_old.pitch = error.pitch;
                                 error_old.yaw = error.yaw;
 
+                                /* Calculating position controllers outputs */
                                 pos_roll = - Kp_pos * pos_error.y - Kd_pos * error_y_der;
                                 pos_pitch = - Kp_pos * pos_error.x - Kd_pos * error_x_der;
 
+                                /* Limiting position controllers output */
                                 if ((float)fabs(pos_roll) > pos_max)
                                         pos_roll = pos_max * (pos_roll / (float)fabs(pos_roll));
 
                                 if ((float)fabs(pos_pitch) > pos_max)
                                         pos_pitch = pos_max * (pos_pitch / (float)fabs(pos_pitch));
 
+                                /* Calculate attitude controllers output */
                                 out.roll =  (float)Kp * (float)error.roll + Kd * error_der.roll + pos_roll;
                                 out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch + pos_pitch;
                                 out.yaw = (float)Kp_yaw * (float)error.yaw + Kd_yaw * error_der.yaw;
 
+                                /* Limiting attitude controllers output */
                                 if ( (float)fabs(out.roll) > rp_max )
                                         out.roll = rp_max * (out.roll / (float)fabs(out.roll));
 
@@ -280,14 +289,14 @@ int att_control_thread_main(int argc, char *argv[]) {
                         actuators.control[1] = (float)out.pitch;
                         actuators.control[2] = (float)out.yaw;
                         actuators.control[3] = (float)out.thrust;
+
+                        orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
                 }
 
                 /* mavlink_log_info(mavlink_fd, "[quad_att] y:%.3f", (double)v_att.yaw); */
                 // mavlink_log_info(mavlink_fd, "[quad_att] x:%.3f y:%.3f z:%.3f", (double)qmsg.x, (double)qmsg.y, (double)qmsg.z);
                 // mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f yaw:%.3f", (double)v_att.roll, (double)v_att.pitch, (double)v_att.yaw); 
 		/* mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f y:%.3f T:%.3f", (double)out.roll, (double)out.pitch, (double)out.yaw, (double)out.thrust);  */
-
-                orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
         }
 }
 
