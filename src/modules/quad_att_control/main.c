@@ -149,6 +149,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 dt = 0.01,
                 dt_z = 0.1,
                 time = 0,
+                t = 0,
                 time_old = 0,
                 time_att = 0,
                 time_att_old = 0;
@@ -293,7 +294,13 @@ int att_control_thread_main(int argc, char *argv[]) {
                         actuators.control[0] = (float)out.roll;
                         actuators.control[1] = (float)out.pitch;
                         actuators.control[2] = (float)out.yaw;
-                        actuators.control[3] = (float)out.thrust;
+                        if (t<200){
+                                actuators.control[3] = anti_gravity;
+                                t += 1;
+                        }
+                        else{
+                                actuators.control[3] = (float)out.thrust;
+                        }
 
                         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
                 }
