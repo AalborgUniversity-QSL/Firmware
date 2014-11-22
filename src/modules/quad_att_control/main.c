@@ -149,10 +149,11 @@ int att_control_thread_main(int argc, char *argv[]) {
                 dt = 0.01,
                 dt_z = 0.1,
                 time = 0,
-                t = 0,
                 time_old = 0,
                 time_att = 0,
                 time_att_old = 0;
+
+        int     t = 0;
 
         bool    first = true,
                 output = true;  /* enabling and disabling actuator outputs  */
@@ -294,11 +295,10 @@ int att_control_thread_main(int argc, char *argv[]) {
                         actuators.control[0] = (float)out.roll;
                         actuators.control[1] = (float)out.pitch;
                         actuators.control[2] = (float)out.yaw;
-                        if (t<200){
+                        if ( t < 200 ) {
                                 actuators.control[3] = anti_gravity;
                                 t += 1;
-                        }
-                        else{
+                        } else {
                                 actuators.control[3] = (float)out.thrust;
                         }
 
