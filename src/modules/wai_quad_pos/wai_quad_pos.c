@@ -39,7 +39,7 @@ static void usage(const char *reason);
 // struct quad_formation_msg_s update_quad_topic(void);
 
 
-static bool thread_running = false;
+// static bool thread_running = false;
 static bool thread_should_exit = false;
 static int daemon_task;
 
