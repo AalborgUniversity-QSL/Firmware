@@ -38,6 +38,7 @@
 #include <systemlib/perf_counter.h>
 #include <systemlib/systemlib.h>
 #include <systemlib/err.h>
+#include <lib/mathlib/mathlib.h>
 
 struct attError_s {
         float roll;
@@ -182,7 +183,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
 
                                 abs_yaw = fabs(v_att.yaw);
-                                v_att.yaw = (float)-1 * (((float)3.141592 - abs_yaw) * (v_att.yaw / abs_yaw)); /* Correct the yaw angle to be about zero */
+                                v_att.yaw = (float)-1 * ((PI - abs_yaw) * (v_att.yaw / abs_yaw)); /* Correct the yaw angle to be about zero */
 
                                 bool qmsg_updated;
                                 orb_check(qmsg_sub, &qmsg_updated);
