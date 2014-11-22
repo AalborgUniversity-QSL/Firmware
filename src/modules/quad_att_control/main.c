@@ -126,21 +126,21 @@ int att_control_thread_main(int argc, char *argv[]) {
         memset(&pos_error, 0, sizeof(pos_error));
         
         float   Kp = 0.11,
-                Kd = 0.016,
+                Kd = 0.016,     /* Controller constants for roll and pitch controllers */
                 Kp_yaw = 0.08,
-                Kd_yaw = 0.12,
+                Kd_yaw = 0.12,  /* Controller constants for yaw controller */
                 Kp_thrust = 0.000025,
-                Kd_thrust = 0.000040,
+                Kd_thrust = 0.000040, /* Controller constants for thrust controller */
                 Kp_pos = 0.00006,
-                Kd_pos = 0.0001,
-                anti_gravity = 0.45,
+                Kd_pos = 0.0001, /* Controller constants for position controller */
+                anti_gravity = 0.45, /* Thrust offset */
                 error_thrust_der = 0,
                 error_thrust_old = 0,
                 error_x_der  = 0,
                 error_x_old = 0,
                 error_y_der = 0,
                 error_y_old = 0,
-                abs_yaw = 0,
+                abs_yaw = 0,    /* Constant for use in yaw controller */
                 pos_max = 0.1,
                 pos_roll = 0,
                 pos_pitch = 0,
@@ -154,7 +154,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 time_att_old = 0;
 
         bool    first = true,
-                output = true;
+                output = true;  /* enabling and disabling actuator outputs  */
 
         while (!thread_should_exit) {
                 int ret_sp = poll(fd_sp, 1, 1);
@@ -180,19 +180,20 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
 
                                 abs_yaw = fabs(v_att.yaw);
-                                v_att.yaw = (float)-1 * (((float)3.141592 - abs_yaw) * (v_att.yaw / abs_yaw));
+                                v_att.yaw = (float)-1 * (((float)3.141592 - abs_yaw) * (v_att.yaw / abs_yaw)); /* Correct the yaw angle to be about zero */
 
                                 bool qmsg_updated;
                                 orb_check(qmsg_sub, &qmsg_updated);
-                                if (qmsg_updated) {
+                                if (qmsg_updated) { /* Positional and command loop */
                                         orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
                                         
-                                        /* Calculating time between qmsg from gnd */
+                                        /* Calculating dt for position loop */
                                         time = (hrt_absolute_time() / (float)1000000);
                                         dt_z = time - time_old;
                                         /* mavlink_log_info(mavlink_fd, "[quad_att] delta time:%.3f, rate [Hz]: %.3f", (double)dt_z, (double)(1 / dt_z)); */
                                         time_old = time;
-                                        
+
+                                        /* Saving offsets (only first loop) */
                                         if ( first == true ) {
                                                 v_att_offset.yaw = v_att.yaw;
                                                 pos_offset.x = qmsg.x;
@@ -227,19 +228,23 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         error_x_old = pos_error.x;
                                         error_y_old = pos_error.y;
                                 }
-                       
+
+                                /* Calculating attitude error */
                                 error.roll = sp.roll - v_att.roll;
                                 error.pitch = sp.pitch - v_att.pitch;
                                 error.yaw = sp.yaw -v_att.yaw + v_att_offset.yaw;
 
+                                /* Calculating dt for attitude loop */
                                 time_att = (hrt_absolute_time() / (float)1000000);
                                 dt = time_att - time_att_old;
                                 time_att_old = time_att;
 
+                                /* Calculating the derivative of the attitude error */
                                 error_der.roll = (error.roll - error_old.roll)/dt;
                                 error_der.pitch = (error.pitch - error_old.pitch)/dt;
                                 error_der.yaw = (error.yaw - error_old.yaw)/dt;
 
+                                /* Saving attitude error for next loop */
                                 error_old.roll = error.roll;
                                 error_old.pitch = error.pitch;
                                 error_old.yaw = error.yaw;
