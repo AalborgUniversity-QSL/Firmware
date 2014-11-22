@@ -222,7 +222,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                                 out.thrust = anti_gravity;
                                         }
 
-                                        if ( (t0 + (float)5) < (float)time ) {
+                                        if ( (t0 + (float)5) > (float)time ) {
                                                 out.thrust = anti_gravity;
                                                 mavlink_log_info(mavlink_fd, "[quad_att] t0:%.2f\t time: %.2f", (double)t0, (double)time);
                                         }
