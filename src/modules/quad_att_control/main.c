@@ -149,7 +149,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 dt = 0.01,
                 dt_z = 0.1,
                 time = 0,
-                t = 0,
+                t0 = 0,
                 time_old = 0,
                 time_att = 0,
                 time_att_old = 0;
@@ -201,7 +201,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                                 pos_offset.x = qmsg.x;
                                                 pos_offset.y = qmsg.y;
                                                 first = false;
-                                                t = time;
+                                                t0 = time;
                                         }
 
                                         error.thrust = sp.z - qmsg.z;
@@ -278,8 +278,10 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 if ( (float)fabs(out.yaw) > yaw_max )
                                         out.yaw = yaw_max * (out.yaw / (float)fabs(out.yaw));
 
-                                if ( t + 5 < time )
+                                if ( (t0 + (float)5) < (float)time ) {
                                         out.thrust = anti_gravity;
+                                        mavlink_log_info(mavlink_fd, "[quad_att] t0:%.2f\t time: %.2f", (double)t0, (double)time);
+                                }
                        
                         } else {
                                 /* nothing happened */
