@@ -125,12 +125,12 @@ int att_control_thread_main(int argc, char *argv[]) {
         struct pos_error_s pos_error;
         memset(&pos_error, 0, sizeof(pos_error));
         
-        float   Kp = 0.17,
-                Kd = 0.02,
-                Kp_yaw = 0.1,//0.018,
-                Kd_yaw = 0.055,
-                Kp_thrust = 0.000018,
-                Kd_thrust = 0.000034,
+        float   Kp = 0.14,
+                Kd = 0.017,
+                Kp_yaw = 0.08,//0.018,
+                Kd_yaw = 0.12,
+                Kp_thrust = 0.000025,
+                Kd_thrust = 0.000040,
                 // Kp_pos = 0.00006,//125,
                 // Kd_pos = 0.0001,
                 dt = 0.01,
