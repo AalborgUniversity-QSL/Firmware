@@ -125,11 +125,11 @@ int att_control_thread_main(int argc, char *argv[]) {
         struct pos_error_s pos_error;
         memset(&pos_error, 0, sizeof(pos_error));
         
-        float   Kp = 0.11,
-                Kd = 0.016,     /* Controller constants for roll and pitch controllers */
+        float   Kp = 0.15,//11,
+                Kd = 0.045,//16,     /* Controller constants for roll and pitch controllers */
                 Kp_yaw = 0.08,
                 Kd_yaw = 0.12,  /* Controller constants for yaw controller */
-                Kp_thrust = 0.000025,
+                Kp_thrust = 0.0003, //0.000025
                 Kd_thrust = 0.000040, /* Controller constants for thrust controller */
                 Kp_pos = 0.00006,
                 Kd_pos = 0.0001, /* Controller constants for position controller */
@@ -144,7 +144,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 pos_max = 0.1,
                 pos_roll = 0,
                 pos_pitch = 0,
-                rp_max = 0.4,   /* roll and pitch maximum output */
+                rp_max = 0.6,   /* roll and pitch maximum output */
                 yaw_max = 0.4,  /* yaw maximum output */
                 dt = 0.01,
                 dt_z = 0.1,
@@ -222,9 +222,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                                                 out.thrust = anti_gravity;
                                         }
 
-                                        if ( (t0 + (float)5) > (float)time ) {
+                                        if ( (t0 + (float)3) > (float)time ) {
                                                 out.thrust = anti_gravity;
-                                                mavlink_log_info(mavlink_fd, "[quad_att] t0:%.2f\t time: %.2f", (double)t0, (double)time);
                                         }
                                         
                                         pos_error.x = pos_offset.x - qmsg.x;
@@ -261,6 +260,9 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 pos_roll = - Kp_pos * pos_error.y - Kd_pos * error_y_der;
                                 pos_pitch = - Kp_pos * pos_error.x - Kd_pos * error_x_der;
 
+                                pos_roll = 0;
+                                pos_pitch = 0;
+
                                 /* Limiting position controllers output */
                                 if ((float)fabs(pos_roll) > pos_max)
                                         pos_roll = pos_max * (pos_roll / (float)fabs(pos_roll));
@@ -292,6 +294,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         out.roll = 0.f;
                         out.pitch = 0.f;
                         out.yaw = 0.f;
+                        first = true;
 
                 } else {
                         /* Nothhing to do */
