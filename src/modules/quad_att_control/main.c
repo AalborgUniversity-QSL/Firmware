@@ -170,7 +170,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
 
                                 abs_yaw = fabs(v_att.yaw);
-                                v_att.yaw = ((float)3.141592 - abs_yaw) * (v_att.yaw / abs_yaw);
+                                v_att.yaw = (float)-1 * (((float)3.141592 - abs_yaw) * (v_att.yaw / abs_yaw));
 
                                 bool qmsg_updated;
                                 orb_check(qmsg_sub, &qmsg_updated);
@@ -259,11 +259,11 @@ int att_control_thread_main(int argc, char *argv[]) {
                 } else {
                         /* Nothhing to do */
                 }
-                actuators.control[0] = (float)0;//(float)out.roll;
-                actuators.control[1] = (float)0;//(float)out.pitch;
+                actuators.control[0] = (float)out.roll;
+                actuators.control[1] = (float)out.pitch;
                 actuators.control[2] = (float)out.yaw;
                 actuators.control[3] = (float)out.thrust;
-                mavlink_log_info(mavlink_fd, "[quad_att] y:%.3f", (double)v_att.yaw);
+                /* mavlink_log_info(mavlink_fd, "[quad_att] y:%.3f", (double)v_att.yaw); */
                 // mavlink_log_info(mavlink_fd, "[quad_att] x:%.3f y:%.3f z:%.3f", (double)qmsg.x, (double)qmsg.y, (double)qmsg.z);
                 // mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f yaw:%.3f", (double)v_att.roll, (double)v_att.pitch, (double)v_att.yaw); 
 		/* mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f y:%.3f T:%.3f", (double)out.roll, (double)out.pitch, (double)out.yaw, (double)out.thrust);  */
