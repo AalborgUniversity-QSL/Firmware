@@ -152,7 +152,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                 time = 0,
                 time_old = 0;
 
-        bool first = true;
+        bool    first = true,
+                output = false;
 
         while (!thread_should_exit) {
                 int ret_sp = poll(fd_sp, 1, 1);
@@ -273,10 +274,14 @@ int att_control_thread_main(int argc, char *argv[]) {
                 } else {
                         /* Nothhing to do */
                 }
-                actuators.control[0] = (float)out.roll;
-                actuators.control[1] = (float)out.pitch;
-                actuators.control[2] = (float)out.yaw;
-                actuators.control[3] = (float)out.thrust;
+
+                if ( output == true ) {
+                        actuators.control[0] = (float)out.roll;
+                        actuators.control[1] = (float)out.pitch;
+                        actuators.control[2] = (float)out.yaw;
+                        actuators.control[3] = (float)out.thrust;
+                }
+
                 /* mavlink_log_info(mavlink_fd, "[quad_att] y:%.3f", (double)v_att.yaw); */
                 // mavlink_log_info(mavlink_fd, "[quad_att] x:%.3f y:%.3f z:%.3f", (double)qmsg.x, (double)qmsg.y, (double)qmsg.z);
                 // mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f yaw:%.3f", (double)v_att.roll, (double)v_att.pitch, (double)v_att.yaw); 
