@@ -20,6 +20,7 @@ Build/*
 core
 cscope.out
 Firmware.sublime-workspace
+Firmware.sublime-project
 Images/*.bin
 Images/*.px4
 mavlink/include/mavlink/v0.9/
