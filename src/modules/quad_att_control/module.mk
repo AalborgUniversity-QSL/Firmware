@@ -3,5 +3,5 @@
 #
 
 MODULE_COMMAND	= quad_att_control
-SRCS		= main.c
+SRCS		= quad_att_control_main.c
 MODULE_STACKSIZE = 1200

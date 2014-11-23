@@ -40,31 +40,8 @@
 #include <systemlib/err.h>
 #include <lib/mathlib/mathlib.h>
 
-struct attError_s {
-        float roll;
-        float pitch;
-        float yaw;
-        float thrust;
-};
+#include "quad_att_control_main.h"
 
-struct output_s {
-        float roll;
-        float pitch;
-        float yaw;
-        float thrust;
-};
-
-struct pos_s {
-        float x;
-        float y;
-        float z;
-};
-
-struct pos_error_s {
-        float x;
-        float y;
-        float z;
-};
 
 /* Function prototypes */
 __EXPORT int quad_att_control_main(int argc, char *argv[]);
@@ -179,7 +156,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 warnx("poll sp error");
                         } else if (ret_v_att == 0) {
                                 /* no return value - nothing has happened */
-                        } else if (fd_v_att[0].revents & POLLIN) {
+                        } else if (fd_v_att[0].revents & POLLIN) { /* Inner loop - handles attitude control */
                                 orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
 
                                 abs_yaw = fabs(v_att.yaw);
@@ -187,7 +164,7 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                 bool qmsg_updated;
                                 orb_check(qmsg_sub, &qmsg_updated);
-                                if (qmsg_updated) { /* Positional and command loop */
+                                if (qmsg_updated) { /* Outer loop - handles positional feedback */
                                         orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
                                         
                                         /* Calculating dt for position loop */
@@ -271,7 +248,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 if ((float)fabs(pos_pitch) > pos_max)
                                         pos_pitch = pos_max * (pos_pitch / (float)fabs(pos_pitch));
 
-                                /* Calculate attitude controllers output */
+                                /* Calculate attitude controllers output - and fusing positional controls with attitude controls*/
                                 out.roll =  (float)Kp * (float)error.roll + Kd * error_der.roll + pos_roll;
                                 out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch + pos_pitch;
                                 out.yaw = (float)Kp_yaw * (float)error.yaw + Kd_yaw * error_der.yaw;
