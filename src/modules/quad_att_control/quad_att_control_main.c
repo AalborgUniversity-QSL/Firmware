@@ -110,7 +110,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 Kp_thrust = 0.0003, //0.000025
                 Kd_thrust = 0.000040, /* Controller constants for thrust controller */
                 Kp_pos = 0.00006,
-                Kd_pos = 0.0001, /* Controller constants for position controller */
+                Kd_pos = 0.00001, /* Controller constants for position controller */
                 anti_gravity = 0.41, /* Thrust offset */
                 error_thrust_der = 0,
                 error_thrust_old = 0,
@@ -119,7 +119,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 error_y_der = 0,
                 error_y_old = 0,
                 abs_yaw = 0,    /* Constant for use in yaw controller */
-                pos_max = 0.1,
+                pos_max = 0.01,
                 pos_roll = 0,
                 pos_pitch = 0,
                 rp_max = 0.6,   /* roll and pitch maximum output */
@@ -242,8 +242,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 pos_pitch = - Kp_pos * pos_error.x - Kd_pos * error_x_der;
 
                                 /* killing position controllers */
-                                pos_roll = 0;
-                                pos_pitch = 0;
+                                // pos_roll = 0;
+                                // pos_pitch = 0;
 
                                 /* Limiting position controllers output */
                                 if ((float)fabs(pos_roll) > pos_max)
