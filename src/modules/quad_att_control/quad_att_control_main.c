@@ -135,7 +135,8 @@ int att_control_thread_main(int argc, char *argv[]) {
 
         bool    first = true,
                 output = true;  /* enabling and disabling actuator outputs  */
-        int     n = 0;
+
+        /* int     n = 0; */
 
         while (!thread_should_exit) {
                 int ret_sp = poll(fd_sp, 1, 1);
@@ -287,7 +288,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         }       
 
                 } else if ( sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP ) {
-                /* emergency_shutdown: /\* Only used if an emergency arises. Seriously a problem if necessary *\/ */
+                emergency_shutdown: /* Only used if an emergency arises. Seriously a problem if necessary */
                         out.thrust = 0.f;
                         out.roll = 0.f;
                         out.pitch = 0.f;
