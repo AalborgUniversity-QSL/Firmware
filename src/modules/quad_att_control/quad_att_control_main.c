@@ -164,12 +164,16 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                 bool qmsg_updated;
                                 orb_check(qmsg_sub, &qmsg_updated);
-                                if (qmsg_updated) { /* Outer loop - handles positional feedback */
+                                if ( qmsg_updated ) { /* Outer loop - handles positional feedback */
                                         orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
                                         
                                         /* Calculating dt for position loop */
-                                        time = (hrt_absolute_time() / (float)1000000);
+                                        time = (hrt_absolute_time() / (float)1000000); /* time is in seconds */
                                         dt_z = time - time_old;
+                                        
+                                        if ( dt_z >= (float)1 ) /* Emergency handling if connection from gnd is lost */
+                                                goto emergency_shutdown;
+
                                         /* mavlink_log_info(mavlink_fd, "[quad_att] delta time:%.3f, rate [Hz]: %.3f", (double)dt_z, (double)(1 / dt_z)); */
                                         time_old = time;
 
@@ -227,6 +231,9 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 dt = time_att - time_att_old;
                                 time_att_old = time_att;
 
+                                if ( dt >= (float)0.1 ) /* Emergency handling if attitude estimation is lost */
+                                        goto emergency_shutdown;
+
                                 /* Calculating the derivative of the attitude error */
                                 error_der.roll = (error.roll - error_old.roll)/dt;
                                 error_der.pitch = (error.pitch - error_old.pitch)/dt;
@@ -271,7 +278,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 /* nothing happened */
                         }       
 
-                } else if (sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP) {
+                } else if ( sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP ) {
+                emergency_shutdown: /* Only used if an emergency arise. Seriously a problem if necessary */
                         out.thrust = 0.f;
                         out.roll = 0.f;
                         out.pitch = 0.f;
