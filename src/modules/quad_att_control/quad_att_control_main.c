@@ -203,13 +203,16 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         if ( (t0 + (float)3) > (float)time ) {
                                                 out.thrust = anti_gravity;
                                         }
-                                        
+
+                                        /* Calculating position error */
                                         pos_error.x = pos_offset.x - qmsg.x;
                                         pos_error.y = pos_offset.y - qmsg.y;
                                         
+                                        /* Calculating derivative of position error */
                                         error_x_der = (pos_error.x - error_x_old)/dt_z;
                                         error_y_der = (pos_error.y - error_y_old)/dt_z;
 
+                                        /* Saving position error for next loop */
                                         error_x_old = pos_error.x;
                                         error_y_old = pos_error.y;
                                 }
@@ -238,6 +241,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 pos_roll = - Kp_pos * pos_error.y - Kd_pos * error_y_der;
                                 pos_pitch = - Kp_pos * pos_error.x - Kd_pos * error_x_der;
 
+                                /* killing position controllers */
                                 pos_roll = 0;
                                 pos_pitch = 0;
 
