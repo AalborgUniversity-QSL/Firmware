@@ -231,7 +231,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         error_y_old = pos_error.y;
                                 }
 
-                                if (((hrt_absolute_time() / (float)1000000) - time) > (float)0.5 ) {  /* Emergency handling if connection from gnd is lost */
+                                if ( ((hrt_absolute_time() / (float)1000000) - time) > (float)0.5 ) {  /* Emergency handling if connection from gnd is lost */
                                         sp.cmd = (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP;
                                         goto emergency_shutdown;
                                 }
@@ -246,8 +246,10 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 dt = time_att - time_att_old;
                                 time_att_old = time_att;
 
-                                /* if ( dt >= (float)0.1 ) /\* Emergency handling if attitude estimation is lost *\/
-                                 *         goto emergency_shutdown; */
+                                /* if ( dt >= (float)0.1 ) { /\* Emergency handling if attitude estimation is lost *\/
+                                 *         sp.cmd = (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP;
+                                 *         goto emergency_shutdown;
+                                 * } */
 
                                 /* Calculating the derivative of the attitude error */
                                 error_der.roll = (error.roll - error_old.roll)/dt;
