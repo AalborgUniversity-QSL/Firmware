@@ -174,11 +174,6 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         time = (hrt_absolute_time() / (float)1000000); /* time is in seconds */
                                         dt_z = time - time_old;
                                         
-                                        if ( dt_z >= (float)1 && first == false ) {  /* Emergency handling if connection from gnd is lost */
-                                                sp.cmd = (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP;
-                                                goto emergency_shutdown;
-                                        }
-
                                         /* mavlink_log_info(mavlink_fd, "[quad_att] delta time:%.3f, rate [Hz]: %.3f", (double)dt_z, (double)(1 / dt_z)); */
                                         time_old = time;
 
@@ -234,6 +229,11 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         /* Saving position error for next loop */
                                         error_x_old = pos_error.x;
                                         error_y_old = pos_error.y;
+                                }
+
+                                if (((hrt_absolute_time() / (float)1000000) - time) > (float)0.5 ) {  /* Emergency handling if connection from gnd is lost */
+                                        sp.cmd = (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP;
+                                        goto emergency_shutdown;
                                 }
 
                                 /* Calculating attitude error */
