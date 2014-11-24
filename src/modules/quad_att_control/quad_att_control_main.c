@@ -200,10 +200,10 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                         out.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error_thrust_der + anti_gravity;
                                         
-                                        if (out.thrust > out_thrust_old + (float)0.005){
-                                            out.thrust = out_thrust_old + (float)0.005;
-                                        } else if (out.thrust < out_thrust_old - (float)0.005){
-                                            out.thrust = out_thrust_old - (float)0.005;
+                                        if (out.thrust > out_thrust_old + (float)0.05){
+                                                out.thrust = out_thrust_old + (float)0.05;
+                                        } else if (out.thrust < out_thrust_old - (float)0.05) {
+                                                out.thrust = out_thrust_old - (float)0.05;
                                         }
 
                                         error_thrust_old = error.thrust;
