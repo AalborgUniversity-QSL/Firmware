@@ -279,7 +279,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         }       
 
                 } else if ( sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP ) {
-                /* emergency_shutdown: /\* Only used if an emergency arise. Seriously a problem if necessary *\/ */
+                /* emergency_shutdown: /\* Only used if an emergency arises. Seriously a problem if necessary *\/ */
                         out.thrust = 0.f;
                         out.roll = 0.f;
                         out.pitch = 0.f;
