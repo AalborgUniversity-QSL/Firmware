@@ -103,8 +103,8 @@ int att_control_thread_main(int argc, char *argv[]) {
         struct pos_error_s pos_error;
         memset(&pos_error, 0, sizeof(pos_error));
         
-        float   Kp = 0.17,//11,
-                Kd = 0.045,//16,     /* Controller constants for roll and pitch controllers */
+        float   Kp = 0.8,//17,//11,
+                Kd = 0.05,//16,     /* Controller constants for roll and pitch controllers */
                 Kp_yaw = 0.15,
                 Kd_yaw = 0.12,  /* Controller constants for yaw controller */
                 Kp_thrust = 0.0006, //0.000025
@@ -174,8 +174,10 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         time = (hrt_absolute_time() / (float)1000000); /* time is in seconds */
                                         dt_z = time - time_old;
                                         
-                                        if ( dt_z >= (float)1 && first == false ) /* Emergency handling if connection from gnd is lost */
+                                        if ( dt_z >= (float)1 && first == false ) {  /* Emergency handling if connection from gnd is lost */
+                                                sp.cmd = (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP;
                                                 goto emergency_shutdown;
+                                        }
 
                                         /* mavlink_log_info(mavlink_fd, "[quad_att] delta time:%.3f, rate [Hz]: %.3f", (double)dt_z, (double)(1 / dt_z)); */
                                         time_old = time;
