@@ -249,11 +249,11 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 pos_roll = - Kp_pos * pos_error.y - Kd_pos * error_y_der;
                                 pos_pitch = - Kp_pos * pos_error.x - Kd_pos * error_x_der;
 
-                                n++;
-                                if (n == 100) {
-                                	mavlink_log_info(mavlink_fd, "[quad_att] pos_r:%.3f pos_p: %.3f", (double)pos_roll, (double)pos_pitch);
-                                	n = 0;
-                                }
+                                /* n++;
+                                 * if (n == 100) {
+                                 * 	mavlink_log_info(mavlink_fd, "[quad_att] pos_r:%.3f pos_p: %.3f", (double)pos_roll, (double)pos_pitch);
+                                 * 	n = 0;
+                                 * } */
 
                                 /* killing position controllers */
                                 pos_roll = 0;
