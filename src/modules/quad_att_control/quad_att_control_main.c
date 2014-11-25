@@ -103,20 +103,20 @@ int att_control_thread_main(int argc, char *argv[]) {
         struct pos_error_s pos_error;
         memset(&pos_error, 0, sizeof(pos_error));
         
-        float   Kp = 0.2,//17,//11,
+        float   Kp = 0.3,//17,//11,
                 Kd = 0.01,//16,     /* Controller constants for roll and pitch controllers */
                 Kp_yaw = 0.15,
                 Kd_yaw = 0.12,  /* Controller constants for yaw controller */
-                Kp_thrust = 0.0002,//0.00006, //0.000025
+                Kp_thrust = 0.0001,//0.00006, //0.000025
                 Kd_thrust = 0.00011,//0.000020, /* Controller constants for thrust controller */
                 Kp_pos = 0.00006,
                 Kd_pos = 0.00001, /* Controller constants for position controller */
-                anti_gravity = 0.43, /* Thrust offset */
+                anti_gravity = 0.45, /* Thrust offset */
                 off_set = 0, 
                 min_rotor_speed = 0.33,
                 error_thrust_der = 0,
                 error_thrust_old = 0,
-                // out_thrust_old = 0,
+                out_thrust_old = 0,
                 error_x_der  = 0,
                 error_x_old = 0,
                 error_y_der = 0,
@@ -139,7 +139,7 @@ int att_control_thread_main(int argc, char *argv[]) {
         bool    first = true,
                 output = true;  /* enabling and disabling actuator outputs  */
 
-        /* int     n = 0; */
+        int     n = 0; 
 
         while (!thread_should_exit) {
                 int ret_sp = poll(fd_sp, 1, 1);
@@ -193,15 +193,15 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                         error_thrust_der = (error.thrust - error_thrust_old)/dt_z;
 
-                                        // out_thrust_old = out.thrust,
+                                        out_thrust_old = out.thrust,
 
                                         out.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error_thrust_der;
                                         
-                                        // if (out.thrust > out_thrust_old + (float)0.01){
-                                        //         out.thrust = out_thrust_old + (float)0.01;
-                                        // } else if (out.thrust < out_thrust_old - (float)0.01) {
-                                        //         out.thrust = out_thrust_old - (float)0.01;
-                                        // }
+                                        if (out.thrust > out_thrust_old + (float)0.003){
+                                                out.thrust = out_thrust_old + (float)0.003;
+                                        } else if (out.thrust < out_thrust_old - (float)0.003) {
+                                                out.thrust = out_thrust_old - (float)0.003;
+                                        }
 
                                         // out.thrust = out.thrust + anti_gravity;
                                         
@@ -273,11 +273,11 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 pos_roll = - Kp_pos * pos_error.y - Kd_pos * error_y_der;
                                 pos_pitch = - Kp_pos * pos_error.x - Kd_pos * error_x_der;
 
-                                /* n++;
-                                 * if (n == 100) {
-                                 * 	mavlink_log_info(mavlink_fd, "[quad_att] pos_r:%.3f pos_p: %.3f", (double)pos_roll, (double)pos_pitch);
-                                 * 	n = 0;
-                                 * } */
+                                n++;
+                                if (n == 100) {
+                                	mavlink_log_info(mavlink_fd, "[quad_att] thrust:%.3f", (double)out.thrust);
+                                  	n = 0;
+                                } 
 
                                 /* killing position controllers */
                                 pos_roll = 0;
@@ -331,6 +331,8 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
                 }
+
+
 
                 /* mavlink_log_info(mavlink_fd, "[quad_att] y:%.3f", (double)v_att.yaw); */
                 // mavlink_log_info(mavlink_fd, "[quad_att] x:%.3f y:%.3f z:%.3f", (double)qmsg.x, (double)qmsg.y, (double)qmsg.z);
