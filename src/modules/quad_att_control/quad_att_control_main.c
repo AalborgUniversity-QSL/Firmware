@@ -211,7 +211,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         } else if ( out.thrust < 0 ) {
                                                 out.thrust = 0;
                                         }
-                                        
+
                                         if ( (t0 + (float)2) > (float)time ) {
                                                 anti_gravity = min_rotor_speed;
                                         }
@@ -318,7 +318,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         first = true;
 
                 } else {
-                        /* Nothhing to do */
+                        anti_gravity = 0;
                 }
 
                 if ( output == true ) {
