@@ -316,6 +316,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         out.roll = 0.f;
                         out.pitch = 0.f;
                         out.yaw = 0.f;
+                        off_set = 0.f;
                         first = true;
 
                 }// else {
