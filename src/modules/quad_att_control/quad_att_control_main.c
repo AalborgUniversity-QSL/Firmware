@@ -112,6 +112,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 Kp_pos = 0.00006,
                 Kd_pos = 0.00001, /* Controller constants for position controller */
                 anti_gravity = 0.42, /* Thrust offset */
+                min_rotor_speed = 0.36,
                 error_thrust_der = 0,
                 error_thrust_old = 0,
                 out_thrust_old = 0,
@@ -212,8 +213,12 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         }
                                         
                                         if ( (t0 + (float)2) > (float)time ) {
-                                                out.thrust = ( anti_gravity - (float)0.06);
+                                                anti_gravity = min_rotor_speed;
                                         }
+                                        else{
+                                        	anti_gravity = min_rotor_speed + 0.06;
+                                        }
+
 
                                         /* Calculating position error */
                                         pos_error.x = pos_offset.x - qmsg.x;
