@@ -201,7 +201,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                                 out.thrust = out_thrust_old - (float)0.002;
                                         }
 
-                                        out.thrust = out.thrust + anti_gravity
+                                        out.thrust = out.thrust + anti_gravity;
                                         
                                         error_thrust_old = error.thrust;
                                         
