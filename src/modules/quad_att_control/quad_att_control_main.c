@@ -193,14 +193,16 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                         out_thrust_old = out.thrust,
 
-                                        out.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error_thrust_der + anti_gravity;
+                                        out.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error_thrust_der;
                                         
-                                        if (out.thrust > out_thrust_old + (float)0.02){
+                                        if (out.thrust > out_thrust_old + (float)0.002){
                                                 out.thrust = out_thrust_old + (float)0.002;
                                         } else if (out.thrust < out_thrust_old - (float)0.002) {
-                                                out.thrust = out_thrust_old - (float)0.02;
+                                                out.thrust = out_thrust_old - (float)0.002;
                                         }
 
+                                        out.thrust = out.thrust + anti_gravity
+                                        
                                         error_thrust_old = error.thrust;
                                         
                                         if ( out.thrust > (float)1 ) {
@@ -229,6 +231,11 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 if ( ((hrt_absolute_time() / (float)1000000) - time) > (float)0.5 ) {  /* Emergency handling if connection from gnd is lost */
                                         sp.cmd = (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP;
                                         goto emergency_shutdown;
+                                }
+
+                                if ( fabs(v_att.roll) > 0.7 ||  fabs(v_att.pitch) > 0.7 ){
+                                    sp.cmd = (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP;
+                                    goto emergency_shutdown;
                                 }
 
                                 /* Calculating attitude error */
