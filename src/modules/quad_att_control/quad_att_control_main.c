@@ -212,7 +212,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         }
                                         
                                         if ( (t0 + (float)2) > (float)time ) {
-                                                out.thrust = ( anti_gravity - (float)0.08);
+                                                out.thrust = ( anti_gravity - (float)0.06);
                                         }
 
                                         /* Calculating position error */
@@ -233,7 +233,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         goto emergency_shutdown;
                                 }
 
-                                if ( fabs(v_att.roll) > 0.7 ||  fabs(v_att.pitch) > 0.6 ){
+                                if ( fabs(v_att.roll) > 0.7 ||  fabs(v_att.pitch) > 0.7 ){
                                     sp.cmd = (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP;
                                     goto emergency_shutdown;
                                 }
