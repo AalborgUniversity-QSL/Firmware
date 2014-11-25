@@ -195,13 +195,13 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                         out.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error_thrust_der;
                                         
-                                        if (out.thrust > out_thrust_old + (float)0.001 - anti_gravity){
-                                                out.thrust = out_thrust_old + (float)0.001 - anti_gravity;
-                                        } else if (out.thrust < out_thrust_old - (float)0.001 - anti_gravity) {
-                                                out.thrust = out_thrust_old - (float)0.001 - anti_gravity;
+                                        if (out.thrust > out_thrust_old + (float)0.001){
+                                                out.thrust = out_thrust_old + (float)0.001;
+                                        } else if (out.thrust < out_thrust_old - (float)0.001) {
+                                                out.thrust = out_thrust_old - (float)0.001;
                                         }
 
-                                        out.thrust = out.thrust + anti_gravity;
+                                        // out.thrust = out.thrust + anti_gravity;
                                         
                                         error_thrust_old = error.thrust;
                                         
@@ -320,7 +320,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         actuators.control[0] = (float)out.roll;
                         actuators.control[1] = (float)out.pitch;
                         actuators.control[2] = (float)out.yaw;
-                        actuators.control[3] = (float)out.thrust;
+                        actuators.control[3] = (float)out.thrust + anti_gravity;
 
                         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
                 }
