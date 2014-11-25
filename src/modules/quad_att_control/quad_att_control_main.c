@@ -214,10 +214,10 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         }
 
                                         if ( (t0 + (float)2) > (float)time ) {
-                                                anti_gravity = min_rotor_speed;
+                                                off_set = min_rotor_speed; //anti_gravity = min_rotor_speed;
                                         }
                                         else{
-                                        	anti_gravity = min_rotor_speed + (float)0.06;
+                                        	off_set = anti_gravity; //= min_rotor_speed + (float)0.06;
                                         }
 
 
@@ -318,7 +318,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         out.yaw = 0.f;
                         first = true;
 
-                // } else {
+                }// else {
                 //         anti_gravity = 0;
                 // }
 
