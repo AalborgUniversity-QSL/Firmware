@@ -212,7 +212,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         }
                                         
                                         if ( (t0 + (float)2) > (float)time ) {
-                                                out.thrust = ( anti_gravity - (float)0.08);
+                                                out.thrust = ( anti_gravity - (float)0.06);
                                         }
 
                                         /* Calculating position error */
