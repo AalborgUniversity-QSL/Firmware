@@ -103,7 +103,7 @@ int att_control_thread_main(int argc, char *argv[]) {
         struct pos_error_s pos_error;
         memset(&pos_error, 0, sizeof(pos_error));
         
-        float   Kp = 0.3,//17,//11,
+        float   Kp = 0.2,//17,//11,
                 Kd = 0.01,//16,     /* Controller constants for roll and pitch controllers */
                 Kp_yaw = 0.15,
                 Kd_yaw = 0.12,  /* Controller constants for yaw controller */
@@ -113,7 +113,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 Kd_pos = 0.00001, /* Controller constants for position controller */
                 anti_gravity = 0.45, /* Thrust offset */
                 off_set = 0, 
-                min_rotor_speed = 0.33,
+                min_rotor_speed = 0.36,
                 error_thrust_der = 0,
                 error_thrust_old = 0,
                 out_thrust_old = 0,
@@ -197,10 +197,10 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                         out.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error_thrust_der;
                                         
-                                        if (out.thrust > out_thrust_old + (float)0.003){
-                                                out.thrust = out_thrust_old + (float)0.003;
-                                        } else if (out.thrust < out_thrust_old - (float)0.003) {
-                                                out.thrust = out_thrust_old - (float)0.003;
+                                        if (out.thrust > out_thrust_old + (float)0.03){
+                                                out.thrust = out_thrust_old + (float)0.03;
+                                        } else if (out.thrust < out_thrust_old - (float)0.03) {
+                                                out.thrust = out_thrust_old - (float)0.03;
                                         }
 
                                         // out.thrust = out.thrust + anti_gravity;
