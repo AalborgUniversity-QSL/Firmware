@@ -79,7 +79,7 @@ int hover_test_thread_main(int argc, char *argv[]) {
                         if (qmsg.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_START) {
                                 printf("[hover_test] start\n");
                                 sp.cmd = (enum QUAD_ATT_CMD)QUAD_ATT_CMD_START;
-                                sp.z = (double)800;
+                                sp.z = (double)400;
                                 orb_publish(ORB_ID(quad_att_sp), quad_att_sp_pub, &sp);
                         } else if (qmsg.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_STOP){
                                 printf("[hover_test] stop\n");
