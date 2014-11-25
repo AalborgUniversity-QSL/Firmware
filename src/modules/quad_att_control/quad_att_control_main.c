@@ -216,7 +216,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                                 anti_gravity = min_rotor_speed;
                                         }
                                         else{
-                                        	anti_gravity = min_rotor_speed + 0.06;
+                                        	anti_gravity = min_rotor_speed + (float)0.06;
                                         }
 
 
@@ -325,7 +325,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         actuators.control[0] = (float)out.roll;
                         actuators.control[1] = (float)out.pitch;
                         actuators.control[2] = (float)out.yaw;
-                        actuators.control[3] = (float)out.thrust + anti_gravity;
+                        actuators.control[3] = (float)out.thrust + (float)anti_gravity;
 
                         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
                 }
