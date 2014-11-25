@@ -111,7 +111,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 Kd_thrust = 0.000040, /* Controller constants for thrust controller */
                 Kp_pos = 0.00006,
                 Kd_pos = 0.00001, /* Controller constants for position controller */
-                anti_gravity = 0.48, /* Thrust offset */
+                anti_gravity = 0.42, /* Thrust offset */
                 error_thrust_der = 0,
                 error_thrust_old = 0,
                 out_thrust_old = 0,
@@ -212,7 +212,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         }
                                         
                                         if ( (t0 + (float)2) > (float)time ) {
-                                                out.thrust = ( anti_gravity - (float)0.11 );
+                                                out.thrust = ( anti_gravity - (float)0.08);
                                         }
 
                                         /* Calculating position error */
@@ -233,7 +233,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         goto emergency_shutdown;
                                 }
 
-                                if ( fabs(v_att.roll) > 0.7 ||  fabs(v_att.pitch) > 0.7 ){
+                                if ( fabs(v_att.roll) > 0.7 ||  fabs(v_att.pitch) > 0.6 ){
                                     sp.cmd = (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP;
                                     goto emergency_shutdown;
                                 }
