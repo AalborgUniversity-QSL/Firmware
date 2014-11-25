@@ -233,6 +233,11 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         goto emergency_shutdown;
                                 }
 
+                                if ( fabs(v_att.roll) > 0.7 ||  fabs(v_att.pitch) > 0.7 ){
+                                    sp.cmd = (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP;
+                                    goto emergency_shutdown;
+                                }
+
                                 /* Calculating attitude error */
                                 error.roll = sp.roll - v_att.roll;
                                 error.pitch = sp.pitch - v_att.pitch;
