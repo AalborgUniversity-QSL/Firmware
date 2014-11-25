@@ -103,7 +103,7 @@ int att_control_thread_main(int argc, char *argv[]) {
         struct pos_error_s pos_error;
         memset(&pos_error, 0, sizeof(pos_error));
         
-        float   Kp = 0.2,//17,//11,
+        float   Kp = 0.5,//17,//11,
                 Kd = 0.01,//16,     /* Controller constants for roll and pitch controllers */
                 Kp_yaw = 0.15,
                 Kd_yaw = 0.12,  /* Controller constants for yaw controller */
@@ -111,7 +111,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 Kd_thrust = 0.00011,//0.000020, /* Controller constants for thrust controller */
                 Kp_pos = 0.00006,
                 Kd_pos = 0.00001, /* Controller constants for position controller */
-                anti_gravity = 0.45, /* Thrust offset */
+                anti_gravity = 0.455, /* Thrust offset */
                 off_set = 0, 
                 min_rotor_speed = 0.36,
                 error_thrust_der = 0,
@@ -139,7 +139,7 @@ int att_control_thread_main(int argc, char *argv[]) {
         bool    first = true,
                 output = true;  /* enabling and disabling actuator outputs  */
 
-        int     n = 0; 
+        // int     n = 0; 
 
         while (!thread_should_exit) {
                 int ret_sp = poll(fd_sp, 1, 1);
@@ -197,10 +197,10 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                         out.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error_thrust_der;
                                         
-                                        if (out.thrust > out_thrust_old + (float)0.03){
-                                                out.thrust = out_thrust_old + (float)0.03;
-                                        } else if (out.thrust < out_thrust_old - (float)0.03) {
-                                                out.thrust = out_thrust_old - (float)0.03;
+                                        if (out.thrust > out_thrust_old + (float)0.006){
+                                                out.thrust = out_thrust_old + (float)0.006;
+                                        } else if (out.thrust < out_thrust_old - (float)0.006) {
+                                                out.thrust = out_thrust_old - (float)0.006;
                                         }
 
                                         // out.thrust = out.thrust + anti_gravity;
@@ -273,11 +273,11 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 pos_roll = - Kp_pos * pos_error.y - Kd_pos * error_y_der;
                                 pos_pitch = - Kp_pos * pos_error.x - Kd_pos * error_x_der;
 
-                                n++;
-                                if (n == 100) {
-                                	mavlink_log_info(mavlink_fd, "[quad_att] thrust:%.3f", (double)out.thrust);
-                                  	n = 0;
-                                } 
+                                // n++;
+                                // if (n == 100) {
+                                // 	mavlink_log_info(mavlink_fd, "[quad_att] thrust:%.3f", (double)out.thrust);
+                                //   	n = 0;
+                                // } 
 
                                 /* killing position controllers */
                                 pos_roll = 0;
