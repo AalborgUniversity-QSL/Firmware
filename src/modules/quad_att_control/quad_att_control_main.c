@@ -207,8 +207,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         
                                         if ( out.thrust > (float)1 ) {
                                                 out.thrust = (float)1;
-                                        } else if ( out.thrust < anti_gravity ) {
-                                                out.thrust = anti_gravity;
+                                        } else if ( out.thrust < 0 ) {
+                                                out.thrust = 0;
                                         }
                                         
                                         if ( (t0 + (float)2) > (float)time ) {
