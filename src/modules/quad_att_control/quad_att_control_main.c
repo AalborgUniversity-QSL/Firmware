@@ -107,11 +107,15 @@ int att_control_thread_main(int argc, char *argv[]) {
                 Kd = 0.03,//16,     /* Controller constants for roll and pitch controllers */
                 Kp_yaw = 0.15,
                 Kd_yaw = 0.12,  /* Controller constants for yaw controller */
-                Kp_thrust = 0.00015, //0.000025
-                Kd_thrust = 0.000040, /* Controller constants for thrust controller */
+                Kp_thrust = 0.00002, //0.000025
+                Kd_thrust = 0.000010, /* Controller constants for thrust controller */
                 Kp_pos = 0.00006,
                 Kd_pos = 0.00001, /* Controller constants for position controller */
+<<<<<<< HEAD
                 anti_gravity = 0.44, /* Thrust offset */
+=======
+                anti_gravity = 0.42, /* Thrust offset */
+>>>>>>> 5b66640c8fd89b02f4c7ba16a088c22971517a9a
                 error_thrust_der = 0,
                 error_thrust_old = 0,
                 out_thrust_old = 0,
@@ -195,10 +199,10 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                         out.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error_thrust_der;
                                         
-                                        if (out.thrust > out_thrust_old + (float)0.002){
-                                                out.thrust = out_thrust_old + (float)0.002;
-                                        } else if (out.thrust < out_thrust_old - (float)0.002) {
-                                                out.thrust = out_thrust_old - (float)0.002;
+                                        if (out.thrust > out_thrust_old + (float)0.001){
+                                                out.thrust = out_thrust_old + (float)0.001;
+                                        } else if (out.thrust < out_thrust_old - (float)0.001) {
+                                                out.thrust = out_thrust_old - (float)0.001;
                                         }
 
                                         out.thrust = out.thrust + anti_gravity;
@@ -207,12 +211,12 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         
                                         if ( out.thrust > (float)1 ) {
                                                 out.thrust = (float)1;
-                                        } else if ( out.thrust < anti_gravity ) {
-                                                out.thrust = anti_gravity;
+                                        } else if ( out.thrust < 0 ) {
+                                                out.thrust = 0;
                                         }
                                         
                                         if ( (t0 + (float)2) > (float)time ) {
-                                                out.thrust = ( anti_gravity - (float)0.11 );
+                                                out.thrust = ( anti_gravity - (float)0.06);
                                         }
 
                                         /* Calculating position error */
@@ -234,8 +238,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 }
 
                                 if ( fabs(v_att.roll) > 0.7 ||  fabs(v_att.pitch) > 0.7 ){
-                                    sp.cmd = (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP;
-                                    goto emergency_shutdown;
+                                        sp.cmd = (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP;
+                                        goto emergency_shutdown;
                                 }
 
                                 /* Calculating attitude error */
