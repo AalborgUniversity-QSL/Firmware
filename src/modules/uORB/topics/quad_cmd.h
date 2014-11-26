@@ -22,9 +22,9 @@ enum QUAD_CMD {
         QUAD_CMD_START = 42,
 	QUAD_CMD_STOP = 43,
 	QUAD_CMD_TEST = 44,
-	QUAD_CMD_ENUM_END = 45,
-        QUAD_CMD_LAND = 46,
-        QUAD_CMD_EMRGENCY = 47
+        QUAD_CMD_LAND = 45,
+        QUAD_CMD_EMRGENCY = 46,
+	QUAD_CMD_ENUM_END = 47
 };
 
 struct quad_cmd_s {
