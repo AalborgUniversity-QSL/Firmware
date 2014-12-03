@@ -107,8 +107,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                 Kd = 0.05, /* Controller constants for roll and pitch controllers */
                 Kp_yaw = 0.3,
                 Kd_yaw = 0.15,  /* Controller constants for yaw controller */
-                Kp_thrust = 0.00008,//0.00006, //0.000025
-                Kd_thrust = 0.00011,//0.000020, /* Controller constants for thrust controller */
+                Kp_thrust = 0.0002,//0.00008,
+                Kd_thrust = 0.00011, /* Controller constants for thrust controller */
                 Kp_pos = 0.00006,
                 Kd_pos = 0.00001, /* Controller constants for position controller */
                 anti_gravity = 0.44, /* Thrust offset */
@@ -193,7 +193,7 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                         error_thrust_der = (error.thrust - error_thrust_old)/dt_z;
 
-                                        out_thrust_old = out.thrust - (float)0.03;
+                                        out_thrust_old = out.thrust - (float)0.04;
 
                                         out.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error_thrust_der;
 
@@ -203,7 +203,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                                 out.thrust = out_thrust_old - (float)0.01;
                                         }
 
-                                        out.thrust += (float)0.03;
+                                        out.thrust += (float)0.04;
 
                                         error_thrust_old = error.thrust;
 
