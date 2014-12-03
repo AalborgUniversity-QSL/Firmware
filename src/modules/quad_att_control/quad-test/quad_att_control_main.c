@@ -150,7 +150,7 @@ int actuatorOuput() {
         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
 }
 
-int control(struct *sp) {
+int control(struct quad_att_sp_s *sp, struct output_s *out) {
         static struct attError_s error;
         memset(&error, 0, sizeof(error));
         static struct attError_s error_old;
