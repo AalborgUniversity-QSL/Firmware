@@ -111,7 +111,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 Kd_thrust = 0.00011,//0.000020, /* Controller constants for thrust controller */
                 Kp_pos = 0.00006,
                 Kd_pos = 0.00001, /* Controller constants for position controller */
-                anti_gravity = 0.48, /* Thrust offset */
+                anti_gravity = 0.3,//0.48, /* Thrust offset */
                 off_set = 0,
                 min_rotor_speed = 0.3,
                 error_thrust_der = 0,
