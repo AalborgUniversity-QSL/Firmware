@@ -213,7 +213,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                                 out.thrust = 0;
                                         }
 
-                                        out.thrust += (float)0.02;
+                                        out.thrust += (float)0.015;
 
                                         if ( (t0 + (float)4) > (float)time ) {
                                                 off_set = min_rotor_speed; //anti_gravity = min_rotor_speed;
