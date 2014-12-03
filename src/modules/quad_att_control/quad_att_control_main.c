@@ -104,14 +104,14 @@ int att_control_thread_main(int argc, char *argv[]) {
         memset(&pos_error, 0, sizeof(pos_error));
 
         float   Kp = 0.3,//17,//11,
-                Kd = 0.2,//16,     /* Controller constants for roll and pitch controllers */
+                Kd = 0.1,//16,     /* Controller constants for roll and pitch controllers */
                 Kp_yaw = 0.15,
                 Kd_yaw = 0.12,  /* Controller constants for yaw controller */
                 Kp_thrust = 0.0005,//0.00006, //0.000025
                 Kd_thrust = 0.00011,//0.000020, /* Controller constants for thrust controller */
                 Kp_pos = 0.00006,
                 Kd_pos = 0.00001, /* Controller constants for position controller */
-                anti_gravity = 0.4,//0.48, /* Thrust offset */
+                anti_gravity = 0.44,//0.48, /* Thrust offset */
                 min_rotor_speed = 0.25,
                 off_set = 0,
                 error_thrust_der = 0,
@@ -293,10 +293,6 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 out.roll =  (float)Kp * (float)error.roll + Kd * error_der.roll + pos_roll;
                                 out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch + pos_pitch;
                                 out.yaw = (float)Kp_yaw * (float)error.yaw + Kd_yaw * error_der.yaw;
-
-                                out.roll =  (float)0;
-                                out.pitch = (float)0;
-                                out.yaw = (float)0;
 
                                 /* Limiting attitude controllers output */
                                 if ( (float)fabs(out.roll) > rp_max )
