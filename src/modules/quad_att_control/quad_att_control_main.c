@@ -111,9 +111,9 @@ int att_control_thread_main(int argc, char *argv[]) {
                 Kd_thrust = 0.00011,//0.000020, /* Controller constants for thrust controller */
                 Kp_pos = 0.00006,
                 Kd_pos = 0.00001, /* Controller constants for position controller */
-                anti_gravity = 0.3,//0.48, /* Thrust offset */
+                anti_gravity = 0.4,//0.48, /* Thrust offset */
+                min_rotor_speed = 0.25,
                 off_set = 0,
-                min_rotor_speed = 0.3,
                 error_thrust_der = 0,
                 error_thrust_old = 0,
                 // out_thrust_old = 0,
@@ -294,6 +294,10 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 out.pitch = (float)Kp * (float)error.pitch + Kd * error_der.pitch + pos_pitch;
                                 out.yaw = (float)Kp_yaw * (float)error.yaw + Kd_yaw * error_der.yaw;
 
+                                out.roll =  (float)0;
+                                out.pitch = (float)0;
+                                out.yaw = (float)0;
+
                                 /* Limiting attitude controllers output */
                                 if ( (float)fabs(out.roll) > rp_max )
                                         out.roll = rp_max * (out.roll / (float)fabs(out.roll));
@@ -325,7 +329,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         actuators.control[0] = (float)out.roll;
                         actuators.control[1] = (float)out.pitch;
                         actuators.control[2] = (float)out.yaw;
-                        actuators.control[3] = (float)out.thrust + off_set; //anti_gravity;
+                        actuators.control[3] = /* (float)out.thrust +  */(float)off_set; //anti_gravity;
 
                         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
                 }
