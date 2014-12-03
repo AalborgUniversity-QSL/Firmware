@@ -103,10 +103,10 @@ int att_control_thread_main(int argc, char *argv[]) {
         struct pos_error_s pos_error;
         memset(&pos_error, 0, sizeof(pos_error));
 
-        float   Kp = 0.23,//17,//11,
-                Kd = 0.06,//16,     /* Controller constants for roll and pitch controllers */
-                Kp_yaw = 0.15,
-                Kd_yaw = 0.12,  /* Controller constants for yaw controller */
+        float   Kp = 0.23,
+                Kd = 0.05, /* Controller constants for roll and pitch controllers */
+                Kp_yaw = 0.3,
+                Kd_yaw = 0.15,  /* Controller constants for yaw controller */
                 Kp_thrust = 0.0005,//0.00006, //0.000025
                 Kd_thrust = 0.00011,//0.000020, /* Controller constants for thrust controller */
                 Kp_pos = 0.00006,
@@ -116,7 +116,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 off_set = 0,
                 error_thrust_der = 0,
                 error_thrust_old = 0,
-                // out_thrust_old = 0,
+                out_thrust_old = 0,
                 error_x_der  = 0,
                 error_x_old = 0,
                 error_y_der = 0,
@@ -193,15 +193,15 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                         error_thrust_der = (error.thrust - error_thrust_old)/dt_z;
 
-                                        // out_thrust_old = out.thrust,
+                                        out_thrust_old = out.thrust,
 
                                         out.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error_thrust_der;
 
-                                        // if (out.thrust > out_thrust_old + (float)0.006){
-                                        //         out.thrust = out_thrust_old + (float)0.006;
-                                        // } else if (out.thrust < out_thrust_old - (float)0.006) {
-                                        //         out.thrust = out_thrust_old - (float)0.006;
-                                        // }
+                                        if (out.thrust > out_thrust_old + (float)0.006){
+                                                out.thrust = out_thrust_old + (float)0.006;
+                                        } else if (out.thrust < out_thrust_old - (float)0.006) {
+                                                out.thrust = out_thrust_old - (float)0.006;
+                                        }
 
                                         // out.thrust = out.thrust + anti_gravity;
 
@@ -215,6 +215,7 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                         if ( (t0 + (float)4) > (float)time ) {
                                                 off_set = min_rotor_speed; //anti_gravity = min_rotor_speed;
+                                                out.thrust = 0;
                                         } else {
                                                 off_set = anti_gravity; //= min_rotor_speed + (float)0.06;
                                         }
@@ -246,17 +247,12 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 /* Calculating attitude error */
                                 error.roll = sp.roll - v_att.roll;
                                 error.pitch = sp.pitch - v_att.pitch;
-                                error.yaw = sp.yaw -v_att.yaw + v_att_offset.yaw;
+                                error.yaw = sp.yaw - v_att.yaw; /* - v_att_offset.yaw; */
 
                                 /* Calculating dt for attitude loop */
                                 time_att = (hrt_absolute_time() / (float)1000000);
                                 dt = time_att - time_att_old;
                                 time_att_old = time_att;
-
-                                /* if ( dt >= (float)0.1 ) { /\* Emergency handling if attitude estimation is lost *\/
-                                 *         sp.cmd = (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP;
-                                 *         goto emergency_shutdown;
-                                 * } */
 
                                 /* Calculating the derivative of the attitude error */
                                 error_der.roll = (error.roll - error_old.roll)/dt;
@@ -279,8 +275,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 // }
 
                                 /* killing position controllers */
-                                pos_roll = 0;
-                                pos_pitch = 0;
+                                /* pos_roll = 0;
+                                 * pos_pitch = 0; */
 
                                 /* Limiting position controllers output */
                                 if ((float)fabs(pos_roll) > pos_max)
@@ -325,7 +321,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         actuators.control[0] = (float)out.roll;
                         actuators.control[1] = (float)out.pitch;
                         actuators.control[2] = (float)out.yaw;
-                        actuators.control[3] = /* (float)out.thrust +  */(float)off_set; //anti_gravity;
+                        actuators.control[3] = (float)out.thrust + (float)off_set;
 
                         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
                 }
