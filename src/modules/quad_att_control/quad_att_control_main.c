@@ -193,7 +193,7 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                         error_thrust_der = (error.thrust - error_thrust_old)/dt_z;
 
-                                        out_thrust_old = out.thrust,
+                                        out_thrust_old = out.thrust - (float)0.03;
 
                                         out.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error_thrust_der;
 
@@ -203,7 +203,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                                 out.thrust = out_thrust_old - (float)0.01;
                                         }
 
-                                        // out.thrust = out.thrust + anti_gravity;
+                                        out.thrust += (float)0.03;
 
                                         error_thrust_old = error.thrust;
 
@@ -212,8 +212,6 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         } else if ( out.thrust < 0 ) {
                                                 out.thrust = 0;
                                         }
-
-                                        out.thrust += (float)0.015;
 
                                         if ( (t0 + (float)4) > (float)time ) {
                                                 off_set = min_rotor_speed; //anti_gravity = min_rotor_speed;
