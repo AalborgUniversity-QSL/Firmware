@@ -103,8 +103,8 @@ int att_control_thread_main(int argc, char *argv[]) {
         struct pos_error_s pos_error;
         memset(&pos_error, 0, sizeof(pos_error));
 
-        float   Kp = 0.25,//17,//11,
-                Kd = 0.1,//16,     /* Controller constants for roll and pitch controllers */
+        float   Kp = 0.23,//17,//11,
+                Kd = 0.06,//16,     /* Controller constants for roll and pitch controllers */
                 Kp_yaw = 0.15,
                 Kd_yaw = 0.12,  /* Controller constants for yaw controller */
                 Kp_thrust = 0.0005,//0.00006, //0.000025
