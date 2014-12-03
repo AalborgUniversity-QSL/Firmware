@@ -4,8 +4,8 @@
  *************************************************************************/
 /*
  * @file main.c
- * 
- * Implementation of an quadrotor attitude control app for use in the 
+ *
+ * Implementation of an quadrotor attitude control app for use in the
  * semester project.
  *
  */
@@ -58,7 +58,7 @@ int att_control_thread_main(int argc, char *argv[]) {
         static int mavlink_fd;
         mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
         mavlink_log_info(mavlink_fd, "[quad_att__control] started");
-        
+
         /* Subscription */
         struct quad_att_sp_s sp;
         memset(&sp, 0, sizeof(sp));
@@ -74,7 +74,7 @@ int att_control_thread_main(int argc, char *argv[]) {
         /* Published */
         struct actuator_controls_s actuators;
         memset(&actuators, 0, sizeof(actuators));
-        
+
         for (unsigned i = 0; i < NUM_ACTUATOR_CONTROLS; i++) {
                 actuators.control[i] = 0.0f;
         }
@@ -102,7 +102,7 @@ int att_control_thread_main(int argc, char *argv[]) {
         memset(&pos_offset, 0, sizeof(pos_offset));
         struct pos_error_s pos_error;
         memset(&pos_error, 0, sizeof(pos_error));
-        
+
         float   Kp = 0.3,//17,//11,
                 Kd = 0.2,//16,     /* Controller constants for roll and pitch controllers */
                 Kp_yaw = 0.15,
@@ -112,7 +112,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 Kp_pos = 0.00006,
                 Kd_pos = 0.00001, /* Controller constants for position controller */
                 anti_gravity = 0.48, /* Thrust offset */
-                off_set = 0, 
+                off_set = 0,
                 min_rotor_speed = 0.3,
                 error_thrust_der = 0,
                 error_thrust_old = 0,
@@ -139,7 +139,7 @@ int att_control_thread_main(int argc, char *argv[]) {
         bool    first = true,
                 output = true;  /* enabling and disabling actuator outputs  */
 
-        // int     n = 0; 
+        // int     n = 0;
 
         while (!thread_should_exit) {
                 int ret_sp = poll(fd_sp, 1, 1);
@@ -171,11 +171,11 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 orb_check(qmsg_sub, &qmsg_updated);
                                 if ( qmsg_updated ) { /* Outer loop - handles positional feedback */
                                         orb_copy(ORB_ID(quad_formation_msg), qmsg_sub, &qmsg);
-                                        
+
                                         /* Calculating dt for position loop */
                                         time = (hrt_absolute_time() / (float)1000000); /* time is in seconds */
                                         dt_z = time - time_old;
-                                        
+
                                         /* mavlink_log_info(mavlink_fd, "[quad_att] delta time:%.3f, rate [Hz]: %.3f", (double)dt_z, (double)(1 / dt_z)); */
                                         time_old = time;
 
@@ -196,7 +196,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         // out_thrust_old = out.thrust,
 
                                         out.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error_thrust_der;
-                                        
+
                                         // if (out.thrust > out_thrust_old + (float)0.006){
                                         //         out.thrust = out_thrust_old + (float)0.006;
                                         // } else if (out.thrust < out_thrust_old - (float)0.006) {
@@ -204,9 +204,9 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         // }
 
                                         // out.thrust = out.thrust + anti_gravity;
-                                        
+
                                         error_thrust_old = error.thrust;
-                                        
+
                                         if ( out.thrust > (float)1 ) {
                                                 out.thrust = (float)1;
                                         } else if ( out.thrust < 0 ) {
@@ -216,14 +216,14 @@ int att_control_thread_main(int argc, char *argv[]) {
                                         if ( (t0 + (float)4) > (float)time ) {
                                                 off_set = min_rotor_speed; //anti_gravity = min_rotor_speed;
                                         } else {
-                                        	off_set = anti_gravity; //= min_rotor_speed + (float)0.06;
+                                                off_set = anti_gravity; //= min_rotor_speed + (float)0.06;
                                         }
 
 
                                         /* Calculating position error */
                                         pos_error.x = pos_offset.x - qmsg.x;
                                         pos_error.y = pos_offset.y - qmsg.y;
-                                        
+
                                         /* Calculating derivative of position error */
                                         error_x_der = (pos_error.x - error_x_old)/dt_z;
                                         error_y_der = (pos_error.y - error_y_old)/dt_z;
@@ -274,9 +274,9 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                 // n++;
                                 // if (n == 100) {
-                                // 	mavlink_log_info(mavlink_fd, "[quad_att] thrust:%.3f", (double)out.thrust);
-                                //   	n = 0;
-                                // } 
+                                //      mavlink_log_info(mavlink_fd, "[quad_att] thrust:%.3f", (double)out.thrust);
+                                //      n = 0;
+                                // }
 
                                 /* killing position controllers */
                                 pos_roll = 0;
@@ -304,10 +304,9 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 if ( (float)fabs(out.yaw) > yaw_max )
                                         out.yaw = yaw_max * (out.yaw / (float)fabs(out.yaw));
 
-                       
                         } else {
                                 /* nothing happened */
-                        }       
+                        }
 
                 } else if ( sp.cmd == (enum QUAD_MSG_CMD)QUAD_ATT_CMD_STOP ) {
                 emergency_shutdown: /* Only used if an emergency arises. Seriously a problem if necessary */
@@ -335,8 +334,8 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                 /* mavlink_log_info(mavlink_fd, "[quad_att] y:%.3f", (double)v_att.yaw); */
                 // mavlink_log_info(mavlink_fd, "[quad_att] x:%.3f y:%.3f z:%.3f", (double)qmsg.x, (double)qmsg.y, (double)qmsg.z);
-                // mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f yaw:%.3f", (double)v_att.roll, (double)v_att.pitch, (double)v_att.yaw); 
-		// mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f y:%.3f T:%.3f", (double)out.roll, (double)out.pitch, (double)out.yaw, (double)out.thrust);
+                // mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f yaw:%.3f", (double)v_att.roll, (double)v_att.pitch, (double)v_att.yaw);
+                // mavlink_log_info(mavlink_fd, "[quad_att] r:%.3f p:%.3f y:%.3f T:%.3f", (double)out.roll, (double)out.pitch, (double)out.yaw, (double)out.thrust);
         }
 }
 
