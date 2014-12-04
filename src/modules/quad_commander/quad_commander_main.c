@@ -58,41 +58,37 @@ int quad_commander_thread_main(int argc, char *argv[]) {
         mavlink_log_info(mavlink_fd, "[quad_att__control] started");
 
         /* Subscription */
-        struct quad_formation_msg_s qmsg; /* Her skal det være den nye cmd msg */
-        memset(&qmsg, 0, sizeof(qmsg));
+        struct quad_swarm_cmd_s swarm_cmd;
+        memset(&swarm_cmd, 0, sizeof(swarm_cmd));
 
-        int qmsg_sub = orb_subscribe(ORB_ID(quad_formation_msg));
+        int cmd_sub = orb_subscribe(ORB_ID(quad_swarm_cmd));
 
         /* Published */
-        struct actuator_controls_s actuators; /* Her skal publishes på cmd topic */
-        memset(&actuators, 0, sizeof(actuators));
+        struct quad_mode_s mode;
+        memset(&mode, 0, sizeof(mode));
 
-        orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
+        orb_advert_t mode_pub = orb_advertise(ORB_ID(quad_mode), &mode);
 
-        struct pollfd fd_v_att[1]; /* polles på cmd mavlink */
-        fd_v_att[0].fd = v_att_sub;
-        fd_v_att[0].events = POLLIN;
+        struct pollfd fd_cmd[1]; /* polles på cmd mavlink */
+        fd_cmd[0].fd = cmd_sub;
+        fd_cmd[0].events = POLLIN;
 
         while (!thread_should_exit) {
-                int ret_sp = poll(fd_sp, 1, 100);
-                if (ret_sp < 0) {
-                        warnx("poll sp error");
-                } else if (ret_sp == 0) {
+                int ret_cmd = poll(fd_cmd, 1, 100);
+                if (ret_cmd < 0) {
+                        warnx("poll cmd error");
+                } else if (ret_cmd == 0) {
                         /* no return value - nothing has happened */
-                } else if (fd_sp[0].revents & POLLIN) {
-                        orb_copy(ORB_ID(quad_att_sp), quad_sp_sub, &sp);
+                } else if (fd_cmd[0].revents & POLLIN) {
+                        orb_copy(ORB_ID(quad_quad_swarm_cmd), cmd_sub, &cmd);
                         
-                        if ( cmd == state transition 1 ) {
+                        if ( cmd.cmd == (uint8_t)QUAD_CMD_TAKEOFF ) {
                                 
-                        } else if ( cmd == state transition 2 ) {
+                        } else if ( cmd == (uint8_t)QUAD_CMD_SWARM ) {
 
-                        } else if ( cmd == state transition 3 ) {
+                        } else if ( cmd == (uint8_t)QUAD_CMD_LAND ) {
 
-                        } else if ( cmd == state transition 4 ) {
-                        
-                        } else if ( cmd == state transition 5 ) {
-                        
-                        } else if ( cmd == state transition 6 ) {
+                        } else if ( cmd == (uint8_)QUAD_CMD_GROUNDED ) {
                         
                         } else {
                                 /* nothing to do */
