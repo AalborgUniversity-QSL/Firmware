@@ -40,8 +40,6 @@
 #include <systemlib/err.h>
 #include <lib/mathlib/mathlib.h>
 
-#include "quad_commander_main.h"
-
 
 /* Function prototypes */
 __EXPORT int quad_commander_main(int argc, char *argv[]);
