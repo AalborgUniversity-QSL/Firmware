@@ -74,15 +74,24 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		int pret = poll(fds, 1, 500);
 
 		if (pret < 0){
-			mavlink_log_info(mavlink_fd,"[VELO] Poll error");
+			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
 			package_loss++;
 			if(package_loss > 10){
 				package_loss = 0;
-				mavlink_log_info(mavlink_fd,"[VELO] Package loss limit reached")
+				mavlink_log_info(mavlink_fd,"[POT] Package loss limit reached")
 			}
 		} else if (fds[0].revents & POLLIN) {
-			
+
+			orb_copy(ORB_ID(quad_pos_msg), quad_pos_sub, &quad_pos);
+
+			bool quad_mode_updated;
+			orb_check(quad_mode_sub, &quad_mode_updated);
+
+			if (quad_mode_updated){
+				orb_copy(ORB_ID(quad_mode), quad_mode_sub, quad_mode);
+			}
+
 		}
 
 	}
