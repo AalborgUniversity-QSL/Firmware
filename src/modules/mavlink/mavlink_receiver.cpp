@@ -145,7 +145,7 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 	case MAVLINK_MSG_ID_QUAD_POS:
                 MavlinkReceiver::handle_message_quad_pos(msg);
                 break;
-                
+
         case MAVLINK_MSG_ID_SWARM_COMMANDER:
         	MavlinkReceiver::handle_message_quad_swarm_cmd(msg);
                 	
@@ -281,7 +281,7 @@ MavlinkReceiver::handle_message_quad_pos(mavlink_message_t *msg) {
 }
 
 void handle_message_quad_swarm_cmd(mavlink_message_t *msg){
-	mavlink_quad_swarm_t msg_mavlink;
+	mavlink_swarm_commander_t msg_mavlink;
 	mavlink_msg_swarm_commander_decode(msg, &msg_mavlink);
 
 	struct quad_swarm_cmd_s quad_cmd;
