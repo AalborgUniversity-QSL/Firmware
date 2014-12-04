@@ -56,8 +56,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	memset(&velocity_sp, 0, sizeof(velocity_sp));
 	struct quad_mode_s quad_mode;
 	memset(&quad_mode, 0, sizeof(quad_mode));
-	struct state_transsion_s state_transsion;
-	memset(&state_transsion, false, sizeof(state_transsion));
+	struct state_transition_s state_transition;
+	memset(&state_transition, false, sizeof(state_transition));
 
 	int quad_pos_sub = orb_subscribe(ORB_ID(quad_pos_msg));
 	int quad_mode_sub = orb_subscribe(ORB_ID(quad_mode));
@@ -67,7 +67,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 	int package_loss = 0;
 
-	float formation_alt = 1;		// 1 meter altitude
 	int system_id = 1;
 
 	struct pollfd fds[1];
@@ -97,9 +96,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				orb_copy(ORB_ID(quad_mode), quad_mode_sub, quad_mode);
 			}
 
-			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED && !state_transsion.takeoff){
+			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED && !state_transition.takeoff){
 				
-				// Takeoff sequence
+				// initialise take-off sequence
 				struct init_pos_s takeoff_pos;
 				memset(&takeoff_pos, 0, sizeof(takeoff_pos));
 
@@ -108,15 +107,15 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				takeoff_pos.y = quad_pos.y[system_id - 1];
 				takeoff_pos.z = quad_pos.z[system_id - 1];
 
-				state_transsion.takeoff = true;
+				state_transition.takeoff = true;
 
-			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING){
+			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING && !state_transition.land){
 				// Landing sequence
 
-			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING){
+			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING && !state_transition.start){
 				// Start computing potential fields
 			
-			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_SWARMING){
+			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_SWARMING && !state_transition.stop){
 				
 				// Stop computing potential fields and break formation and return to hovering
 				struct init_pos_s landing_pos;
@@ -127,8 +126,17 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				landing_pos.y = quad_pos.y[system_id - 1];
 				landing_pos.z = quad_pos.z[system_id - 1];
 
+				state_transition = true;
+
 			} else {
 				// Do nothing yet
+
+			}
+
+			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && state_transition.takeoff){
+				// Takeoff sequence
+
+			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && state_transition.land){
 
 			}
 

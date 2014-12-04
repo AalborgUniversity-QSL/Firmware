@@ -11,7 +11,7 @@ struct init_pos_s {
 	float init_z;
 };
 
-struct state_transsion_s {
+struct state_transition_s {
 	bool takeoff;
 	bool land;
 	bool start;
