@@ -128,7 +128,7 @@ private:
 	void handle_message_hil_sensor(mavlink_message_t *msg);
 	void handle_message_hil_gps(mavlink_message_t *msg);
 	void handle_message_hil_state_quaternion(mavlink_message_t *msg);
-        void handle_message_command_quad_formation(mavlink_message_t *msg);
+        void handle_message_quad_pos(mavlink_message_t *msg);
 
 	void *receive_thread(void *arg);
 

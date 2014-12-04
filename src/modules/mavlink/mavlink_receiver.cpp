@@ -137,8 +137,8 @@ void
 MavlinkReceiver::handle_message(mavlink_message_t *msg)
 {
 	switch (msg->msgid) {
-	case MAVLINK_MSG_ID_QUAD_POS: // Hvis det er en besked til quad formation
-                MavlinkReceiver::handle_message_command_quad_formation(msg);
+	case MAVLINK_MSG_ID_QUAD_POS:
+                MavlinkReceiver::handle_message_quad_pos(msg);
                 break;
                 	
 	case MAVLINK_MSG_ID_COMMAND_LONG:
@@ -247,20 +247,26 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 
 
 void 
-MavlinkReceiver::handle_message_command_quad_formation(mavlink_message_t *msg) { /* Funktion til at modtage custom beskeder - BGT */
+MavlinkReceiver::handle_message_quad_pos(mavlink_message_t *msg) {
         mavlink_quad_pos_t msg_mavlink;
         mavlink_msg_quad_pos_decode(msg, &msg_mavlink);
 
         struct quad_formation_msg_s quad_msg;
         memset(&quad_msg, 0, sizeof(quad_msg));
         
-        quad_msg.x = msg_mavlink.x;
-        quad_msg.y = msg_mavlink.y;
-        quad_msg.z = msg_mavlink.z;
+        quad_msg.x[0] = msg_mavlink.x[0];
+        quad_msg.y[0] = msg_mavlink.y[0];
+        quad_msg.z[0] = msg_mavlink.z[0];
+        quad_msg.x[1] = msg_mavlink.x[1];
+        quad_msg.y[1] = msg_mavlink.y[1];
+        quad_msg.z[1] = msg_mavlink.z[1];
+        quad_msg.x[2] = msg_mavlink.x[2];
+        quad_msg.y[2] = msg_mavlink.y[2];
+        quad_msg.z[2] = msg_mavlink.z[2];
+
         quad_msg.timestamp = hrt_absolute_time();
         quad_msg.target_system = msg_mavlink.target_system;
-        quad_msg.cmd_id = (enum QUAD_MSG_CMD)msg_mavlink.cmd_id;
-        quad_msg.pos_no = msg_mavlink.pos_no;
+        // quad_msg.cmd_id = (enum QUAD_MSG_CMD)msg_mavlink.cmd_id;
 
         if (_quad_formation_msg_pub < 0) {
                 _quad_formation_msg_pub = orb_advertise(ORB_ID(quad_formation_msg), &quad_msg);
