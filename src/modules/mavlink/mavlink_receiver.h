@@ -72,7 +72,8 @@
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/battery_status.h>
 #include <uORB/topics/vehicle_force_setpoint.h>
-#include <uORB/topics/quad_formation_msg.h>
+#include <uORB/topics/quad_pos_msg.h>
+#include <uORB/topics/quad_swarm_cmd.h>
 
 #include "mavlink_ftp.h"
 
@@ -129,6 +130,7 @@ private:
 	void handle_message_hil_gps(mavlink_message_t *msg);
 	void handle_message_hil_state_quaternion(mavlink_message_t *msg);
         void handle_message_quad_pos(mavlink_message_t *msg);
+        void handle_message_quad_swarm_cmd(mavlink_message_t *msg);
 
 	void *receive_thread(void *arg);
 
@@ -166,7 +168,8 @@ private:
 	bool _hil_local_proj_inited;
 	float _hil_local_alt0;
 	struct map_projection_reference_s _hil_local_proj_ref;
-        orb_advert_t _quad_formation_msg_pub;
+        orb_advert_t _quad_pos_msg_pub;
+        orb_advert_t _quad_swarm_cmd_pub;
 
 	/* do not allow copying this class */
 	MavlinkReceiver(const MavlinkReceiver&);

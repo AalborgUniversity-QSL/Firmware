@@ -122,7 +122,8 @@ MavlinkReceiver::MavlinkReceiver(Mavlink *parent) :
 	_hil_local_proj_inited(0),
 	_hil_local_alt0(0.0f),
 	_hil_local_proj_ref{},
-        _quad_formation_msg_pub(-1)
+        _quad_pos_msg_pub(-1),
+        _quad_swarm_cmd_pub(-1)
 {
 
 	// make sure the FTP server is started
@@ -140,6 +141,8 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 	case MAVLINK_MSG_ID_QUAD_POS:
                 MavlinkReceiver::handle_message_quad_pos(msg);
                 break;
+        case MAVLINK_MSG_ID_SWARM_COMMANDER:
+        	MavlinkReceiver::handle_message_quad_swarm_cmd(msg);
                 	
 	case MAVLINK_MSG_ID_COMMAND_LONG:
 		handle_message_command_long(msg);
@@ -268,8 +271,8 @@ MavlinkReceiver::handle_message_quad_pos(mavlink_message_t *msg) {
         quad_msg.target_system = msg_mavlink.target_system;
         // quad_msg.cmd_id = (enum QUAD_MSG_CMD)msg_mavlink.cmd_id;
 
-        if (_quad_formation_msg_pub < 0) {
-                _quad_formation_msg_pub = orb_advertise(ORB_ID(quad_formation_msg), &quad_msg);
+        if (_quad_pos_msg_pub < 0) {
+                _quad_pos_msg_pub = orb_advertise(ORB_ID(quad_pos_msg), &quad_msg);
 
         } else {
                 orb_publish(ORB_ID(quad_formation_msg), _quad_formation_msg_pub, &quad_msg);

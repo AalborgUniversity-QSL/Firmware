@@ -18,11 +18,11 @@
 /* register this as object request broker structure */
 
 struct quad_pos_msg_s {
-        uint8_t target_system;   ///<  The target_system is defined in enum QUAD_FORMATION_ID
+        uint8_t target_system;   //<  The target_system is defined in enum QUAD_FORMATION_ID
         uint64_t timestamp;
-        float x[3];           ///< x-axis
-        float y[3];           ///< y-axis
-        float z[3];           ///< z-axis -1 if coordinate is Not Available
+        float x[3];           //< x-axis
+        float y[3];           //< y-axis
+        float z[3];           //< z-axis -1 if coordinate is Not Available
 };
 
 ORB_DECLARE(quad_pos_msg);
