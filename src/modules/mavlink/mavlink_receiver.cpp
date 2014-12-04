@@ -138,15 +138,17 @@ void
 MavlinkReceiver::handle_message(mavlink_message_t *msg)
 {
 	switch (msg->msgid) {
-	case MAVLINK_MSG_ID_QUAD_POS:
-                MavlinkReceiver::handle_message_quad_pos(msg);
-                break;
-        case MAVLINK_MSG_ID_SWARM_COMMANDER:
-        	MavlinkReceiver::handle_message_quad_swarm_cmd(msg);
-                	
 	case MAVLINK_MSG_ID_COMMAND_LONG:
 		handle_message_command_long(msg);
 		break;
+
+	case MAVLINK_MSG_ID_QUAD_POS:
+                MavlinkReceiver::handle_message_quad_pos(msg);
+                break;
+                
+        case MAVLINK_MSG_ID_SWARM_COMMANDER:
+        	MavlinkReceiver::handle_message_quad_swarm_cmd(msg);
+                	
 
 	case MAVLINK_MSG_ID_COMMAND_INT:
 		handle_message_command_int(msg);
@@ -254,28 +256,45 @@ MavlinkReceiver::handle_message_quad_pos(mavlink_message_t *msg) {
         mavlink_quad_pos_t msg_mavlink;
         mavlink_msg_quad_pos_decode(msg, &msg_mavlink);
 
-        struct quad_formation_msg_s quad_msg;
-        memset(&quad_msg, 0, sizeof(quad_msg));
+        struct quad_pos_msg_s quad_pos;
+        memset(&quad_pos, 0, sizeof(quad_pos));
         
-        quad_msg.x[0] = msg_mavlink.x[0];
-        quad_msg.y[0] = msg_mavlink.y[0];
-        quad_msg.z[0] = msg_mavlink.z[0];
-        quad_msg.x[1] = msg_mavlink.x[1];
-        quad_msg.y[1] = msg_mavlink.y[1];
-        quad_msg.z[1] = msg_mavlink.z[1];
-        quad_msg.x[2] = msg_mavlink.x[2];
-        quad_msg.y[2] = msg_mavlink.y[2];
-        quad_msg.z[2] = msg_mavlink.z[2];
+        quad_pos.x[0] = msg_mavlink.x[0];
+        quad_pos.y[0] = msg_mavlink.y[0];
+        quad_pos.z[0] = msg_mavlink.z[0];
+        quad_pos.x[1] = msg_mavlink.x[1];
+        quad_pos.y[1] = msg_mavlink.y[1];
+        quad_pos.z[1] = msg_mavlink.z[1];
+        quad_pos.x[2] = msg_mavlink.x[2];
+        quad_pos.y[2] = msg_mavlink.y[2];
+        quad_pos.z[2] = msg_mavlink.z[2];
 
-        quad_msg.timestamp = hrt_absolute_time();
-        quad_msg.target_system = msg_mavlink.target_system;
-        // quad_msg.cmd_id = (enum QUAD_MSG_CMD)msg_mavlink.cmd_id;
+        quad_pos.timestamp = hrt_absolute_time();
+        quad_pos.target_system = msg_mavlink.target_system;
 
         if (_quad_pos_msg_pub < 0) {
-                _quad_pos_msg_pub = orb_advertise(ORB_ID(quad_pos_msg), &quad_msg);
+                _quad_pos_msg_pub = orb_advertise(ORB_ID(quad_pos_msg), &quad_pos);
 
         } else {
-                orb_publish(ORB_ID(quad_formation_msg), _quad_formation_msg_pub, &quad_msg);
+                orb_publish(ORB_ID(quad_pos_msg), _quad_pos_msg_pub, &quad_pos);
+        }
+}
+
+void handle_message_quad_swarm_cmd(mavlink_message_t *msg){
+	mavlink_quad_swarm_t msg_mavlink;
+	mavlink_msg_swarm_commander_decode(msg, &msg_mavlink);
+
+	struct quad_swarm_cmd_s quad_cmd;
+	memset(&quad_cmd, 0, sizeof(quad_cmd));
+
+	quad_cmd.target_system = msg_mavlink.target_system;
+	quad_cmd.cmd_id = msg_mavlink.cmd_id;
+
+	if (_quad_swarm_cmd_pub < 0) {
+                _quad_swarm_cmd_pub = orb_advertise(ORB_ID(quad_swarm_cmd), &quad_cmd);
+
+        } else {
+                orb_publish(ORB_ID(quad_swarm_cmd), _quad_swarm_cmd_pub, &quad_cmd);
         }
 }
 
