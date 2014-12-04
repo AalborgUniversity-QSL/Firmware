@@ -23,16 +23,18 @@ enum QUAD_CMD {
 	QUAD_CMD_STOP_SWARM = 43,
 	QUAD_CMD_TAKEOFF = 44,
 	QUAD_CMD_LAND = 45,
-/* Responses to quad_commander */
-        QUAD_CMD_SWARMING = 46,
-        QUAD_CMD_HOVERING = 47,
-        QUAD_CMD_LANDED = 48,
-	QUAD_CMD_ENUM_END = 49
+};
+
+enum QUAD_STATE{
+        QUAD_STATE_SWARMING = 46,
+        QUAD_STATE_HOVERING = 47,
+        QUAD_STATE_GROUNDED = 48,
+	QUAD_STATE_ENUM_END = 49
 };
 
 struct quad_mode_s {
         uint8_t cmd;
-        uint8_t response;
+        uint8_t current_state;
 };
 
 #endif

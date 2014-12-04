@@ -92,11 +92,12 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				orb_copy(ORB_ID(quad_mode), quad_mode_sub, quad_mode);
 			}
 
+			if (quad_mode == (enum QUAD_CMD)QUAD_CMD_TAKEOFF)
+
 		}
 
 	}
-
-
+	return 0;
 }
 
 
