@@ -25,11 +25,8 @@
 #include <mavlink/mavlink_log.h>
 
 #include <uORB/uORB.h>
-#include <uORB/topics/sensor_combined.h>
-#include <uORB/topics/actuator_controls.h>
-#include <uORB/topics/quad_att_sp.h>
-#include <uORB/topics/quad_formation_msg.h>
-#include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/quad_mode.h>
+#include <uORB/topics/quad_swarm_cmd>
 
 #include <geo/geo.h>
 
@@ -81,7 +78,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                         /* no return value - nothing has happened */
                 } else if (fd_cmd[0].revents & POLLIN) {
                         orb_copy(ORB_ID(quad_quad_swarm_cmd), cmd_sub, &cmd);
-                        
+
                         if ( cmd.cmd == (uint8_t)QUAD_CMD_TAKEOFF ) {
                                 
                         } else if ( cmd == (uint8_t)QUAD_CMD_SWARM ) {
@@ -89,7 +86,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                         } else if ( cmd == (uint8_t)QUAD_CMD_LAND ) {
 
                         } else if ( cmd == (uint8_)QUAD_CMD_GROUNDED ) {
-                        
+
                         } else {
                                 /* nothing to do */
                         }
