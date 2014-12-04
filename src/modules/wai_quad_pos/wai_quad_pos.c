@@ -53,8 +53,8 @@ int wai_quad_pos_thread_main(int argc, char *argv[]){
         memset(&st, 0, sizeof(st));
 
         warnx("[wai] Started ");
-        mavlink_log_info(mavlink_fd,"[wai] Started");
         mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
+        mavlink_log_info(mavlink_fd,"[wai] Started");
 
         int vhe_sub = orb_subscribe(ORB_ID(vehicle_status));
         int quad_sub = orb_subscribe(ORB_ID(quad_formation_msg));
