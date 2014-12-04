@@ -40,8 +40,6 @@
 #include <systemlib/err.h>
 #include <lib/mathlib/mathlib.h>
 
-#include "quad_commander_main.h"
-
 
 /* Function prototypes */
 __EXPORT int quad_commander_main(int argc, char *argv[]);
@@ -83,10 +81,9 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                         /* no return value - nothing has happened */
                 } else if (fd_sp[0].revents & POLLIN) {
                         orb_copy(ORB_ID(quad_att_sp), quad_sp_sub, &sp);
-
                         
                         if ( cmd == state transition 1 ) {
-                                /* sæt parameter så statesne passer */
+                                
                         } else if ( cmd == state transition 2 ) {
 
                         } else if ( cmd == state transition 3 ) {
