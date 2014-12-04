@@ -26,7 +26,7 @@ enum QUAD_MSG_CMD {
 
 struct quad_swarm_cmd_s {
 	uint8_t target_system;
-	uint8_t cmd_id;
+	uint8_t cmd_id;			// Commands given by ENUM QUAD_MSG_CMD
 };
 
 ORB_DECLARE(quad_swarm_cmd);
