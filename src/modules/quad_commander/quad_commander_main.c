@@ -83,23 +83,25 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                         /* no return value - nothing has happened */
                 } else if (fd_sp[0].revents & POLLIN) {
                         orb_copy(ORB_ID(quad_att_sp), quad_sp_sub, &sp);
-                        /* printf("yes, vi fik et SP poll\n"); */
+                        
+                        if ( cmd == state transition 1 ) {
+                                /* sæt parameter så statesne passer */
+                        } else if ( cmd == state transition 2 ) {
+
+                        } else if ( cmd == state transition 3 ) {
+
+                        } else if ( cmd == state transition 4 ) {
+                        
+                        } else if ( cmd == state transition 5 ) {
+                        
+                        } else if ( cmd == state transition 6 ) {
+                        
+                        } else {
+                                /* nothing to do */
+                        }
+
                 } else {
                         /* nothing happened */
-                }
-
-                if ( cmd == state transition 1 ) {
-                        /* sæt parameter så statesne passer */
-                } else if ( cmd == state transition 2 ) {
-
-                } else if ( cmd == state transition 3 ) {
-
-                } else if ( cmd == state transition 4 ) {
-                        
-                } else if ( cmd == state transition 5 ) {
-                        
-                } else if ( cmd == state transition 6 ) {
-                        
                 }
         }
 }
