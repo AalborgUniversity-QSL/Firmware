@@ -13,34 +13,13 @@
  
 #include <stdint.h>
 #include "../uORB.h"
-
-/**
- * @addtogroup topics
- * @{
- */
-
-enum QUAD_ATT_CMD {
-        QUAD_ATT_CMD_START = 16,
-        QUAD_ATT_CMD_STOP = 17
-};
  
 struct quad_att_sp_s {
         uint64_t timestamp;
-        float x;    /* vector for sp */
-        float y;
+        float dx;    /* vector for sp */
+        float dy;
         float z;
-        float q[4]; /* quaternion setpoint for quaternion based control */
-        float roll;
-        float pitch;
-        float yaw;
-        float thrust;
-        uint8_t cmd;
 };
-
-
-/**
- * @}
- */
  
 ORB_DECLARE(quad_att_sp);
  
