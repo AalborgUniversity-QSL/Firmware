@@ -50,6 +50,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 	struct quad_pos_msg_s quad_pos;
 	memset(&quad_pos, 0, sizeof(quad_pos));
+	struct quad_velocity_sp_s velocity_sp;
+	memset(&velocity_sp, 0, sizeof(velocity_sp));
 	struct quad_mode_s quad_mode;
 	memset(&quad_mode, 0, sizeof(quad_mode));
 	struct vehicle_status_s vehicle_status;
@@ -58,6 +60,33 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	int quad_pos_sub = orb_subscribe(ORB_ID(quad_pos_msg));
 	int quad_mode_sub = orb_subscribe(ORB_ID(quad_mode));
 	int vehicle_status_sub = orb_subscribe(ORB_ID(vehicle_status));
+
+	orb_advert_t quad_velocity_sp_pub = orb_advertise(ORB_ID(quad_velocity_sp), &velocity_sp);
+
+	int package_loss = 0;
+
+	struct pollfd fds[1];
+	fds[0].fd = quad_pos_sub;
+	fds[0].events = POLLIN;
+
+	while(!thread_should_exit){
+
+		int pret = poll(fds, 1, 500);
+
+		if (pret < 0){
+			mavlink_log_info(mavlink_fd,"[VELO] Poll error");
+		} else if (pret == 0){
+			package_loss++;
+			if(package_loss > 10){
+				package_loss = 0;
+				mavlink_log_info(mavlink_fd,"[VELO] Package loss limit reached")
+			}
+		} else if (fds[0].revents & POLLIN) {
+			
+		}
+
+	}
+
 
 }
 
