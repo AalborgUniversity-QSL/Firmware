@@ -57,8 +57,11 @@ int quad_commander_thread_main(int argc, char *argv[]) {
         /* Subscription */
         struct quad_swarm_cmd_s swarm_cmd;
         memset(&swarm_cmd, 0, sizeof(swarm_cmd));
+        struct quad_pos_msg_s quad_pos;
+        memset(&quad_pos, 0, sizeof(quad_pos));
 
-        int cmd_sub = orb_subscribe(ORB_ID(quad_swarm_cmd));
+        int swarm_cmd_sub = orb_subscribe(ORB_ID(quad_swarm_cmd));
+        int quad_pos_sub = orb_subscribe(ORB_ID(quad_pos_msg));
 
         /* Published */
         struct quad_mode_s mode;
@@ -67,8 +70,11 @@ int quad_commander_thread_main(int argc, char *argv[]) {
         orb_advert_t mode_pub = orb_advertise(ORB_ID(quad_mode), &mode);
 
         struct pollfd fd_cmd[1]; /* polles på cmd mavlink */
-        fd_cmd[0].fd = cmd_sub;
+        fd_cmd[0].fd = swarm_cmd_sub;
         fd_cmd[0].events = POLLIN;
+
+        /* QUAD_MSG_CMD_START_SWARM = 42,
+         *         QUAD_MSG_CMD_STOP_SWARM = 43, */
 
         while (!thread_should_exit) {
                 int ret_cmd = poll(fd_cmd, 1, 100);
@@ -77,15 +83,17 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                 } else if (ret_cmd == 0) {
                         /* no return value - nothing has happened */
                 } else if (fd_cmd[0].revents & POLLIN) {
-                        orb_copy(ORB_ID(quad_quad_swarm_cmd), cmd_sub, &cmd);
+                        orb_copy(ORB_ID(quad_quad_swarm_cmd), swarm_cmd_sub, &swarm_cmd);
 
-                        if ( cmd.cmd == (uint8_t)QUAD_CMD_TAKEOFF ) {
-                                
-                        } else if ( cmd == (uint8_t)QUAD_CMD_SWARM ) {
+                        if ( swarm_cmd.cmd == (uint8_t)QUAD_MSG_CMD_TAKEOFF ) {
 
-                        } else if ( cmd == (uint8_t)QUAD_CMD_LAND ) {
+                                mode.cmd = (enum QUAD_CMD)QUAD_CMD_TAKEOFF;
+                                orb_publish(ORB_ID(quad_mode), mode_pub, &mode);
 
-                        } else if ( cmd == (uint8_)QUAD_CMD_GROUNDED ) {
+                        } else if ( swarm_cmd.cmd == (uint8_t)QUAD_MSG_CMD_LAND ) {
+
+                                mode.cmd = (enum QUAD_CMD)QUAD_CMD_LAND;
+                                orb_publish(ORB_ID(quad_mode), mode_pub, &mode);
 
                         } else {
                                 /* nothing to do */
