@@ -2,6 +2,7 @@
 #define PARAM
 
 float formation_alt = 1;		// 1 meter altitude
+float altitude_threashold = 0.1;
 
 
 struct init_pos_s {
@@ -16,6 +17,7 @@ struct state_transition_s {
 	bool land;
 	bool start;
 	bool stop;
+	bool in_air;
 };
 
 #endif
