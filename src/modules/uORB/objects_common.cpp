@@ -235,7 +235,10 @@ ORB_DEFINE(wind_estimate, struct wind_estimate_s);
 ORB_DEFINE(quad_pos_msg, struct quad_pos_msg_s);
 
 #include "topics/quad_swarm_cmd.h"
-ORB_DEFINE(quad_swarm_cmd, struct quad_swarm_cmd_s)
+ORB_DEFINE(quad_swarm_cmd, struct quad_swarm_cmd_s);
 
 #include "topics/quad_att_sp.h"
 ORB_DEFINE(quad_att_sp, struct quad_att_sp_s);
+
+#include "topics/quad_mode.h"
+ORB_DEFINE(quad_mode, struct quad_mode_s);
