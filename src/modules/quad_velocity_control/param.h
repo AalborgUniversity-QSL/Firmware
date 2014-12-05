@@ -6,13 +6,14 @@ float	Kp_thrust = 0.2,//0.00008,
         Kp_pos = 0.06,
         Kd_pos = 0.01, /* Controller constants for position controller */
  	
- 	formation_alt = 1,		// 1 meter altitude
+ 	hover_alt = 1,		// 1 meter altitude
  	landing_alt = 0.1,
-	altitude_threashold = 0.1,
+	hover_threashold = 0.1,
 	out_thrust_old = 0,
 	anti_gravity = 0.48,
 	min_rotor_speed = 0.25,
-	speed_up_time = 4;
+	speed_up_time = 4,
+	min_hover_velocity = 0.001;
 
 struct init_pos_s {
 	float timestamp;

@@ -71,7 +71,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	int quad_mode_sub = orb_subscribe(ORB_ID(quad_mode));
 
 	orb_advert_t quad_velocity_sp_pub = orb_advertise(ORB_ID(quad_velocity_sp), &velocity_sp);
-	orb_advert_t quad_mode_sub = orb_advertise(ORB_ID(quad_mode), &quad_mode);
+	orb_advert_t quad_mode_pub = orb_advertise(ORB_ID(quad_mode), &quad_mode);
 
 	int package_loss = 0;
 
@@ -105,8 +105,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			if (!initialised) {
 				dt_pos = 0.1;
 				time_old = quad_pos.timestamp;
-				state.x_old = quad_pos.x[system_id - 1];
-				state.y_old = quad_pos.y[system_id - 1];
+				state.x_old = quad_pos.x[system_id - 1] / (float)1000;
+				state.y_old = quad_pos.y[system_id - 1] / (float)1000;
 				initialised = true;
 			} else {
 
@@ -114,11 +114,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				time_old = quad_pos.timestamp;
 			}
 
-			state.x = quad_pos.x[system_id - 1];
-			state.y = quad_pos.y[system_id - 1];
-			state.z = quad_pos.z[system_id - 1];
-			state.dx = (state.x - state.x_old)/(float)dt_pos;
-			state.dy = (state.y - state.y_old)/(float)dt_pos;
+			state.x = quad_pos.x[system_id - 1] / (float)1000;
+			state.y = quad_pos.y[system_id - 1] / (float)1000;
+			state.z = quad_pos.z[system_id - 1] / (float)1000;
+			state.dx = (state.x - state.x_old) / (float)dt_pos;
+			state.dy = (state.y - state.y_old) / (float)dt_pos;
 			// state.ddx = (state.dx - state.dx_old)/(float)dt_pos;
 			// state.ddy = (state.dy - state.dy_old)/(float)dt_pos;
 
@@ -148,7 +148,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				// sp.timestamp = (hrt_absolute_time() / (float)1000000);
 				sp.dx = 0;
 				sp.dy = 0;
-				sp.z = formation_alt;
+				sp.z = hover_alt;
 
 				state_transition.takeoff = true;
 
@@ -183,13 +183,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 
 			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && state_transition.takeoff){
+				
 				// Takeoff sequence
-				if (quad_pos.z[system_id - 1] > 100 && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED){
-					state_transition.in_air = true;
-				}
-
-				if (quad_pos.z[system_id - 1] < (sp.z + (float)altitude_threashold && quad_pos.z[system_id - 1] > (sp.z - (float)altitude_threashold ){
+				if (state.z > (sp.z - (float)hover_threashold) && state.z < (sp.z + (float)hover_threashold && (float)fabs(state.dx + state.dy) < float(min_hover_velocity){
 					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_HOVERING;
+					orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 				}
 
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && state_transition.land){
@@ -207,7 +205,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         } else {
 
 				// Thrust controller
-				error.thrust = sp.z - state.z/(float)1000;
+				error.thrust = sp.z - state.z;
 				error.thrust_der = (error.thrust - error.thrust_old)/(float)dt_pos;
 
 				error.thrust_old = error.thrust;
