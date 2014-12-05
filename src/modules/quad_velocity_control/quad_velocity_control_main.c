@@ -80,7 +80,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	float 	dt_pos = 0,
 		time_old = 0;
 
-	bool initialised = false;
+	bool initialised = false,
+	     shutdown_motors = false;
 
 	struct pollfd fds[1];
 	fds[0].fd = quad_pos_sub;
@@ -194,10 +195,18 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && state_transition.land){
 
-				sp.z = state.z - 0.02;
-
-				if (state.z < landing_alt) {
+				if(state.z > hover_alt ) {
+					sp.z = state.z - 0.1;
+				} else if (state.z < hover_alt && state.z > 0.5){
+					sp.z = state.z - 0.02;		
+				} else if (state.z < 0.5 && state.z > landing_alt){
+					sp.z = state.z - 0.005;
+				} else {
+					
 					sp.z = landing_alt;
+					shutdown_motors = true;
+					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
+                        		orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 				}
 
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM && state_transition.start){
@@ -209,6 +218,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			if ( (takeoff_pos.timestamp + (float)speed_up_time) > quad_pos.timestamp && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED ) {
 				// Spinning up motors.
                                 velocity_sp.thrust = min_rotor_speed;
+                        } else if (shutdown_motors) {
+
+                        	velocity_sp.thrust = 0;
 
                         } else {
 
