@@ -64,6 +64,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	memset(&sp, 0, sizeof(sp));
 	struct quad_alt_velocity error;
 	memset(&error, 0, sizeof(error));
+	struct quad_alt_velocity state;
+	memset(&state, 0, sizeof(state));
 
 	int quad_pos_sub = orb_subscribe(ORB_ID(quad_pos_msg));
 	int quad_mode_sub = orb_subscribe(ORB_ID(quad_mode));
@@ -103,12 +105,23 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			if (!initialised) {
 				dt_pos = 0.1;
 				time_old = quad_pos.timestamp;
+				state.x_old = quad_pos.x[system_id - 1];
+				state.y_old = quad_pos.y[system_id - 1];
 				initialised = true;
 			} else {
 
 				dt_pos = quad_pos.timestamp - time_old;
 				time_old = quad_pos.timestamp;
 			}
+
+			state.x = quad_pos.x[system_id - 1];
+			state.y = quad_pos.y[system_id - 1];
+			state.z = quad_pos.z[system_id - 1];
+			state.dx = (state.x - state.x_old)/(float)dt_pos;
+			state.dy = (state.y - state.y_old)/(float)dt_pos;
+
+			state.x_old = state.x;
+			state.y_old = state.y;
 
 			bool quad_mode_updated;
 			orb_check(quad_mode_sub, &quad_mode_updated);
@@ -123,10 +136,10 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				struct init_pos_s takeoff_pos;
 				memset(&takeoff_pos, 0, sizeof(takeoff_pos));
 
-				takeoff_pos.timestamp = (hrt_absolute_time() / (float)1000000);
-				takeoff_pos.x = quad_pos.x[system_id - 1];
-				takeoff_pos.y = quad_pos.y[system_id - 1];
-				takeoff_pos.z = quad_pos.z[system_id - 1];
+				takeoff_pos.timestamp = quad_pos.timestamp;
+				takeoff_pos.x = state.x;
+				takeoff_pos.y = state.y;
+				takeoff_pos.z = state.z;
 
 				// sp.timestamp = (hrt_absolute_time() / (float)1000000);
 				sp.dx = 0;
@@ -147,10 +160,14 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				struct init_pos_s landing_pos;
 				memset(&landing_pos, 0, sizeof(landing_pos));
 
-				landing_pos.timestamp = (hrt_absolute_time() / (float)1000000);
-				landing_pos.x = quad_pos.x[system_id - 1];
-				landing_pos.y = quad_pos.y[system_id - 1];
-				landing_pos.z = quad_pos.z[system_id - 1];
+				landing_pos.timestamp = quad_pos.timestamp;
+				landing_pos.x = state.x;
+				landing_pos.y = state.y;
+				landing_pos.z = state.z;
+
+				sp.dx = 0;
+				sp.dy = 0;
+				sp.z = landing_alt;
 
 				state_transition = true;
 
@@ -185,19 +202,19 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         } else {
 
 				// Thrust controller
-				error.thrust = sp.z - quad_pos.z[system_id - 1];
-				error.thrust_der = (error.thrust - error.thrust_old)/dt_pos;
+				error.thrust = sp.z - state.z/(float)1000;
+				error.thrust_der = (error.thrust - error.thrust_old)/(float)dt_pos;
 
 				error.thrust_old = error.thrust;
 
-				out_thrust_old = output.thrust;
+				output.thrust_old = output.thrust;
 
 				output.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error.thrust_der;
 
-	                        if (output.thrust > out_thrust_old + (float)0.01){
-	                                output.thrust = out_thrust_old + (float)0.01;
-	                        } else if (output.thrust < out_thrust_old - (float)0.01) {
-	                                output.thrust = out_thrust_old - (float)0.01;
+	                        if (output.thrust > output.thrust_old + (float)0.01){
+	                                output.thrust = output.thrust_old + (float)0.01;
+	                        } else if (output.thrust < output.thrust_old - (float)0.01) {
+	                                output.thrust = output.thrust_old - (float)0.01;
 	                        }
 
 	                        if ( output.thrust > (float)1 ) {
@@ -209,6 +226,16 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 				velocity_sp.thrust = output.thrust + anti_gravity;
                         }
+
+
+                        error.dx = sp.dx - state.dx;
+                        error.dy = sp.dx - state.dy;
+
+
+
+
+
+                        orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 		}
 	}
 	return 0;
