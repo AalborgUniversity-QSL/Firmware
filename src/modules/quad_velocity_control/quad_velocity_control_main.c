@@ -101,8 +101,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			orb_copy(ORB_ID(quad_pos_msg), quad_pos_sub, &quad_pos);
 
 			if (!initialised) {
-				time_old = (hrt_absolute_time() / (float)1000000);
 				dt_pos = 0.1;
+				time_old = quad_pos.timestamp;
 				initialised = true;
 			} else {
 
@@ -128,7 +128,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				takeoff_pos.y = quad_pos.y[system_id - 1];
 				takeoff_pos.z = quad_pos.z[system_id - 1];
 
-				sp.timestamp = (hrt_absolute_time() / (float)1000000);
+				// sp.timestamp = (hrt_absolute_time() / (float)1000000);
 				sp.dx = 0;
 				sp.dy = 0;
 				sp.z = formation_alt;
@@ -167,7 +167,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					state_transition.in_air = true;
 				}
 
-				if (quad_pos.z[system_id - 1] < (formation_alt + (float)altitude_threashold && quad_pos.z[system_id - 1] > (formation_alt - (float)altitude_threashold ){
+				if (quad_pos.z[system_id - 1] < (sp.z + (float)altitude_threashold && quad_pos.z[system_id - 1] > (sp.z - (float)altitude_threashold ){
 					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_HOVERING;
 				}
 
@@ -185,7 +185,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         } else {
 
 				// Thrust controller
-				error.thrust = sp.z - quad_pos.z;
+				error.thrust = sp.z - quad_pos.z[system_id - 1];
 				error.thrust_der = (error.thrust - error.thrust_old)/dt_pos;
 
 				error.thrust_old = error.thrust;
@@ -209,9 +209,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 				velocity_sp.thrust = output.thrust + anti_gravity;
                         }
-
 		}
-
 	}
 	return 0;
 }
