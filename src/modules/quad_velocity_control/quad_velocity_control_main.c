@@ -156,7 +156,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				// initialise landing sequence
 				sp.dx = 0;
 				sp.dy = 0;
-				sp.z = landing_alt;
 
 				state_transition.land = true;
 
@@ -191,11 +190,15 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					// Change state to hovering state
 					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_HOVERING;
 					orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
-
-					state_transition.takeoff = false;
 				}
 
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && state_transition.land){
+
+				sp.z = state.z - 0.02;
+
+				if (state.z < landing_alt) {
+					sp.z = landing_alt;
+				}
 
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM && state_transition.start){
 
