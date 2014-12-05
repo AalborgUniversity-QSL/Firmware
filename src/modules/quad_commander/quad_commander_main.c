@@ -108,11 +108,14 @@ int quad_commander_thread_main(int argc, char *argv[]) {
         fd_cmd[0].fd = swarm_cmd_sub;
         fd_cmd[0].events = POLLIN;
 
+        /* Initial state of the quadrotor; operations always start from the ground */
+        state.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
+
         while (!thread_should_exit) {
                 orb_copy(ORB_ID(vehicle_status), v_status_sub, &v_status);
 
-                if ( v_status.battery_warning == (enum VEHICLE_BATTERY_WARNING)VEHICLE_BATTERY_WARNING_LOW 
-                     && state.current_state != (enum QUAD_STATE)QUAD_STATE_GROUNDED ) {
+                if ( v_status.battery_warning == (enum VEHICLE_BATTERY_WARNING)VEHICLE_BATTERY_WARNING_LOW &&
+                     state.current_state != (enum QUAD_STATE)QUAD_STATE_GROUNDED ) {
 
                         low_battery = true;
                         mavlink_log_critical(mavlink_fd, "[quad_commmander] Battery lavel low!");
