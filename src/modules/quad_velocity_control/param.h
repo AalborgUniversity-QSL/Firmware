@@ -3,6 +3,8 @@
 
 float	Kp_thrust = 0.2,//0.00008,
         Kd_thrust = 0.11, /* Controller constants for thrust controller */
+        Kp_pos = 0.06,
+        Kd_pos = 0.01, /* Controller constants for position controller */
  	
  	formation_alt = 1,		// 1 meter altitude
  	landing_alt = 0.1,
@@ -34,8 +36,12 @@ struct quad_alt_velocity {
 	float z;
 	float dx;
 	float dy;
+	float ddx;
+	float ddy;
 	float x_old;
 	float y_old;
+	float dx_old;
+	float dy_old;
 	float thrust;
 	float thrust_der;
 	float thrust_old;

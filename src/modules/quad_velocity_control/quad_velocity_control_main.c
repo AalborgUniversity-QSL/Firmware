@@ -119,9 +119,13 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			state.z = quad_pos.z[system_id - 1];
 			state.dx = (state.x - state.x_old)/(float)dt_pos;
 			state.dy = (state.y - state.y_old)/(float)dt_pos;
+			// state.ddx = (state.dx - state.dx_old)/(float)dt_pos;
+			// state.ddy = (state.dy - state.dy_old)/(float)dt_pos;
 
 			state.x_old = state.x;
 			state.y_old = state.y;
+			// state.dx_old = state.dx;
+			// state.dy_old = state.dy;
 
 			bool quad_mode_updated;
 			orb_check(quad_mode_sub, &quad_mode_updated);
@@ -197,6 +201,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			}
 
 			if ( (takeoff_pos.timestamp + (float)speed_up_time) > quad_pos.timestamp ) {
+				// Spinning up motors.
                                 velocity_sp.thrust = min_rotor_speed;
 
                         } else {
@@ -227,13 +232,28 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				velocity_sp.thrust = output.thrust + anti_gravity;
                         }
 
-
+                        // Velocity controller
                         error.dx = sp.dx - state.dx;
                         error.dy = sp.dx - state.dy;
 
+                        error.ddx = (error.dx - error.dx_old)/dt_pos;
+                        error.ddy = (error.dy - error.dy_old)/dt_pos;
 
+                        error.dx_old = error.dx;
+                        error.dy_old = error.dy;
 
+                        output.pitch = - Kp_pos * error.dx - Kd_pos * error.ddx;
+                        output.roll  = - Kp_pos * error.dy - Kd_pos * error.ddy;
 
+                        // /* Limiting position controller output */
+                        // if ((float)fabs(output.roll) > max_accl)
+                        //         output.roll = max_velocity * (pos_roll / (float)fabs(pos_roll));
+
+                        // if ((float)fabs(pos_pitch) > max_accl)
+                        //         output.pitch = max_accl * pos_pitch / (float)fabs(pos_pitch));
+
+                        velocity_sp.roll = output.roll;
+                        velocity_sp.pitch = output.pitch;
 
                         orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 		}
