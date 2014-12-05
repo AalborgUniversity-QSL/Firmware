@@ -1,8 +1,8 @@
 /*************************************************************************
  * Copyright (c) 2014 Group 731 Aalborg University. All rights reserved.
  * Author:   Group 731 <14gr731@es.aau.dk>
- *************************************************************************/
-/*
+ *************************************************************************
+ *
  * @file main.c
  *
  * Implementation of an quadrotor commander app for use in the
@@ -111,9 +111,11 @@ int quad_commander_thread_main(int argc, char *argv[]) {
         while (!thread_should_exit) {
                 orb_copy(ORB_ID(vehicle_status), v_status_sub, &v_status);
 
-                if ( v_status.battery_warning == (enum VEHICLE_BATTERY_WARNING)VEHICLE_BATTERY_WARNING_LOW ) {
+                if ( v_status.battery_warning == (enum VEHICLE_BATTERY_WARNING)VEHICLE_BATTERY_WARNING_LOW 
+                     && state.current_state != (enum QUAD_STATE)QUAD_STATE_GROUNDED ) {
+
                         low_battery = true;
-                        mavlink_log_critical(mavlink_fd, "[quad_commmander] Battery lavel critical!");
+                        mavlink_log_critical(mavlink_fd, "[quad_commmander] Battery lavel low!");
                         emergency_land();
 
                 } else {
