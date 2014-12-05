@@ -54,6 +54,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	memset(&quad_pos, 0, sizeof(quad_pos));
 	struct quad_velocity_sp_s velocity_sp;
 	memset(&velocity_sp, 0, sizeof(velocity_sp));
+	struct quad_velocity_sp_s output;
+	memset(&output, 0, sizeof(output));
 	struct quad_mode_s quad_mode;
 	memset(&quad_mode, 0, sizeof(quad_mode));
 	struct state_transition_s state_transition;
@@ -74,7 +76,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	int system_id = 1;
 
 	float 	dt_pos = 0,
-		time_old = (hrt_absolute_time() / (float)1000000);
+		time_old = 0;
+
+	bool initialised = false;
 
 	struct pollfd fds[1];
 	fds[0].fd = quad_pos_sub;
@@ -96,8 +100,15 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			orb_copy(ORB_ID(quad_pos_msg), quad_pos_sub, &quad_pos);
 
-			dt_pos = quad_pos.timestamp - time_old;
-			time_old = quad_pos.timestamp;
+			if (!initialised) {
+				time_old = (hrt_absolute_time() / (float)1000000);
+				dt_pos = 0.1;
+				initialised = true;
+			} else {
+
+				dt_pos = quad_pos.timestamp - time_old;
+				time_old = quad_pos.timestamp;
+			}
 
 			bool quad_mode_updated;
 			orb_check(quad_mode_sub, &quad_mode_updated);
@@ -112,6 +123,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				struct init_pos_s takeoff_pos;
 				memset(&takeoff_pos, 0, sizeof(takeoff_pos));
 
+				takeoff_pos.timestamp = (hrt_absolute_time() / (float)1000000);
 				takeoff_pos.x = quad_pos.x[system_id - 1];
 				takeoff_pos.y = quad_pos.y[system_id - 1];
 				takeoff_pos.z = quad_pos.z[system_id - 1];
@@ -167,25 +179,37 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			}
 
-			// Thrust controller
-			error.thrust = sp.z - quad_pos.z;
-			error.thrust_der = (error.thrust - error.thrust_old)/dt_pos;
+			if ( (takeoff_pos.timestamp + (float)speed_up_time) > quad_pos.timestamp ) {
+                                velocity_sp.thrust = min_rotor_speed;
 
-			error.thrust_old = error.thrust;
+                        } else {
 
-			velocity_sp.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error.thrust_der;
+				// Thrust controller
+				error.thrust = sp.z - quad_pos.z;
+				error.thrust_der = (error.thrust - error.thrust_old)/dt_pos;
 
-                        if (velocity_sp.thrust > out_thrust_old + (float)0.01){
-                                velocity_sp.thrust = out_thrust_old + (float)0.01;
-                        } else if (velocity_sp.thrust < out_thrust_old - (float)0.01) {
-                                velocity_sp.thrust = out_thrust_old - (float)0.01;
+				error.thrust_old = error.thrust;
+
+				out_thrust_old = output.thrust;
+
+				output.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error.thrust_der;
+
+	                        if (output.thrust > out_thrust_old + (float)0.01){
+	                                output.thrust = out_thrust_old + (float)0.01;
+	                        } else if (output.thrust < out_thrust_old - (float)0.01) {
+	                                output.thrust = out_thrust_old - (float)0.01;
+	                        }
+
+	                        if ( output.thrust > (float)1 ) {
+	                                output.thrust = (float)1;
+	                        } else if ( output.thrust < 0 ) {
+	                                output.thrust = 0;
+	                        }
+
+
+				velocity_sp.thrust = output.thrust + anti_gravity;
                         }
 
-                        if ( velocity_sp.thrust > (float)1 ) {
-                                velocity_sp.thrust = (float)1;
-                        } else if ( velocity_sp.thrust < 0 ) {
-                                velocity_sp.thrust = 0;
-                        }
 		}
 
 	}

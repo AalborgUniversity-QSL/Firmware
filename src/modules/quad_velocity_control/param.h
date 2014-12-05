@@ -1,17 +1,21 @@
 #ifndef PARAM
 #define PARAM
 
-float 	formation_alt = 1,		// 1 meter altitude
+float	Kp_thrust = 0.0002,//0.00008,
+        Kd_thrust = 0.00011, /* Controller constants for thrust controller */
+ 	
+ 	formation_alt = 1,		// 1 meter altitude
 	altitude_threashold = 0.1,
-	out_thrust_old = 0;
+	out_thrust_old = 0,
 	anti_gravity = 0.48,
-	Kp_thrust = 0.0002,//0.00008,
-        Kd_thrust = 0.00011; /* Controller constants for thrust controller */
+	min_rotor_speed = 0.25,
+	speed_up_time = 4;	
 
 
 
 
 struct init_pos_s {
+	float timestamp;
 	float init_x;
 	float init_y;
 	float init_z;
