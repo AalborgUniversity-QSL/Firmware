@@ -167,8 +167,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			}
 
-			error.z = sp.z - quad_pos.z;
-			error.thrust_der = 
+			error.thrust = sp.z - quad_pos.z;
+			error.thrust_der = (error.thrust - error.thrust_old)/dt_pos;
 
 
 

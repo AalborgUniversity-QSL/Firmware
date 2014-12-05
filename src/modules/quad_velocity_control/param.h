@@ -1,8 +1,9 @@
 #ifndef PARAM
 #define PARAM
 
-float formation_alt = 1;		// 1 meter altitude
-float altitude_threashold = 0.1;
+float 	formation_alt = 1,		// 1 meter altitude
+	altitude_threashold = 0.1,
+	anti_gravity = 0.48;
 
 
 struct init_pos_s {
@@ -26,6 +27,7 @@ struct quad_alt_velocity {
 	float z;
 	float thrust;
 	float thrust_der;
+	float thrust_old;
 };
 
 #endif
