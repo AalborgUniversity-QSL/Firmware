@@ -24,7 +24,7 @@
 
 #include <uORB/uORB.h>
 #include <uORB/topics/actuator_controls.h>
-#include <uORB/topics/quad_att_sp.h>
+#include <uORB/topics/quad_velocity_sp.h>
 #include <uORB/topics/vehicle_attitude.h>
 
 #include <geo/geo.h>
@@ -44,12 +44,56 @@ __EXPORT int quad_att_control_main(int argc, char *argv[]);
 int att_control_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
 
+/**
+ * Global variables
+ */
 static bool thread_should_exit = false;
 static bool thread_running = false;
 static int daemon_task;
 
-int att_control_thread_main(int argc, char *argv[]) {
+struct output_s out;
+memset(&out, 0, sizeof(out));
+struct PD_object_s roll;
+memset(&roll, 0, sizeof(roll));
+struct PD_object_s pitch;
+memset(&pitch, 0, sizeof(pitch));
+struct PD_object_s yaw;
+memset(&yaw, 0, sizeof(yaw));
 
+/**
+ * Subscriptions
+ */
+struct quad_velocity_sp_s sp;
+memset(&sp, 0, sizeof(sp));
+struct vehicle_attitude_s v_att;
+memset(&v_att, 0, sizeof(v_att));
+
+int sp_sub = orb_subscribe(ORB_ID(quad_velocity_sp));
+int v_att_sub = orb_subscribe(ORB_ID(vehicle_attitude));
+
+/**
+ * Topics to be published on
+ */
+struct actuator_controls_s actuators;
+memset(&actuators, 0, sizeof(actuators));
+
+orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
+
+
+int att_control_thread_main(int argc, char *argv[]) {
+        warnx("[quad_att_control] has begun");
+
+        static int mavlink_fd;
+        mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
+        mavlink_log_info(mavlink_fd, "[quad_att_control] started");
+
+        struct pollfd fd_cmd[1]; /* polles på cmd mavlink */
+        fd_cmd[0].fd = swarm_cmd_sub;
+        fd_cmd[0].events = POLLIN;
+
+        while (!thread_should_exit) {
+                
+        }
 }
 
 static void usage(const char *reason) {
