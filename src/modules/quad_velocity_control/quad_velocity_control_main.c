@@ -167,14 +167,25 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			}
 
+			// Thrust controller
 			error.thrust = sp.z - quad_pos.z;
 			error.thrust_der = (error.thrust - error.thrust_old)/dt_pos;
 
+			error.thrust_old = error.thrust;
 
+			velocity_sp.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error.thrust_der;
 
+                        if (velocity_sp.thrust > out_thrust_old + (float)0.01){
+                                velocity_sp.thrust = out_thrust_old + (float)0.01;
+                        } else if (velocity_sp.thrust < out_thrust_old - (float)0.01) {
+                                velocity_sp.thrust = out_thrust_old - (float)0.01;
+                        }
 
-
-
+                        if ( velocity_sp.thrust > (float)1 ) {
+                                velocity_sp.thrust = (float)1;
+                        } else if ( velocity_sp.thrust < 0 ) {
+                                velocity_sp.thrust = 0;
+                        }
 		}
 
 	}

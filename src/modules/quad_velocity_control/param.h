@@ -3,7 +3,12 @@
 
 float 	formation_alt = 1,		// 1 meter altitude
 	altitude_threashold = 0.1,
-	anti_gravity = 0.48;
+	out_thrust_old = 0;
+	anti_gravity = 0.48,
+	Kp_thrust = 0.0002,//0.00008,
+        Kd_thrust = 0.00011; /* Controller constants for thrust controller */
+
+
 
 
 struct init_pos_s {
