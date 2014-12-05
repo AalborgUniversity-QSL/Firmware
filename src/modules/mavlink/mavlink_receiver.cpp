@@ -269,7 +269,7 @@ MavlinkReceiver::handle_message_quad_pos(mavlink_message_t *msg) {
         quad_pos.y[2] = msg_mavlink.y[2];
         quad_pos.z[2] = msg_mavlink.z[2];
 
-        quad_pos.timestamp = hrt_absolute_time();
+        quad_pos.timestamp = (hrt_absolute_time() / (float)1000000);
         quad_pos.target_system = msg_mavlink.target_system;
 
         if (_quad_pos_msg_pub < 0) {

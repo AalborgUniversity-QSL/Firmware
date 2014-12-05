@@ -6,7 +6,6 @@ float altitude_threashold = 0.1;
 
 
 struct init_pos_s {
-	float timestamp;		// timestamp in seconds
 	float init_x;
 	float init_y;
 	float init_z;
@@ -20,11 +19,13 @@ struct state_transition_s {
 	bool in_air;
 };
 
-struct quad_alt_velocity_sp {
+struct quad_alt_velocity {
 	float timestamp;		// timestamp in seconds
 	float dx;
 	float dy;
-	float altitude;
+	float z;
+	float thrust;
+	float thrust_der;
 };
 
 #endif
