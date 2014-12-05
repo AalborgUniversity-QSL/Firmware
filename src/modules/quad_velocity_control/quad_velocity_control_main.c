@@ -96,7 +96,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				orb_copy(ORB_ID(quad_mode), quad_mode_sub, quad_mode);
 			}
 
-			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED && !state_transition.takeoff){
+			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && !state_transition.takeoff){
 				
 				// initialise take-off sequence
 				struct init_pos_s takeoff_pos;
@@ -107,21 +107,15 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				takeoff_pos.y = quad_pos.y[system_id - 1];
 				takeoff_pos.z = quad_pos.z[system_id - 1];
 
-				velocity_sp.dx = 0;
-				velocity_sp.dy = 0;
-				velocity_sp.z = formation_alt;
-
-				orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
-
 				state_transition.takeoff = true;
 
-			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING && !state_transition.land){
+			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && !state_transition.land){
 				// Landing sequence
 
-			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING && !state_transition.start){
+			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM && !state_transition.start){
 				// Start computing potential fields
 			
-			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_SWARMING && !state_transition.stop){
+			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM && !state_transition.stop){
 				
 				// Stop computing potential fields and break formation and return to hovering
 				struct init_pos_s landing_pos;
