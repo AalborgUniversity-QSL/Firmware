@@ -203,7 +203,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					sp.z = state.z - 0.005;
 				} else {
 					
-					sp.z = landing_alt;
 					shutdown_motors = true;
 					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
                         		orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
