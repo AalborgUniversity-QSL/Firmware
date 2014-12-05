@@ -153,27 +153,28 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				state_transition.takeoff = true;
 
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && !state_transition.land){
-				// Landing sequence
+				// initialise landing sequence
+				sp.dx = 0;
+				sp.dy = 0;
+				sp.z = landing_alt;
+
+				state_transition.land = true;
 
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM && !state_transition.start){
 				// Start computing potential fields
 			
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM && !state_transition.stop){
 				
-				// Stop computing potential fields and break formation and return to hovering
-				struct init_pos_s landing_pos;
-				memset(&landing_pos, 0, sizeof(landing_pos));
+				// // Stop computing potential fields and break formation and return to hovering
+				// struct init_pos_s landing_pos;
+				// memset(&landing_pos, 0, sizeof(landing_pos));
 
-				landing_pos.timestamp = quad_pos.timestamp;
-				landing_pos.x = state.x;
-				landing_pos.y = state.y;
-				landing_pos.z = state.z;
+				// landing_pos.timestamp = quad_pos.timestamp;
+				// landing_pos.x = state.x;
+				// landing_pos.y = state.y;
+				// landing_pos.z = state.z;
 
-				sp.dx = 0;
-				sp.dy = 0;
-				sp.z = landing_alt;
-
-				state_transition = true;
+				// state_transition = true;
 
 			} else {
 				// Do nothing yet
@@ -186,8 +187,12 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				
 				// Takeoff sequence
 				if (state.z > (sp.z - (float)hover_threashold) && state.z < (sp.z + (float)hover_threashold && (float)fabs(state.dx + state.dy) < float(min_hover_velocity){
+					
+					// Change state to hovering state
 					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_HOVERING;
 					orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+
+					state_transition.takeoff = false;
 				}
 
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && state_transition.land){
@@ -198,7 +203,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			}
 
-			if ( (takeoff_pos.timestamp + (float)speed_up_time) > quad_pos.timestamp ) {
+			if ( (takeoff_pos.timestamp + (float)speed_up_time) > quad_pos.timestamp && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED ) {
 				// Spinning up motors.
                                 velocity_sp.thrust = min_rotor_speed;
 
@@ -214,18 +219,19 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 				output.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error.thrust_der;
 
+				// Thrust filter
 	                        if (output.thrust > output.thrust_old + (float)0.01){
 	                                output.thrust = output.thrust_old + (float)0.01;
 	                        } else if (output.thrust < output.thrust_old - (float)0.01) {
 	                                output.thrust = output.thrust_old - (float)0.01;
 	                        }
 
+	                        // Thrust limiter
 	                        if ( output.thrust > (float)1 ) {
 	                                output.thrust = (float)1;
 	                        } else if ( output.thrust < 0 ) {
 	                                output.thrust = 0;
 	                        }
-
 
 				velocity_sp.thrust = output.thrust + anti_gravity;
                         }
@@ -234,12 +240,14 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         error.dx = sp.dx - state.dx;
                         error.dy = sp.dx - state.dy;
 
-                        error.ddx = (error.dx - error.dx_old)/dt_pos;
-                        error.ddy = (error.dy - error.dy_old)/dt_pos;
+                        // Derivative part
+                        error.ddx = (error.dx - error.dx_old)/(float)dt_pos;
+                        error.ddy = (error.dy - error.dy_old)/(float)dt_pos;
 
                         error.dx_old = error.dx;
                         error.dy_old = error.dy;
 
+                        // PD velocity controller
                         output.pitch = - Kp_pos * error.dx - Kd_pos * error.ddx;
                         output.roll  = - Kp_pos * error.dy - Kd_pos * error.ddy;
 
@@ -253,6 +261,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         velocity_sp.roll = output.roll;
                         velocity_sp.pitch = output.pitch;
 
+                        // Publish the new roll, pitch, yaw and thrust set points
                         orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 		}
 	}
