@@ -16,9 +16,9 @@
  
 struct quad_velocity_sp_s {
         uint64_t timestamp;
-        float dx;    /* vector for sp */
-        float dy;
-        float z;
+        float roll;    /* vector for sp */
+        float pitch;
+        float thrust;
 };
  
 ORB_DECLARE(quad_velocity_sp);
