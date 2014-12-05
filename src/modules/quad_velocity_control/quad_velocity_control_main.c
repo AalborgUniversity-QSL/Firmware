@@ -58,6 +58,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	memset(&quad_mode, 0, sizeof(quad_mode));
 	struct state_transition_s state_transition;
 	memset(&state_transition, false, sizeof(state_transition));
+	struct quad_alt_velocity_sp alt_velocity_sp;
+	memset(&alt_velocity_sp, 0, sizeof(alt_velocity_sp));
 
 	int quad_pos_sub = orb_subscribe(ORB_ID(quad_pos_msg));
 	int quad_mode_sub = orb_subscribe(ORB_ID(quad_mode));
@@ -106,6 +108,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				takeoff_pos.x = quad_pos.x[system_id - 1];
 				takeoff_pos.y = quad_pos.y[system_id - 1];
 				takeoff_pos.z = quad_pos.z[system_id - 1];
+
+				alt_velocity_sp.timestamp = (hrt_absolute_time() / (float)1000000);
+				alt_velocity_sp.dx = 0;
+				alt_velocity_sp.dy = 0;
+				alt_velocity_sp.altitude = formation_alt;
 
 				state_transition.takeoff = true;
 
