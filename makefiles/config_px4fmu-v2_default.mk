@@ -132,7 +132,7 @@ MODULES		+= lib/launchdetection
 # Custom apps
 #
 #MODULES         += modules/wai_quad_pos
-#MODULES		+= modules/quad_att_control
+MODULES		+= modules/quad_att_control
 #MODULES		+= modules/hover_test
 MODULES         += modules/quad_velocity_control
 
