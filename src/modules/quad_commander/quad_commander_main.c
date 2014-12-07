@@ -117,7 +117,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
         mode_pub = orb_advertise(ORB_ID(quad_mode), &mode);
 
         mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
-        mavlink_log_info(mavlink_fd, "[quad_att__control] started");
+        mavlink_log_info(mavlink_fd, "[quad_commander] started");
 
         struct pollfd fd_cmd[1];
         fd_cmd[0].fd = swarm_cmd_sub;
