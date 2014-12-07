@@ -77,8 +77,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	orb_advert_t quad_velocity_sp_pub = orb_advertise(ORB_ID(quad_velocity_sp), &velocity_sp);
 	orb_advert_t quad_mode_pub = orb_advertise(ORB_ID(quad_mode), &quad_mode);
 
-	int package_loss = 0;
-
 	int system_id = 1;
 
 	float 	dt_pos = 0,
@@ -86,6 +84,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 	bool initialised = false,
 	     shutdown_motors = false;
+	     error = false;
 
 	struct pollfd fds[1];
 	fds[0].fd = quad_pos_sub;
@@ -98,14 +97,22 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		if (pret < 0){
 			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
-			package_loss++;
-			if(package_loss > 10){
-				package_loss = 0;
-				mavlink_log_info(mavlink_fd,"[POT] Package loss limit reached")
-			}
+
+			velocity_sp.thrust = 0;
+			velocity_sp.roll = 0;
+			velocity_sp.pitch = 0;
+			velocity_sp.yaw = 0;
+
+			orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
+
+			error = true;
+			mavlink_log_info(mavlink_fd,"[POT] Package loss limit reached");
+
 		} else if (fds[0].revents & POLLIN) {
 
 			orb_copy(ORB_ID(quad_pos_msg), quad_pos_sub, &quad_pos);
+
+			error = false;
 
 			if (!initialised) {
 				dt_pos = 0.1;
@@ -228,7 +235,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
                         	velocity_sp.thrust = 0;
 
-                        } else {
+                        } else if (!error) {
 
 				// Thrust controller
 				error.thrust = sp.z - state.z;
@@ -255,6 +262,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	                        }
 
 				velocity_sp.thrust = output.thrust + anti_gravity;
+                        } else {
+                        	// Do nothing
                         }
 
                         // Velocity controller
