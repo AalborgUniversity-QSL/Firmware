@@ -128,6 +128,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 				dt_pos = quad_pos.timestamp - time_old;
 				time_old = quad_pos.timestamp;
+				mavlink_log_info(mavlink_fd,"td_pos %.3f", (double)dt_pos);
 			}
 
 			state.x = quad_pos.x[system_id - 1] / (float)1000;
