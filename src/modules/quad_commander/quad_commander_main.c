@@ -26,8 +26,9 @@
 
 #include <uORB/uORB.h>
 #include <uORB/topics/quad_mode.h>
-#include <uORB/topics/quad_swarm_cmd>
+#include <uORB/topics/quad_swarm_cmd.h>
 #include <uORB/topics/vehicle_status.h>
+#include <uORB/topics/quad_pos_msg.h>
 
 #include <geo/geo.h>
 
@@ -75,32 +76,45 @@ bool low_battery = false;
  * Subscriptions
  */
 struct quad_swarm_cmd_s swarm_cmd;
-memset(&swarm_cmd, 0, sizeof(swarm_cmd));
 struct quad_pos_msg_s quad_pos;
-memset(&quad_pos, 0, sizeof(quad_pos));
 struct quad_mode_s state;
-memset(&state, 0, sizeof(state));
 struct vehicle_status_s v_status;
-memset(&v_status, 0, sizeof(v_status));
 
-int swarm_cmd_sub = orb_subscribe(ORB_ID(quad_swarm_cmd));
-int quad_pos_sub = orb_subscribe(ORB_ID(quad_pos_msg));
-int state_sub = orb_subscribe(ORB_ID(quad_mode), &current_state);
-int v_status_sub = orb_subscribe(ORB_ID(vehicle_status), &v_status);
+int swarm_cmd_sub = 0;
+int quad_pos_sub = 0;
+int state_sub = 0;
+int v_status_sub = 0;
 
 /**
  * Topics to be published on
  */
 struct quad_mode_s mode;
-memset(&mode, 0, sizeof(mode));
 
-orb_advert_t mode_pub = orb_advertise(ORB_ID(quad_mode), &mode);
+orb_advert_t mode_pub; /* = orb_advertise(ORB_ID(quad_mode), &mode); */
+
+/**
+ * Globals
+ */
+static int mavlink_fd;
 
 
 int quad_commander_thread_main(int argc, char *argv[]) {
         warnx("[quad_commander] has begun");
 
-        static int mavlink_fd;
+        memset(&swarm_cmd, 0, sizeof(swarm_cmd));
+        memset(&quad_pos, 0, sizeof(quad_pos));
+        memset(&state, 0, sizeof(state));
+        memset(&v_status, 0, sizeof(v_status));
+
+        swarm_cmd_sub = orb_subscribe(ORB_ID(quad_swarm_cmd));
+        quad_pos_sub = orb_subscribe(ORB_ID(quad_pos_msg));
+        state_sub = orb_subscribe(ORB_ID(quad_mode));
+        v_status_sub = orb_subscribe(ORB_ID(vehicle_status));
+
+        memset(&mode, 0, sizeof(mode));
+
+        mode_pub = orb_advertise(ORB_ID(quad_mode), &mode);
+
         mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
         mavlink_log_info(mavlink_fd, "[quad_att__control] started");
 
@@ -131,18 +145,18 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                 } else if (ret_cmd == 0) {
                         /* no return value - nothing has happened */
                 } else if (fd_cmd[0].revents & POLLIN) {
-                        orb_copy(ORB_ID(quad_quad_swarm_cmd), swarm_cmd_sub, &swarm_cmd);
+                        orb_copy(ORB_ID(quad_swarm_cmd), swarm_cmd_sub, &swarm_cmd);
 
-                        if ( swarm_cmd.cmd == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_TAKEOFF ) {
+                        if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_TAKEOFF ) {
                                 take_off();
 
-                        } else if ( swarm_cmd.cmd == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_LAND ) {
+                        } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_LAND ) {
                                 land();
 
-                        } else if ( swarm_cmd.cmd == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_START_SWARM ) {
+                        } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_START_SWARM ) {
                                 start_swarm();
 
-                        } else if ( swarm_cmd.cmd == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_STOP_SWARM ) {
+                        } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_STOP_SWARM ) {
                                 stop_swarm();
 
                         } else {
@@ -180,7 +194,7 @@ int land(void) {
                 bool state_updated;
                 do {
                         orb_check(state_sub, &state_updated);
-                        if ( mode_response_updated )
+                        if ( state_updated )
                                 orb_copy(ORB_ID(quad_mode), state_sub, &state);
 
                 } while ( state.current_state != (enum QUAD_STATE)QUAD_STATE_GROUNDED );
@@ -227,7 +241,7 @@ int stop_swarm(void) {
                 orb_publish(ORB_ID(quad_mode), mode_pub, &mode);
 
                 bool state_updated;
-                do {
+               do {
                         orb_check(state_sub, &state_updated);
                         if ( state_updated )
                                 orb_copy(ORB_ID(quad_mode), state_sub, &state);
@@ -247,7 +261,7 @@ static void usage(const char *reason) {
         exit(1);
 }
 
-int quad_att_control_main(int argc, char *argv[]) {
+int quad_commander_main(int argc, char *argv[]) {
         if (argc < 1)
                 usage("missing argument");
 
@@ -264,7 +278,7 @@ int quad_att_control_main(int argc, char *argv[]) {
                                              SCHED_DEFAULT,
                                              SCHED_PRIORITY_MAX - 5,
                                              2048,
-                                             quad_commmander_thread_main,
+                                             quad_commander_thread_main,
                                              (argv) ? (const char **)&argv[2] : (const char **)NULL);
                 thread_running = true;
                 exit(0);

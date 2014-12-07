@@ -7,8 +7,8 @@
  *
  */
 
-#define ROLL_PITCH_KP 0.23;
-#define ROLL_PITCH_KD 0.05;
+#define ROLL_PITCH_KP 0.23
+#define ROLL_PITCH_KD 0.05
 
-#define YAW_KP 0.3;
+#define YAW_KP 0.3
 #define YAW_KD 0.15
