@@ -29,12 +29,14 @@ enum QUAD_CMD {
 enum QUAD_STATE{
         QUAD_STATE_SWARMING = 47,
         QUAD_STATE_HOVERING = 48,
-        QUAD_STATE_GROUNDED = 49
+        QUAD_STATE_GROUNDED = 49,
+        QUAD_STATE_EMERGENCY = 50
 };
 
 struct quad_mode_s {
         uint8_t cmd;
         uint8_t current_state;
+        bool error;
 };
 
 #endif
