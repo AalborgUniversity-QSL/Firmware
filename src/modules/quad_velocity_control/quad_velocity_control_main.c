@@ -98,6 +98,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
 
+			if (initialised){
+
 			velocity_sp.thrust = 0;
 			velocity_sp.roll = 0;
 			velocity_sp.pitch = 0;
@@ -108,9 +110,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 			orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
-
+			
 			package_error = true;
 			mavlink_log_info(mavlink_fd,"[POT] Package loss limit reached");
+			}
+
 
 		} else if (fds[0].revents & POLLIN) {
 
