@@ -103,8 +103,6 @@ int att_control_thread_main(int argc, char *argv[]) {
                 dt = 0,
                 time = 0,
                 time_old = 0,
-                dt = 0,
-                error = 0,
                 rp_max = 0.7,  /* roll and pitch maximum output */
                 yaw_max = 0.4;  /* yaw maximum output */
 
@@ -132,7 +130,7 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                         time = (hrt_absolute_time() / (float)1000000);
                         dt = time - time_old;
-                        time_old = time_att;
+                        time_old = time;
 
                         pd_set_dt(&roll, dt);
                         pd_set_dt(&pitch, dt);
@@ -189,7 +187,7 @@ void pd_set_dt(struct PD_object_s* pd, float dt) {
 }
 
 void pd_set_desired(struct PD_object_s* pd, float desired) {
-        pid->desired = desired;
+        pd->desired = desired;
 }
 
 void pd_init(struct PD_object_s* pd, float desired, float kp, float kd, float dt) {
