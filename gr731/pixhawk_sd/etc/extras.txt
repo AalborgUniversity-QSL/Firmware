@@ -1,5 +1,6 @@
 sensors start
-hover_test start
+quad_commander start
+quad_velocity_control start
 quad_att_control start
 commander start
 mavlink start -d /dev/ttyS1 -b 57600

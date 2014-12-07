@@ -132,7 +132,7 @@ MODULES		+= lib/launchdetection
 # Custom apps
 #
 MODULES		+= modules/quad_att_control
-MODULES          += modules/quad_velocity_control
+MODULES         += modules/quad_velocity_control
 MODULES         += modules/quad_commander
 
 #
