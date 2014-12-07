@@ -96,7 +96,7 @@ orb_advert_t mode_pub; /* = orb_advertise(ORB_ID(quad_mode), &mode); */
  * Globals
  */
 static int mavlink_fd;
-const float time_out = 20;
+const float time_out = 20.f;
 
 
 int quad_commander_thread_main(int argc, char *argv[]) {

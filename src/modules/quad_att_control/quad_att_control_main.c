@@ -99,10 +99,10 @@ int att_control_thread_main(int argc, char *argv[]) {
         pd_init(&pitch, (float)0, (float)ROLL_PITCH_KP, (float)ROLL_PITCH_KD, (float)0.01);
         pd_init(&yaw, (float)0, (float)YAW_KP, (float)YAW_KD, (float)0.01);
 
-        float   abs_yaw = 0,
-                dt = 0,
-                time = 0,
-                time_old = 0,
+        float   abs_yaw = 0.f,
+                dt = 0.f,
+                time = 0.f,
+                time_old = 0.f,
                 rp_max = 0.7,  /* roll and pitch maximum output */
                 yaw_max = 0.4;  /* yaw maximum output */
 
@@ -150,7 +150,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         if ( (float)fabs(out.yaw) > yaw_max )
                                 out.yaw = yaw_max * (out.yaw / (float)fabs(out.yaw));
 
-                        out.thrust = sp.thrust;
+                        out.thrust = sp.thrust; /* Thrust controller resides in velocity controller */
 
                         actuators.control[0] = (float)out.roll;
                         actuators.control[1] = (float)out.pitch;
