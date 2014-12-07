@@ -1,3 +1,15 @@
+/*************************************************************************
+ * Copyright (c) 2014 Group 731 Aalborg University. All rights reserved.
+ * Author:   Group 731 <14gr731@es.aau.dk>
+ *************************************************************************
+ *
+ * Controller constants for the attutude controllers
+ *
+ */
+
+#ifndef QUAD_ATT_CONTROL_MAIN_H
+#define QUAD_ATT_CONTROL_MAIN_H
+
 struct PD_object_s {
         float desired; //< set point
         float error; //< error
@@ -16,3 +28,5 @@ struct output_s {
         float yaw;
         float thrust;
 };
+
+#endif  /* QUAD_ATT_CONTROL_MAIN_H */
