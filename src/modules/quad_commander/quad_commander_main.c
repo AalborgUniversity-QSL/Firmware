@@ -184,7 +184,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
 }
 
 int take_off(void) {
-        if ( state.current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED && !low_battery ) {
+        if ( state.current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED /*&& !low_battery*/ ) {
                 mode.cmd = (enum QUAD_CMD)QUAD_CMD_TAKEOFF;
                 orb_publish(ORB_ID(quad_mode), mode_pub, &mode);
 

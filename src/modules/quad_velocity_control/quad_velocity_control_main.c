@@ -107,8 +107,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			quad_mode.error = true;
 			quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_EMERGENCY;
 
-			orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
-			orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+			// orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
+			// orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 			
 			mavlink_log_info(mavlink_fd,"[POT] Package loss limit reached");
 			}
@@ -123,12 +123,15 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				time_old = quad_pos.timestamp;
 				state.x_old = quad_pos.x[system_id - 1] / (float)1000;
 				state.y_old = quad_pos.y[system_id - 1] / (float)1000;
+
+				// quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
+				// orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 				initialised = true;
 			} else {
 
 				dt_pos = quad_pos.timestamp - time_old;
 				time_old = quad_pos.timestamp;
-				mavlink_log_info(mavlink_fd,"td_pos %.3f", (double)dt_pos);
+				// mavlink_log_info(mavlink_fd,"td_pos %.3f", (double)dt_pos);
 			}
 
 			state.x = quad_pos.x[system_id - 1] / (float)1000;
@@ -149,14 +152,18 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			if (quad_mode_updated){
 				orb_copy(ORB_ID(quad_mode), quad_mode_sub, &quad_mode);
+				mavlink_log_info(mavlink_fd,"quad_mode: %u",(int)quad_mode.cmd);
 			}
+			
+			mavlink_log_info(mavlink_fd,"quad_mode: %u",(int)quad_mode.current_state);
+
 
 			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && !state_transition.takeoff){
 				
 				takeoff_pos.timestamp = quad_pos.timestamp;
-				takeoff_pos.x = state.x;
-				takeoff_pos.y = state.y;
-				takeoff_pos.z = state.z;
+				// takeoff_pos.x = state.x;
+				// takeoff_pos.y = state.y;
+				// takeoff_pos.z = state.z;
 
 				// sp.timestamp = (hrt_absolute_time() / (float)1000000);
 				sp.dx = 0;
@@ -234,15 +241,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			}
 
-			if ( (takeoff_pos.timestamp + (float)speed_up_time) > quad_pos.timestamp && quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF ) {
-				// Spinning up motors.
-                                velocity_sp.thrust = min_rotor_speed;
-
-                        } else if (shutdown_motors) {
+                        if (shutdown_motors) {
 
                         	velocity_sp.thrust = 0;
 
-                        } else if (!quad_mode.error) {
+                        } else if (!quad_mode.error && quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF) {
 
 				// Thrust controller
 				error.thrust = sp.z - state.z;
@@ -269,6 +272,10 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	                        }
 
 				velocity_sp.thrust = output.thrust + anti_gravity;
+
+				if ((takeoff_pos.timestamp + (float)speed_up_time) > quad_pos.timestamp){
+					velocity_sp.thrust = min_rotor_speed;
+				}
                         } else {
                         	// Do nothing
                         }
@@ -298,6 +305,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         velocity_sp.roll = output.roll;
                         velocity_sp.pitch = output.pitch;
 
+                        // mavlink_log_info(mavlink_fd,"th: %.3f r: %.3f p: %.3f yaw: %.3f ",(double)velocity_sp.thrust,(double)velocity_sp.roll,(double)velocity_sp.pitch,(double)velocity_sp.yaw);
                         // Publish the new roll, pitch, yaw and thrust set points
                         orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 		}
