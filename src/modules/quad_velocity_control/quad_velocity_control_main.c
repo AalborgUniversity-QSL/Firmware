@@ -103,7 +103,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			velocity_sp.pitch = 0;
 			velocity_sp.yaw = 0;
 
+			quad_mode.error = true;
+			quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_EMERGENCY;
+
 			orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
+			orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 
 			package_error = true;
 			mavlink_log_info(mavlink_fd,"[POT] Package loss limit reached");
@@ -215,7 +219,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				} else {
 					
 					shutdown_motors = true;
-					state_transition = false;
+					state_transition.land = false;
 					quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
 					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
                         		orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
