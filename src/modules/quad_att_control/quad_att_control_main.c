@@ -49,7 +49,7 @@ float pd_update(struct PD_object_s* pd, float measured);
 void pd_set_desired(struct PD_object_s* pd, float desired);
 
 /**
- * Global variables
+ * Globals
  */
 static bool thread_should_exit = false;
 static bool thread_running = false;
