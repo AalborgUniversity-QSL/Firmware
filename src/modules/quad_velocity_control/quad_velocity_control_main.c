@@ -83,8 +83,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		time_old = 0;
 
 	bool initialised = false,
-	     shutdown_motors = false;
-	     error = false;
+	     shutdown_motors = false,
+	     package_error = false;
 
 	struct pollfd fds[1];
 	fds[0].fd = quad_pos_sub;
@@ -105,14 +105,14 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 
-			error = true;
+			package_error = true;
 			mavlink_log_info(mavlink_fd,"[POT] Package loss limit reached");
 
 		} else if (fds[0].revents & POLLIN) {
 
 			orb_copy(ORB_ID(quad_pos_msg), quad_pos_sub, &quad_pos);
 
-			error = false;
+			package_error = false;
 
 			if (!initialised) {
 				dt_pos = 0.1;
@@ -235,7 +235,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
                         	velocity_sp.thrust = 0;
 
-                        } else if (!error) {
+                        } else if (!package_error) {
 
 				// Thrust controller
 				error.thrust = sp.z - state.z;
