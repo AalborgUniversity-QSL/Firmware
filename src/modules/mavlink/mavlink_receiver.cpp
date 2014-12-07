@@ -280,7 +280,8 @@ MavlinkReceiver::handle_message_quad_pos(mavlink_message_t *msg) {
         }
 }
 
-void handle_message_quad_swarm_cmd(mavlink_message_t *msg){
+void 
+MavlinkReceiver::handle_message_quad_swarm_cmd(mavlink_message_t *msg){
 	mavlink_swarm_commander_t msg_mavlink;
 	mavlink_msg_swarm_commander_decode(msg, &msg_mavlink);
 
