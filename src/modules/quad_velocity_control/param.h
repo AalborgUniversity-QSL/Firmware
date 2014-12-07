@@ -15,9 +15,7 @@ float	Kp_thrust = 0.2,//0.00008,
 	speed_up_time = 4,
 	min_hover_velocity = 0.001,
 
-	thrust_filter = 0,
-	takeoff_filter = 0.01,
-	landing_filter = 0.001;
+	thrust_filter = 0.05;
 
 struct init_pos_s {
 	float timestamp;

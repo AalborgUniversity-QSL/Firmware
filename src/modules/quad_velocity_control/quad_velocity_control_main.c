@@ -236,15 +236,15 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 				error.thrust_old = error.thrust;
 
-				output.thrust_old = output.thrust;
-
 				output.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error.thrust_der;
+				
+				state.thrust_old = output.thrust;
 
 				// Thrust filter
-	                        if (output.thrust > output.thrust_old + (float)0.01){
-	                                output.thrust = output.thrust_old + (float)0.01;
-	                        } else if (output.thrust < output.thrust_old - (float)0.01) {
-	                                output.thrust = output.thrust_old - (float)0.01;
+	                        if (output.thrust > state.thrust_old + (float)thrust_filter){
+	                                output.thrust = state.thrust_old + (float)thrust_filter;
+	                        } else if (output.thrust < state.thrust_old - (float)thrust_filter) {
+	                                output.thrust = state.thrust_old - (float)thrust_filter;
 	                        }
 
 	                        // Thrust limiter
