@@ -233,7 +233,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			}
 
-			if ( (takeoff_pos.timestamp + (float)speed_up_time) > quad_pos.timestamp && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED ) {
+			if ( (takeoff_pos.timestamp + (float)speed_up_time) > quad_pos.timestamp && quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF ) {
 				// Spinning up motors.
                                 velocity_sp.thrust = min_rotor_speed;
 
