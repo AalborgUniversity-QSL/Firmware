@@ -189,6 +189,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				if (state.z > (sp.z - (float)hover_threashold) && state.z < (sp.z + (float)hover_threashold && (float)fabs(state.dx + state.dy) < float(min_hover_velocity){
 					
 					// Change state to hovering state
+					state_transition.takeoff = false;
+					quad_mode.mode = (enum QUAD_CMD)QUAD_CMD_PENDING;
 					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_HOVERING;
 					orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 				}
@@ -212,11 +214,14 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM && state_transition.stop){
 
+			} else {
+
 			}
 
 			if ( (takeoff_pos.timestamp + (float)speed_up_time) > quad_pos.timestamp && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED ) {
 				// Spinning up motors.
                                 velocity_sp.thrust = min_rotor_speed;
+                                
                         } else if (shutdown_motors) {
 
                         	velocity_sp.thrust = 0;

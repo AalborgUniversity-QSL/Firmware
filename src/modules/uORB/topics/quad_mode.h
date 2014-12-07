@@ -27,9 +27,9 @@ enum QUAD_CMD {
 };
 
 enum QUAD_STATE{
-        QUAD_STATE_SWARMING = 46,
-        QUAD_STATE_HOVERING = 47,
-        QUAD_STATE_GROUNDED = 48
+        QUAD_STATE_SWARMING = 47,
+        QUAD_STATE_HOVERING = 48,
+        QUAD_STATE_GROUNDED = 49
 };
 
 struct quad_mode_s {
