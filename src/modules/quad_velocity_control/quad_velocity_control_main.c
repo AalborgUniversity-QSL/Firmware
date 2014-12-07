@@ -152,10 +152,10 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			if (quad_mode_updated){
 				orb_copy(ORB_ID(quad_mode), quad_mode_sub, &quad_mode);
-				mavlink_log_info(mavlink_fd,"quad_mode: %u",(int)quad_mode.cmd);
+				// mavlink_log_info(mavlink_fd,"quad_mode: %u",(int)quad_mode.cmd);
 			}
 			
-			mavlink_log_info(mavlink_fd,"quad_mode: %u",(int)quad_mode.current_state);
+			// mavlink_log_info(mavlink_fd,"quad_mode: %u",(int)quad_mode.current_state);
 
 
 			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && !state_transition.takeoff){
