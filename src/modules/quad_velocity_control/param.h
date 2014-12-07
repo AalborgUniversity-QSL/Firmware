@@ -21,9 +21,9 @@ float	Kp_thrust = 0.2,//0.00008,
 
 struct init_pos_s {
 	float timestamp;
-	float init_x;
-	float init_y;
-	float init_z;
+	float x;
+	float y;
+	float z;
 };
 
 struct state_transition_s {

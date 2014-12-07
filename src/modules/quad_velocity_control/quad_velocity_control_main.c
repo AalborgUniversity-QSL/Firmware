@@ -67,6 +67,10 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	struct quad_alt_velocity state;
 	memset(&state, 0, sizeof(state));
 
+	// initialise take-off sequence
+	struct init_pos_s takeoff_pos;
+	memset(&takeoff_pos, 0, sizeof(takeoff_pos));
+
 	int quad_pos_sub = orb_subscribe(ORB_ID(quad_pos_msg));
 	int quad_mode_sub = orb_subscribe(ORB_ID(quad_mode));
 
@@ -132,15 +136,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			orb_check(quad_mode_sub, &quad_mode_updated);
 
 			if (quad_mode_updated){
-				orb_copy(ORB_ID(quad_mode), quad_mode_sub, quad_mode);
+				orb_copy(ORB_ID(quad_mode), quad_mode_sub, &quad_mode);
 			}
 
 			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && !state_transition.takeoff){
 				
-				// initialise take-off sequence
-				struct init_pos_s takeoff_pos;
-				memset(&takeoff_pos, 0, sizeof(takeoff_pos));
-
 				takeoff_pos.timestamp = quad_pos.timestamp;
 				takeoff_pos.x = state.x;
 				takeoff_pos.y = state.y;
@@ -186,11 +186,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && state_transition.takeoff){
 				
 				// Takeoff sequence
-				if (state.z > (sp.z - (float)hover_threashold) && state.z < (sp.z + (float)hover_threashold && (float)fabs(state.dx + state.dy) < float(min_hover_velocity){
+				if ((state.z > (sp.z - (float)hover_threashold)) && (state.z < (sp.z + (float)hover_threashold)) && ((float)fabs(state.dx + state.dy) < (float)min_hover_velocity)){
 					
 					// Change state to hovering state
 					state_transition.takeoff = false;
-					quad_mode.mode = (enum QUAD_CMD)QUAD_CMD_PENDING;
+					quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
 					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_HOVERING;
 					orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 				} else {
@@ -200,11 +200,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && state_transition.land){
 
 				if(state.z > hover_alt ) {
-					sp.z = state.z - 0.1;
-				} else if (state.z < hover_alt && state.z > 0.5){
-					sp.z = state.z - 0.02;		
-				} else if (state.z < 0.5 && state.z > landing_alt){
-					sp.z = state.z - 0.005;
+					sp.z = state.z - (float)0.1;
+				} else if (state.z < hover_alt && state.z > (float)0.5){
+					sp.z = state.z - (float)0.02;		
+				} else if (state.z < (float)0.5 && state.z > landing_alt){
+					sp.z = state.z - (float)0.005;
 				} else {
 					
 					shutdown_motors = true;
