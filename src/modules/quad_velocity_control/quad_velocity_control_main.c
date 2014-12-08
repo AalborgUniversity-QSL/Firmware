@@ -90,7 +90,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	 	
 	 	hover_alt = 1,		// 1 meter altitude
 	 	landing_alt = 0.2,
-		hover_threashold = 0.1,
+		hover_threashold = 0.5,
 		anti_gravity = 0.48,
 		min_rotor_speed = 0.25,
 		speed_up_time = 4,
@@ -130,8 +130,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			if (quad_mode_updated){
 				orb_copy(ORB_ID(quad_mode), quad_mode_sub, &quad_mode);
-				mavlink_log_info(mavlink_fd,"[POT] current_state: %d", quad_mode.current_state);
-				mavlink_log_info(mavlink_fd,"[POT] cmd: %d", quad_mode.cmd);
+				// mavlink_log_info(mavlink_fd,"[POT] current_state: %d", quad_mode.current_state);
+				// mavlink_log_info(mavlink_fd,"[POT] cmd: %d", quad_mode.cmd);
 
 			}
 
@@ -217,6 +217,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
 					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_HOVERING;
 					orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+					mavlink_log_info(mavlink_fd,"[POT] HOVERING");
 				} else {
 					// Do nothing
 				}
