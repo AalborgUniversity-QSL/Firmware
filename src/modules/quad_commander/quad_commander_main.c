@@ -57,6 +57,11 @@ int quad_commander_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
 
 /**
+ * Error messages
+ */
+void error_handling( int error );
+
+/**
  * State transitions functions
  */
 int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
@@ -142,8 +147,8 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                         orb_copy(ORB_ID(quad_swarm_cmd), swarm_cmd_sub, &swarm_cmd);
 
                         if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_TAKEOFF ) {
-                                if ( take_off( &state, &mode, &mode_pub, &state_sub ) < (int)0 )
-                                        mavlink_log_critical(mavlink_fd, "[quad_commmander] take_off failed!");
+                                int ret_value = take_off( &state, &mode, &mode_pub, &state_sub );
+                                error_handling( ret_value );
 
                         } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_LAND ) {
                                 if ( land( &state, &mode, &mode_pub, &state_sub ) < (int)0 )
@@ -171,66 +176,43 @@ int quad_commander_thread_main(int argc, char *argv[]) {
         }
 }
 
-int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub ) {
-        if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED /*&& !low_battery*/ ) {
-                mavlink_log_critical(mavlink_fd, "[quad_commmander] halløj før loopet!");
-                
-                mode->cmd = (enum QUAD_CMD)QUAD_CMD_TAKEOFF;
-                // orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
-                orb_copy(ORB_ID(quad_mode), *state_sub, state);
-
-		int i = 1;
-                float t0 = ( hrt_absolute_time() / (float)1000000 );
-                bool run = true;
-		bool state_updated;
-
-                while (run){
-
-                	if((t0 + i) < (hrt_absolute_time() / (float)1000000 )){
-	                        orb_check(*state_sub, &state_updated);
-
-	                        if ( state_updated ){
-	                                orb_copy(ORB_ID(quad_mode), *state_sub, state);
-	                                run = false;
-	                        }
-	                        i++;
-                	}
-
-                	if ( time_out < ((hrt_absolute_time() / (float)1000000 ) - (float)t0) ) {
-                                return -1;
-                        }
-                }
-
-                // int i = 1;
-                // float t0 = ( hrt_absolute_time() / (float)1000000 );
-                // do {
-                // 	if((t0 + i) < (hrt_absolute_time() / (float)1000000 )){
-                // 		bool state_updated;
-	               //          orb_check(*state_sub, &state_updated);
-
-	               //          if ( state_updated )
-	               //                  orb_copy(ORB_ID(quad_mode), *state_sub, state);
-	               //          i++;
-                // 	}
-                	
-
-                //         // while (i < 500000) {
-                //         //         ++i;
-                //         // }
-
-                //         mavlink_log_critical(mavlink_fd, "[quad_commmander] halløj");
-
-                //         if ( time_out < ((hrt_absolute_time() / (float)1000000 ) - (float)t0) ) {
-                //                 return -1;
-                //         }
-                //         mavlink_log_critical(mavlink_fd, "[quad_commmander] halløj fra loopet!");
-                //         /* BUG(1) */
-
-                // } while ( state->current_state != (enum QUAD_STATE)QUAD_STATE_HOVERING );
-        } else {
-                mavlink_log_critical(mavlink_fd, "[quad_commmander] Not in landed state!");
+void error_handling( int error ) {
+        if ( error == 0 ){
+                mavlink_log_info(mavlink_fd, "[quad_commmander] State transition succes!");
+        } else if ( error == -1 ) {
+                mavlink_log_info(mavlink_fd, "[quad_commmander] No state transition happened!");
+        } else if ( error == -2 ) {
+                mavlink_log_info(mavlink_fd, "[quad_commmander] Not in correct state!");
         }
         return 0;
+}
+
+int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub ) {
+        if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED /*&& !low_battery*/ ) {
+                mode->cmd = (enum QUAD_CMD)QUAD_CMD_TAKEOFF;
+                /* orb_publish(ORB_ID(quad_mode), *mode_pub, mode); */
+
+                struct pollfd fd_state[1];
+                fd_state[0].fd = *state_sub;
+                fd_state[0].events = POLLIN;
+
+                int ret_state = poll(fd_state, 1, 20000);
+                if (ret_state < 0) {
+                        warnx("poll cmd error");
+                } else if (ret_state == 0) {
+                        return -1;
+
+                } else if (fd_state[0].revents & POLLIN) {
+                        orb_copy(ORB_ID(quad_mode), *state_sub, state);
+                        if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING )
+                                return 0;
+                } else {
+
+                }
+
+        } else {
+                return -2;
+        }
 }
 
 int land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub ) {
