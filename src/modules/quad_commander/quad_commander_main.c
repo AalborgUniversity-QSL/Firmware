@@ -83,22 +83,18 @@ int quad_commander_thread_main(int argc, char *argv[]) {
          * Subscriptions
          */
         struct quad_swarm_cmd_s swarm_cmd;
-//        struct quad_pos_msg_s quad_pos;
         struct quad_mode_s state;
         struct vehicle_status_s v_status;
 
         memset(&swarm_cmd, 0, sizeof(swarm_cmd));
-//        memset(&quad_pos, 0, sizeof(quad_pos));
         memset(&state, 0, sizeof(state));
         memset(&v_status, 0, sizeof(v_status));
 
         int swarm_cmd_sub = 0;
-//        int quad_pos_sub = 0;
         int state_sub = 0;
         int v_status_sub = 0;
 
         swarm_cmd_sub = orb_subscribe(ORB_ID(quad_swarm_cmd));
-//        quad_pos_sub = orb_subscribe(ORB_ID(quad_pos_msg));
         state_sub = orb_subscribe(ORB_ID(quad_mode));
         v_status_sub = orb_subscribe(ORB_ID(vehicle_status));
 
@@ -106,9 +102,8 @@ int quad_commander_thread_main(int argc, char *argv[]) {
          * Topics to be published on
          */
         struct quad_mode_s mode;
-        orb_advert_t mode_pub; /* = orb_advertise(ORB_ID(quad_mode), &mode); */
+        orb_advert_t mode_pub = orb_advertise(ORB_ID(quad_mode), &mode);
         memset(&mode, 0, sizeof(mode));
-        mode_pub = orb_advertise(ORB_ID(quad_mode), &mode);
 
         mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
         mavlink_log_info(mavlink_fd, "[quad_commander] started");
@@ -119,7 +114,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
 
         /* Initial state of the quadrotor; operations always start from the ground */
         state.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
-        mavlink_log_info(mavlink_fd, "[quad_commander] Current state: %d", (int)state.current_state);
+        mavlink_log_info(mavlink_fd, "[quad_commander] Current state: %i", (int)state.current_state);
 
         while (!thread_should_exit) {
                 orb_copy(ORB_ID(vehicle_status), v_status_sub, &v_status);
