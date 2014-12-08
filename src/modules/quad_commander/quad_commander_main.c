@@ -194,15 +194,14 @@ void error_handling( int error ) {
 int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub ) {
         if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED /*&& !low_battery*/ ) {
                 mode->cmd = (enum QUAD_CMD)QUAD_CMD_TAKEOFF;
+                orb_copy(ORB_ID(quad_mode), *state_sub, state);
                 /* orb_publish(ORB_ID(quad_mode), *mode_pub, mode); */
 
-                mavlink_log_info(mavlink_fd, "[quad_commmander] Entered take off");
                 struct pollfd fd_state;
                 fd_state.fd = *state_sub;
                 fd_state.events = POLLIN;
 
-                int ret_state = poll(&fd_state, 1, 10000);
-                mavlink_log_info(mavlink_fd, "[quad_commmander] after poll");
+                int ret_state = poll(&fd_state, 1, 20000);
                 if (ret_state < 0) {
                         warnx("poll cmd error");
                 } else if (ret_state == 0) {
@@ -212,9 +211,10 @@ int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t 
                         orb_copy(ORB_ID(quad_mode), *state_sub, state);
                         if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING )
                                 return 0;
-                        mavlink_log_info(mavlink_fd, "[quad_commmander] state: %d", state->current_state);
+
                 } else {
                         mavlink_log_info(mavlink_fd, "[quad_commmander] something is very wrong");
+
                 }
 
         } else {
