@@ -90,7 +90,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	        Kp_pos = 0.06,
 	        Kd_pos = 0.01, /* Controller constants for position controller */
 	 	
-	 	hover_alt = 2,		// 1 meter altitude
+	 	hover_alt = 1,		// 1 meter altitude
 	 	landing_alt = 0.2,
 		hover_threashold = 0.2,
 		anti_gravity = 0.48,
@@ -98,7 +98,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		speed_up_time = 4,
 		min_hover_velocity = 0.001,
 
-		thrust_filter = 0.05,
+		thrust_filter = 0.01,
 
 		dt_pos = 0,
 	        time_old = 0;
@@ -107,7 +107,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 	bool initialised = false,
 	     shutdown_motors = true,
-	     quad_mode_updated = false;
+	     quad_mode_updated = false,
+	     test = false;
 
 	struct pollfd fds[1];
 	fds[0].fd = quad_pos_sub;
@@ -292,20 +293,34 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         	// Do nothing
                         }
 
-                        // Velocity controller
-                        error.dx = sp.dx - state.dx;
-                        error.dy = sp.dx - state.dy;
+                        // // Velocity controller
+                        // error.dx = sp.dx - state.dx;
+                        // error.dy = sp.dx - state.dy;
 
-                        // Derivative part
-                        error.ddx = (error.dx - error.dx_old)/(float)dt_pos;
-                        error.ddy = (error.dy - error.dy_old)/(float)dt_pos;
+                        // // Derivative part
+                        // error.ddx = (error.dx - error.dx_old)/(float)dt_pos;
+                        // error.ddy = (error.dy - error.dy_old)/(float)dt_pos;
 
-                        error.dx_old = error.dx;
-                        error.dy_old = error.dy;
+                        // error.dx_old = error.dx;
+                        // error.dy_old = error.dy;
 
-                        // PD velocity controller
-                        output.pitch = - (float)Kp_pos * error.dx - (float)Kd_pos * error.ddx;
-                        output.roll  = - (float)Kp_pos * error.dy - (float)Kd_pos * error.ddy;
+                        // // PD velocity controller
+                        // output.pitch = - (float)Kp_pos * error.dx - (float)Kd_pos * error.ddx;
+                        // output.roll  = - (float)Kp_pos * error.dy - (float)Kd_pos * error.ddy;
+
+                        // Position controller
+                        error.x = sp.x - state.x;
+                        error.y = sp.y - state.y;
+
+                        error.dx = (error.x - error.x_old)/dt_pos;
+                        error.dy = (error.y - error.y_old)/dt_pos;
+
+                        error x_old = error.x;
+                        error y_old = error.y;
+
+                        output.pitch = - (float)Kp_pos * error.x - (float)Kd_pos * error.dx;
+                        output.roll  = - (float)Kp_pos * error.y - (float)Kd_pos * error.dy;
+
 
                         // /* Limiting position controller output */
                         // if ((float)fabs(output.roll) > max_accl)
@@ -319,6 +334,12 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
                         // mavlink_log_info(mavlink_fd,"th: %.3f r: %.3f p: %.3f yaw: %.3f ",(double)velocity_sp.thrust,(double)velocity_sp.roll,(double)velocity_sp.pitch,(double)velocity_sp.yaw);
                         // Publish the new roll, pitch, yaw and thrust set points
+                        if(test){
+                        	velocity_sp.thrust = 0;
+                        	velocity_sp.roll = 0;
+                        	velocity_sp.pitch = 0;
+         	                velocity_sp.yaw = 0;
+                        }
                         orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 		}
 	}
