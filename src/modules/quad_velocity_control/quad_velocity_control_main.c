@@ -51,20 +51,21 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
 
 	struct quad_pos_msg_s quad_pos;
-	memset(&quad_pos, 0, sizeof(quad_pos));
 	struct quad_velocity_sp_s velocity_sp;
-	memset(&velocity_sp, 0, sizeof(velocity_sp));
 	struct quad_velocity_sp_s output;
-	memset(&output, 0, sizeof(output));
 	struct quad_mode_s quad_mode;
-	memset(&quad_mode, 0, sizeof(quad_mode));
 	struct state_transition_s state_transition;
-	memset(&state_transition, false, sizeof(state_transition));
 	struct quad_alt_velocity sp;
-	memset(&sp, 0, sizeof(sp));
 	struct quad_alt_velocity error;
-	memset(&error, 0, sizeof(error));
 	struct quad_alt_velocity state;
+
+	memset(&quad_pos, 0, sizeof(quad_pos));
+	memset(&velocity_sp, 0, sizeof(velocity_sp));
+	memset(&output, 0, sizeof(output));
+	memset(&quad_mode, 0, sizeof(quad_mode));
+	memset(&state_transition, false, sizeof(state_transition));
+	memset(&sp, 0, sizeof(sp));
+	memset(&error, 0, sizeof(error));
 	memset(&state, 0, sizeof(state));
 
 	// initialise take-off sequence
@@ -79,8 +80,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 	int system_id = 1;
 
-	float 	dt_pos = 0,
-		time_old = 0;
+	float	dt_pos = 0,
+	        time_old = 0;
 
 	bool initialised = false,
 	     shutdown_motors = true;
@@ -131,7 +132,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				state.y_old = quad_pos.y[system_id - 1] / (float)1000;
 
 				initialised = true;
-				
+
 			} else {
 
 				dt_pos = quad_pos.timestamp - time_old;
@@ -164,6 +165,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 				state_transition.takeoff = true;
 				shutdown_motors = false;
+				mavlink_log_info(mavlink_fd,"[POT] TAKEOFF INITIALISED");
 
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && !state_transition.land){
 				// initialise landing sequence
@@ -171,6 +173,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				sp.dy = 0;
 
 				state_transition.land = true;
+				mavlink_log_info(mavlink_fd,"[POT] LANDING INITIALISED");
 
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM && !state_transition.start){
 			
@@ -236,6 +239,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         if (shutdown_motors) {
 
                         	velocity_sp.thrust = 0;
+                        	mavlink_log_info(mavlink_fd,"[POT] SHUTDOWN MOTORS");
 
                         } else if (!quad_mode.error && !shutdown_motors) {
 
