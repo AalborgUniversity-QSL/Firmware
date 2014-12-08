@@ -182,11 +182,11 @@ int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t 
 		int i = 1;
                 float t0 = ( hrt_absolute_time() / (float)1000000 );
                 bool run = true;
+		bool state_updated;
 
                 while (run){
 
                 	if((t0 + i) < (hrt_absolute_time() / (float)1000000 )){
-                		bool state_updated;
 	                        orb_check(*state_sub, &state_updated);
 
 	                        if ( state_updated ){
@@ -350,7 +350,7 @@ int quad_commander_main(int argc, char *argv[]) {
                 thread_should_exit = false;
                 daemon_task = task_spawn_cmd("quad_commander",
                                              SCHED_DEFAULT,
-                                             SCHED_PRIORITY_MAX - 6,
+                                             SCHED_PRIORITY_MAX - 40,
                                              2048,
                                              quad_commander_thread_main,
                                              (argv) ? (const char **)&argv[2] : (const char **)NULL);
