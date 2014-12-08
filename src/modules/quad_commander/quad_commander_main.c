@@ -321,7 +321,7 @@ int quad_commander_main(int argc, char *argv[]) {
                 thread_should_exit = false;
                 daemon_task = task_spawn_cmd("quad_commander",
                                              SCHED_DEFAULT,
-                                             SCHED_PRIORITY_MAX - 5,
+                                             SCHED_PRIORITY_MAX - 6,
                                              2048,
                                              quad_commander_thread_main,
                                              (argv) ? (const char **)&argv[2] : (const char **)NULL);
