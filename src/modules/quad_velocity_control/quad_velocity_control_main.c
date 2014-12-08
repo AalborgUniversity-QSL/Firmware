@@ -225,6 +225,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
 					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
                         		orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+
+                        		mavlink_log_info(mavlink_fd,"[POT] LANDED");
 				}
 
 			} else if (state_transition.start){
@@ -238,7 +240,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         if (shutdown_motors) {
 
                         	velocity_sp.thrust = 0;
-                        	mavlink_log_info(mavlink_fd,"[POT] SHUTDOWN MOTORS");
 
                         } else if (!quad_mode.error && !shutdown_motors) {
 
