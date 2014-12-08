@@ -113,7 +113,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
         fd_cmd[0].events = POLLIN;
 
         /* Initial state of the quadrotor; operations always start from the ground */
-        QUAD_STATE state.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
+        state.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
         mavlink_log_info(mavlink_fd, "[quad_commander] Current state: %i", (int)state.current_state);
 
         while (!thread_should_exit) {
