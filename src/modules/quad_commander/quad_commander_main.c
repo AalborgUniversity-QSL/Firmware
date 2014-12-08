@@ -39,7 +39,7 @@
 #include <systemlib/err.h>
 #include <lib/mathlib/mathlib.h>
 
-#define BUG(x) mavlink_log_info(mavlink_fd, "[quad_commander] %i", x); /* to ease debug messages */
+#define BUG(x) mavlink_log_info(mavlink_fd, "[quad_commander] Debug no. %i", x); /* to ease debug messages */
 
 /**
  * Main loop starter
