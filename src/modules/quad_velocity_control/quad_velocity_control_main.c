@@ -83,7 +83,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		time_old = 0;
 
 	bool initialised = false,
-	     shutdown_motors = false;
+	     shutdown_motors = true;
 
 	struct pollfd fds[1];
 	fds[0].fd = quad_pos_sub;
@@ -98,19 +98,18 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		} else if (pret == 0){
 
 			if (initialised){
+				velocity_sp.thrust = 0;
+				velocity_sp.roll = 0;
+				velocity_sp.pitch = 0;
+				velocity_sp.yaw = 0;
 
-			velocity_sp.thrust = 0;
-			velocity_sp.roll = 0;
-			velocity_sp.pitch = 0;
-			velocity_sp.yaw = 0;
+				quad_mode.error = true;
+				quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_EMERGENCY;
 
-			quad_mode.error = true;
-			quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_EMERGENCY;
-
-			// orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
-			// orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
-			
-			mavlink_log_info(mavlink_fd,"[POT] Package loss limit reached");
+				// orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
+				// orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+				
+				mavlink_log_info(mavlink_fd,"[POT] Package loss limit reached");
 			}
 
 
@@ -118,46 +117,40 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			orb_copy(ORB_ID(quad_pos_msg), quad_pos_sub, &quad_pos);
 
-			if (!initialised) {
-				dt_pos = 0.1;
-				time_old = quad_pos.timestamp;
-				state.x_old = quad_pos.x[system_id - 1] / (float)1000;
-				state.y_old = quad_pos.y[system_id - 1] / (float)1000;
-
-				// quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
-				// orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
-				initialised = true;
-			} else {
-
-				dt_pos = quad_pos.timestamp - time_old;
-				time_old = quad_pos.timestamp;
-				// mavlink_log_info(mavlink_fd,"td_pos %.3f", (double)dt_pos);
-			}
-
-			state.x = quad_pos.x[system_id - 1] / (float)1000;
-			state.y = quad_pos.y[system_id - 1] / (float)1000;
-			state.z = quad_pos.z[system_id - 1] / (float)1000;
-			state.dx = (state.x - state.x_old) / (float)dt_pos;
-			state.dy = (state.y - state.y_old) / (float)dt_pos;
-			// state.ddx = (state.dx - state.dx_old)/(float)dt_pos;
-			// state.ddy = (state.dy - state.dy_old)/(float)dt_pos;
-
-			state.x_old = state.x;
-			state.y_old = state.y;
-			// state.dx_old = state.dx;
-			// state.dy_old = state.dy;
-
 			bool quad_mode_updated;
 			orb_check(quad_mode_sub, &quad_mode_updated);
 
 			if (quad_mode_updated){
 				orb_copy(ORB_ID(quad_mode), quad_mode_sub, &quad_mode);
-				// mavlink_log_info(mavlink_fd,"quad_mode: %u",(int)quad_mode.cmd);
 			}
-			
-			// mavlink_log_info(mavlink_fd,"quad_mode: %u",(int)quad_mode.current_state);
 
+			if (!initialised && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED) {
+				dt_pos = 0.1;
+				time_old = quad_pos.timestamp;
+				state.x_old = quad_pos.x[system_id - 1] / (float)1000;
+				state.y_old = quad_pos.y[system_id - 1] / (float)1000;
 
+				initialised = true;
+				
+			} else {
+
+				dt_pos = quad_pos.timestamp - time_old;
+				time_old = quad_pos.timestamp;
+
+				// mavlink_log_info(mavlink_fd,"dt_pos %.3f", (double)dt_pos);
+			}
+
+			// Set state values
+			state.x = quad_pos.x[system_id - 1] / (float)1000;
+			state.y = quad_pos.y[system_id - 1] / (float)1000;
+			state.z = quad_pos.z[system_id - 1] / (float)1000;
+			state.dx = (state.x - state.x_old) / (float)dt_pos;
+			state.dy = (state.y - state.y_old) / (float)dt_pos;
+
+			state.x_old = state.x;
+			state.y_old = state.y;
+
+			// Set initial values when received commands
 			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && !state_transition.takeoff){
 				
 				takeoff_pos.timestamp = quad_pos.timestamp;
@@ -165,12 +158,12 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				// takeoff_pos.y = state.y;
 				// takeoff_pos.z = state.z;
 
-				// sp.timestamp = (hrt_absolute_time() / (float)1000000);
 				sp.dx = 0;
 				sp.dy = 0;
 				sp.z = hover_alt;
 
 				state_transition.takeoff = true;
+				shutdown_motors = false;
 
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && !state_transition.land){
 				// initialise landing sequence
@@ -180,7 +173,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				state_transition.land = true;
 
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM && !state_transition.start){
-				// Start computing potential fields
 			
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM && !state_transition.stop){
 				
@@ -202,7 +194,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 
 			// Check for state shifts
-			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && state_transition.takeoff){
+			if (state_transition.takeoff){
 				
 				// Takeoff sequence
 				if ((state.z > (sp.z - (float)hover_threashold)) && (state.z < (sp.z + (float)hover_threashold)) && ((float)fabs(state.dx + state.dy) < (float)min_hover_velocity)){
@@ -216,7 +208,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					// Do nothing
 				}
 
-			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && state_transition.land){
+			} else if (state_transition.land){
 
 				if(state.z > hover_alt ) {
 					sp.z = state.z - (float)0.1;
@@ -233,9 +225,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         		orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 				}
 
-			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM && state_transition.start){
+			} else if (state_transition.start){
 
-			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM && state_transition.stop){
+			} else if (state_transition.stop){
 
 			} else {
 
@@ -245,7 +237,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
                         	velocity_sp.thrust = 0;
 
-                        } else if (!quad_mode.error && quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF) {
+                        } else if (!quad_mode.error && !shutdown_motors) {
 
 				// Thrust controller
 				error.thrust = sp.z - state.z;
