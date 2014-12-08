@@ -39,7 +39,7 @@
 #include <systemlib/err.h>
 #include <lib/mathlib/mathlib.h>
 
-/* #define BUG(x) mavlink_log_info(mavlink_fd, "[quad_commander] x"); */
+#define BUG(x) mavlink_log_info(mavlink_fd, "[quad_commander] %i", x);
 
 /**
  * Main loop starter
@@ -186,6 +186,7 @@ int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t 
                         if ( time_out < ((hrt_absolute_time() / (float)1000000 ) - (float)t0) ) {
                                 return -1;
                         }
+                        BUG(1)
 
                 } while ( state->current_state != (enum QUAD_STATE)QUAD_STATE_HOVERING );
         } else {
