@@ -123,6 +123,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			if (quad_mode_updated){
 				orb_copy(ORB_ID(quad_mode), quad_mode_sub, &quad_mode);
+				mavlink_log_info(mavlink_fd,"[POT] current_state: %d", quad_mode.current_state);
+				mavlink_log_info(mavlink_fd,"[POT] cmd: %d", quad_mode.cmd);
+
 			}
 
 			if (!initialised && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED) {
@@ -139,7 +142,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				dt_pos = quad_pos.timestamp - time_old;
 				time_old = quad_pos.timestamp;
 
-				// mavlink_log_info(mavlink_fd,"dt_pos %.3f", (double)dt_pos);
+				mavlink_log_info(mavlink_fd,"dt_pos %.3f", (double)dt_pos);
 			}
 
 			// Set state values
