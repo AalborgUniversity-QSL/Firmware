@@ -118,7 +118,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
         fd_cmd[0].fd = swarm_cmd_sub;
         fd_cmd[0].events = POLLIN;
 
-        orb_copy(ORB_ID(quad_mode), state_sub, &state);
+//        orb_copy(ORB_ID(quad_mode), state_sub, &state);
 
         /* Initial state of the quadrotor; operations always start from the ground */
         state.current_state = QUAD_STATE_GROUNDED;
@@ -185,6 +185,8 @@ void error_handling( int error ) {
                 mavlink_log_info(mavlink_fd, "[quad_commmander] No state transition happened!");
         } else if ( error == -2 ) {
                 mavlink_log_info(mavlink_fd, "[quad_commmander] Not in correct state!");
+        } else {
+                mavlink_log_info(mavlink_fd, "[quad_commmander] Unknown return value!");
         }
         return 0;
 }
@@ -194,11 +196,13 @@ int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t 
                 mode->cmd = (enum QUAD_CMD)QUAD_CMD_TAKEOFF;
                 /* orb_publish(ORB_ID(quad_mode), *mode_pub, mode); */
 
+                mavlink_log_info(mavlink_fd, "[quad_commmander] Entered take off");
                 struct pollfd fd_state;
                 fd_state.fd = *state_sub;
                 fd_state.events = POLLIN;
 
-                int ret_state = poll(&fd_state, 1, 20000);
+                int ret_state = poll(&fd_state, 1, 10000);
+                mavlink_log_info(mavlink_fd, "[quad_commmander] after poll");
                 if (ret_state < 0) {
                         warnx("poll cmd error");
                 } else if (ret_state == 0) {
@@ -210,7 +214,7 @@ int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t 
                                 return 0;
                         mavlink_log_info(mavlink_fd, "[quad_commmander] state: %d", state->current_state);
                 } else {
-
+                        mavlink_log_info(mavlink_fd, "[quad_commmander] something is very wrong");
                 }
 
         } else {
