@@ -41,6 +41,7 @@ static void usage(const char *reason);
 
 // Prototypes
 // float velocity_controller()
+void emergency(struct quad_velocity_sp_s *sp, struct quad_mode_s *mode, orb_advert_t *mode_pub);
 
 
 static bool thread_running = false;
@@ -54,22 +55,23 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
 
 	struct quad_pos_msg_s quad_pos;
-	struct quad_velocity_sp_s velocity_sp;
-	struct quad_velocity_sp_s output;
-	struct quad_mode_s quad_mode;
-	struct state_transition_s state_transition;
-	struct quad_alt_velocity sp;
-	struct quad_alt_velocity error;
-	struct quad_alt_velocity state;
-
 	memset(&quad_pos, 0, sizeof(quad_pos));
+	struct quad_velocity_sp_s velocity_sp;
 	memset(&velocity_sp, 0, sizeof(velocity_sp));
-	memset(&output, 0, sizeof(output));
+	struct quad_mode_s quad_mode;
 	memset(&quad_mode, 0, sizeof(quad_mode));
-	memset(&state_transition, false, sizeof(state_transition));
-	memset(&sp, 0, sizeof(sp));
-	memset(&error, 0, sizeof(error));
+	struct quad_alt_velocity state;
 	memset(&state, 0, sizeof(state));
+	
+	struct quad_velocity_sp_s output;
+	memset(&output, 0, sizeof(output));
+	struct state_transition_s state_transition;
+	memset(&state_transition, false, sizeof(state_transition));
+	struct quad_alt_velocity sp;
+	memset(&sp, 0, sizeof(sp));
+	struct quad_alt_velocity error;
+	memset(&error, 0, sizeof(error));
+
 
 	// initialise take-off sequence
 	struct init_pos_s takeoff_pos;
@@ -81,10 +83,25 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	orb_advert_t quad_velocity_sp_pub = orb_advertise(ORB_ID(quad_velocity_sp), &velocity_sp);
 	orb_advert_t quad_mode_pub = orb_advertise(ORB_ID(quad_mode), &quad_mode);
 
-	int system_id = 1;
+	float	Kp_thrust = 0.2,//0.00008,
+	        Kd_thrust = 0.11, /* Controller constants for thrust controller */
+	        Kp_pos = 0.06,
+	        Kd_pos = 0.01, /* Controller constants for position controller */
+	 	
+	 	hover_alt = 1,		// 1 meter altitude
+	 	landing_alt = 0.2,
+		hover_threashold = 0.1,
+		anti_gravity = 0.48,
+		min_rotor_speed = 0.25,
+		speed_up_time = 4,
+		min_hover_velocity = 0.001,
 
-	float	dt_pos = 0,
+		thrust_filter = 0.05,
+
+		dt_pos = 0,
 	        time_old = 0;
+
+	int system_id = 1;
 
 	bool initialised = false,
 	     shutdown_motors = true;
@@ -96,27 +113,13 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	while(!thread_should_exit){
 
 		int pret = poll(fds, 1, 500);
-
 		if (pret < 0){
 			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
-
 			if (initialised){
-				velocity_sp.thrust = 0;
-				velocity_sp.roll = 0;
-				velocity_sp.pitch = 0;
-				velocity_sp.yaw = 0;
-
-				quad_mode.error = true;
-				quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_EMERGENCY;
-
-				// orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
-				// orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
-				
+				emergency(&velocity_sp, &quad_mode, &quad_mode_pub);
 				mavlink_log_info(mavlink_fd,"[POT] Package loss limit reached");
 			}
-			mavlink_log_info(mavlink_fd,"[POT] lol");
-
 
 		} else if (fds[0].revents & POLLIN) {
 
@@ -317,6 +320,20 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		}
 	}
 	return 0;
+}
+
+void emergency(struct quad_velocity_sp_s *sp, struct quad_mode_s *mode, orb_advert_t *mode_pub){
+	sp->thrust = 0;
+	sp->roll = 0;
+	sp->pitch = 0;
+	sp->yaw = 0;
+
+	mode->error = true;
+	mode->current_state = (enum QUAD_STATE)QUAD_STATE_EMERGENCY;
+
+	orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
+
+
 }
 
 
