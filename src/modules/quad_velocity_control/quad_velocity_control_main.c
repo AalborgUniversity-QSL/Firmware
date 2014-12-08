@@ -132,6 +132,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				state.y_old = quad_pos.y[system_id - 1] / (float)1000;
 
 				initialised = true;
+                       		mavlink_log_info(mavlink_fd,"[POT] INITIALISED");
 
 			} else {
 
