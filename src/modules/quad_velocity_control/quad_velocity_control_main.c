@@ -105,6 +105,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 	bool initialised = false,
 	     shutdown_motors = true;
+	     quad_mode_updated = false;
 
 	struct pollfd fds[1];
 	fds[0].fd = quad_pos_sub;
@@ -125,13 +126,12 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			orb_copy(ORB_ID(quad_pos_msg), quad_pos_sub, &quad_pos);
 
-			bool quad_mode_updated;
 			orb_check(quad_mode_sub, &quad_mode_updated);
 
 			if (quad_mode_updated){
 				orb_copy(ORB_ID(quad_mode), quad_mode_sub, &quad_mode);
-				// mavlink_log_info(mavlink_fd,"[POT] current_state: %d", quad_mode.current_state);
-				// mavlink_log_info(mavlink_fd,"[POT] cmd: %d", quad_mode.cmd);
+				mavlink_log_info(mavlink_fd,"[POT] current_state: %d", quad_mode.current_state);
+				mavlink_log_info(mavlink_fd,"[POT] cmd: %d", quad_mode.cmd);
 
 			}
 
