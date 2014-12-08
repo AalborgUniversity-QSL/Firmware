@@ -113,15 +113,16 @@ int quad_commander_thread_main(int argc, char *argv[]) {
         fd_cmd[0].events = POLLIN;
 
         /* Initial state of the quadrotor; operations always start from the ground */
-        state.current_state = 49;//QUAD_STATE_GROUNDED;
+        state.current_state = QUAD_STATE_GROUNDED;
+        orb_publish(ORB_ID(quad_mode), mode_pub, &mode);
         mavlink_log_info(mavlink_fd, "[quad_commander] Current state: %i", state.current_state);
 
         while (!thread_should_exit) {
                 orb_copy(ORB_ID(vehicle_status), v_status_sub, &v_status);
                 mavlink_log_info(mavlink_fd, "[quad_commander] Current state: %i", state.current_state);
 
-                if ( v_status.battery_warning == (enum VEHICLE_BATTERY_WARNING)VEHICLE_BATTERY_WARNING_LOW &&
-                     state.current_state != (enum QUAD_STATE)QUAD_STATE_GROUNDED ) {
+                if ( (v_status.battery_warning == VEHICLE_BATTERY_WARNING_LOW) &&
+                     (state.current_state != QUAD_STATE_GROUNDED) ) {
 
                         low_battery = true;
                         mavlink_log_critical(mavlink_fd, "[quad_commmander] Battery lavel low!");
@@ -131,16 +132,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                         low_battery = false;
                 }
 
-                bool state_updated;
-                orb_check(state_sub, &state_updated);
-                if ( state_updated )
-                        orb_copy(ORB_ID(quad_mode), state_sub, &state);
-
-                if ( state.error == QUAD_STATE_EMERGENCY )
-                        emergency_land( &state, &mode, &mode_pub, &state_sub );
-
-
-                int ret_cmd = poll(fd_cmd, 1, 100);
+                int ret_cmd = poll(fd_cmd, 1, 250);
                 if (ret_cmd < 0) {
                         warnx("poll cmd error");
                 } else if (ret_cmd == 0) {
@@ -171,6 +163,10 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                 } else {
                         /* nothing happened */
                 }
+
+                if ( state.error == QUAD_STATE_EMERGENCY )
+                        emergency_land( &state, &mode, &mode_pub, &state_sub );
+
         }
 }
 
