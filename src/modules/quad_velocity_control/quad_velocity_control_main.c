@@ -317,7 +317,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         velocity_sp.roll = output.roll;
                         velocity_sp.pitch = output.pitch;
 
-                        // mavlink_log_info(mavlink_fd,"th: %.3f r: %.3f p: %.3f yaw: %.3f ",(double)velocity_sp.thrust,(double)velocity_sp.roll,(double)velocity_sp.pitch,(double)velocity_sp.yaw);
+                        mavlink_log_info(mavlink_fd,"th: %.3f r: %.3f p: %.3f yaw: %.3f ",(double)velocity_sp.thrust,(double)velocity_sp.roll,(double)velocity_sp.pitch,(double)velocity_sp.yaw);
                         // Publish the new roll, pitch, yaw and thrust set points
                         orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 		}
