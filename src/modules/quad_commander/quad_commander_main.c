@@ -169,7 +169,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                         /* nothing happened */
                 }
 
-                if ( state.error == QUAD_STATE_EMERGENCY ) {
+                if ( state.error == true ) {
                         int ret_value = emergency_land( &state, &mode, &mode_pub, &state_sub );
                         error_msg( ret_value );
                 }
@@ -288,6 +288,7 @@ int emergency_land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_adv
                 mavlink_log_info(mavlink_fd, "[quad_commmander] something is very wrong");
 
         }
+        state->error = false;
 }
 
 int start_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub ) {
