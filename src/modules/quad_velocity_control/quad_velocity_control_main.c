@@ -192,7 +192,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			} else {
 				// Do nothing yet
-
 			}
 
 
@@ -334,7 +333,7 @@ int quad_velocity_control_main(int argc, char *argv[]) {
                 thread_should_exit = false;
                 daemon_task = task_spawn_cmd("velocity_controller",
                                              SCHED_DEFAULT,
-                                             SCHED_PRIORITY_MAX - 6,
+                                             SCHED_PRIORITY_MAX - 5,
                                              2048,
                                              quad_velocity_control_thread_main,
                                              (argv) ? (const char **)&argv[2] : (const char **)NULL);
