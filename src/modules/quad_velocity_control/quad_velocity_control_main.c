@@ -35,6 +35,8 @@
 
 #include "param.h"
 
+// #define BUG(x) mavlink_log_info(mavlink_fd, "[quad_commander] Debug no. %i", x); /* to ease debug messages */
+
 __EXPORT int quad_velocity_control_main(int argc, char *argv[]);
 int quad_velocity_control_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
@@ -90,7 +92,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	 	
 	 	hover_alt = 1,		// 1 meter altitude
 	 	landing_alt = 0.2,
-		hover_threashold = 0.5,
+		hover_threashold = 0.2,
 		anti_gravity = 0.48,
 		min_rotor_speed = 0.25,
 		speed_up_time = 4,
@@ -130,8 +132,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			if (quad_mode_updated){
 				orb_copy(ORB_ID(quad_mode), quad_mode_sub, &quad_mode);
-				mavlink_log_info(mavlink_fd,"[POT] current_state: %d", quad_mode.current_state);
-				mavlink_log_info(mavlink_fd,"[POT] cmd: %d", quad_mode.cmd);
+				// mavlink_log_info(mavlink_fd,"[POT] current_state: %d", quad_mode.current_state);
+				// mavlink_log_info(mavlink_fd,"[POT] cmd: %d", quad_mode.cmd);
 
 			}
 
