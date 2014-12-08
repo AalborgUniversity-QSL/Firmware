@@ -118,6 +118,8 @@ int quad_commander_thread_main(int argc, char *argv[]) {
         fd_cmd[0].fd = swarm_cmd_sub;
         fd_cmd[0].events = POLLIN;
 
+        orb_copy(ORB_ID(quad_mode), state_sub, &state);
+
         /* Initial state of the quadrotor; operations always start from the ground */
         state.current_state = QUAD_STATE_GROUNDED;
         orb_publish(ORB_ID(quad_mode), mode_pub, &mode);
