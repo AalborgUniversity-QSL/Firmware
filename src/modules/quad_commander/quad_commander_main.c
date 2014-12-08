@@ -119,6 +119,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
 
         /* Initial state of the quadrotor; operations always start from the ground */
         state.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
+        mavlink_log_info(mavlink_fd, "[quad_commander] Current state: %d", (int)state.current_state);
 
         while (!thread_should_exit) {
                 orb_copy(ORB_ID(vehicle_status), v_status_sub, &v_status);
@@ -203,14 +204,14 @@ int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t 
 int land( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mode_pub, int* state_sub ) {
         if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING ) {
                 mode->cmd = (enum QUAD_CMD)QUAD_CMD_LAND;
-                orb_publish(ORB_ID(quad_mode), mode_pub, mode);
+                orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
 
                 float t0 = ( hrt_absolute_time() / (float)1000000 );
                 bool state_updated;
                 do {
-                        orb_check(state_sub, &state_updated);
+                        orb_check(*state_sub, &state_updated);
                         if ( state_updated )
-                                orb_copy(ORB_ID(quad_mode), state_sub, state);
+                                orb_copy(ORB_ID(quad_mode), *state_sub, state);
 
                         if ( time_out < ((hrt_absolute_time() / (float)1000000 ) - (float)t0) ) {
                                 return -1;
@@ -226,14 +227,14 @@ int land( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mod
 
 int emergency_land( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mode_pub, int* state_sub ) {
         mode->cmd = (enum QUAD_CMD)QUAD_CMD_LAND;
-        orb_publish(ORB_ID(quad_mode), mode_pub, mode);
+        orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
 
         float t0 = ( hrt_absolute_time() / (float)1000000 );
         bool state_updated;
         do {
-                orb_check(state_sub, &state_updated);
+                orb_check(*state_sub, &state_updated);
                 if ( state_updated )
-                        orb_copy(ORB_ID(quad_mode), state_sub, state);
+                        orb_copy(ORB_ID(quad_mode), *state_sub, state);
 
                 if ( time_out < ((hrt_absolute_time() / (float)1000000 ) - (float)t0) ) {
                         return -1;
@@ -247,14 +248,14 @@ int emergency_land( struct quad_mode_s* state, struct quad_mode_s* mode, orb_adv
 int start_swarm( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mode_pub, int* state_sub ) {
         if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING && !low_battery ) {
                 mode->cmd = (enum QUAD_CMD)QUAD_CMD_START_SWARM;
-                orb_publish(ORB_ID(quad_mode), mode_pub, mode);
+                orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
 
                 float t0 = ( hrt_absolute_time() / (float)1000000 );
                 bool state_updated;
                 do {
-                        orb_check(state_sub, &state_updated);
+                        orb_check(*state_sub, &state_updated);
                         if ( state_updated )
-                                orb_copy(ORB_ID(quad_mode), state_sub, state);
+                                orb_copy(ORB_ID(quad_mode), *state_sub, state);
 
                         if ( time_out < ((hrt_absolute_time() / (float)1000000 ) - (float)t0) ) {
                                 return -1;
@@ -272,14 +273,14 @@ int start_swarm( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert
 int stop_swarm( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mode_pub, int* state_sub ) {
         if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_SWARMING ) {
                 mode->cmd = (enum QUAD_CMD)QUAD_CMD_STOP_SWARM;
-                orb_publish(ORB_ID(quad_mode), mode_pub, mode);
+                orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
 
                 float t0 = ( hrt_absolute_time() / (float)1000000 );
                 bool state_updated;
                 do {
-                        orb_check(state_sub, &state_updated);
+                        orb_check(*state_sub, &state_updated);
                         if ( state_updated )
-                                orb_copy(ORB_ID(quad_mode), state_sub, state);
+                                orb_copy(ORB_ID(quad_mode), *state_sub, state);
 
                         if ( time_out < ((hrt_absolute_time() / (float)1000000 ) - (float)t0) ) {
                                 return -1;

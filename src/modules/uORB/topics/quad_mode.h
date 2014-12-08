@@ -35,7 +35,7 @@ enum QUAD_STATE{
 
 struct quad_mode_s {
         uint8_t cmd;
-        uint8_t current_state;
+        enum QUAD_STATE/* uint8_t */ current_state;
         bool error;
 };
 
