@@ -96,7 +96,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		anti_gravity = 0.48,
 		min_rotor_speed = 0.25,
 		speed_up_time = 4,
-		min_hover_velocity = 0.001,
+		// min_hover_velocity = 0.001,
 
 		thrust_filter = 0.01,
 
@@ -213,7 +213,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			if (state_transition.takeoff){
 				
 				// Takeoff sequence
-				if ((state.z > (sp.z - (float)hover_threashold)) && (state.z < (sp.z + (float)hover_threashold)) && ((float)fabs(state.dx + state.dy) < (float)min_hover_velocity)){
+				if ((state.z > (sp.z - (float)hover_threashold)) && (state.z < (sp.z + (float)hover_threashold)) /*&& ((float)fabs(state.dx + state.dy) < (float)min_hover_velocity)*/){
 					
 					// Change state to hovering state
 					state_transition.takeoff = false;
@@ -262,7 +262,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 				// Thrust controller
 				error.thrust = sp.z - state.z;
-				mavlink_log_info(mavlink_fd,"[POT] z:%.3f",(double)state.z);
+				mavlink_log_info(mavlink_fd,"[POT] sp:%.3f z:%.3f",(double)sp.z, (double)state.z);
 				error.thrust_der = (error.thrust - error.thrust_old)/(float)dt_pos;
 
 				error.thrust_old = error.thrust;
