@@ -19,6 +19,7 @@
 #include <math.h>
 #include <poll.h>
 #include <time.h>
+#include <drivers/drv_hrt.h>
 
 #include <systemlib/param/param.h>
 
@@ -98,11 +99,10 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		pos_max = 0.1,
 		speed_up_time = 4,
 		// min_hover_velocity = 0.001,
-
 		thrust_filter = 0.01,
-
 		dt_pos = 0,
-	        time_old = (hrt_absolute_time() / (float)1000000); /* time is in seconds */
+		time = 0,
+	        time_old = hrt_absolute_time() / (float)1000000;
 
 	int system_id = 1;
 
@@ -135,7 +135,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				orb_copy(ORB_ID(quad_mode), quad_mode_sub, &quad_mode);
 			}
 
-			time = (hrt_absolute_time() / (float)1000000); /* time is in seconds */
+			time = (hrt_absolute_time() / (float)1000000);
                         dt_pos = time - time_old;
                         time_old = time;
 
@@ -263,7 +263,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 				velocity_sp.thrust = output.thrust + anti_gravity;
 
-				if ((sp.timestamp + (float)speed_up_time) > (hrt_absolute_time() / (float)1000000);){
+				if ((sp.timestamp + (float)speed_up_time) > (hrt_absolute_time() / (float)1000000)){
 					velocity_sp.thrust = min_rotor_speed;
 				}
                         } else {
@@ -303,8 +303,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         if ((float)fabs(output.roll) > pos_max)
                                 output.roll = pos_max * (output.roll / (float)fabs(output.roll));
 
-                        if ((float)fabs(pos_pitch) > pos_max)
-                                output.pitch = pos_max * output.pitch / (float)fabs(output.pitch));
+                        if ((float)fabs(output.pitch) > pos_max)
+                                output.pitch = pos_max * output.pitch / (float)fabs(output.pitch);
 
                         velocity_sp.roll = output.roll;
                         velocity_sp.pitch = output.pitch;
