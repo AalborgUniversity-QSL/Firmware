@@ -114,7 +114,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
 
         /* Initial state of the quadrotor; operations always start from the ground */
         state.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
-        mavlink_log_info(mavlink_fd, "[quad_commander] Current state: %i", (int)state.current_state);
+        mavlink_log_info(mavlink_fd, "[quad_commander] Current state: %i", (int)(state.current_state));
 
         while (!thread_should_exit) {
                 orb_copy(ORB_ID(vehicle_status), v_status_sub, &v_status);
