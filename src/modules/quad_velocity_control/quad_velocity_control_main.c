@@ -104,7 +104,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	int system_id = 1;
 
 	bool initialised = false,
-	     shutdown_motors = true;
+	     shutdown_motors = true,
 	     quad_mode_updated = false;
 
 	struct pollfd fds[1];
