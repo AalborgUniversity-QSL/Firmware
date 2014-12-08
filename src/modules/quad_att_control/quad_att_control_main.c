@@ -117,7 +117,7 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                         bool sp_updated;
                 	orb_check(sp_sub, &sp_updated);
-                	
+
 	                if ( sp_updated ){
 	                        orb_copy(ORB_ID(quad_velocity_sp), sp_sub, &sp);
 	                }
