@@ -39,6 +39,7 @@
 #include <systemlib/err.h>
 #include <lib/mathlib/mathlib.h>
 
+/* #define BUG(x) mavlink_log_info(mavlink_fd, "[quad_commander] x"); */
 
 /**
  * Main loop starter
@@ -58,11 +59,11 @@ static void usage(const char *reason);
 /**
  * State transitions functions
  */
-int take_off( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mode_pub, int* state_sub );
-int land( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mode_pub, int* state_sub );
-int emergency_land( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mode_pub, int* state_sub );
-int start_swarm( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mode_pub, int* state_sub );
-int stop_swarm( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mode_pub, int* state_sub );
+int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
+int land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
+int emergency_land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
+int start_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
+int stop_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
 
 /**
  * Globals
@@ -119,7 +120,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
 
         while (!thread_should_exit) {
                 orb_copy(ORB_ID(vehicle_status), v_status_sub, &v_status);
-                mavlink_log_info(mavlink_fd, "[quad_commander] Current state: %i", state.current_state);
+                /* mavlink_log_info(mavlink_fd, "[quad_commander] Current state: %i", state.current_state); */
 
                 if ( (v_status.battery_warning == VEHICLE_BATTERY_WARNING_LOW) &&
                      (state.current_state != QUAD_STATE_GROUNDED) ) {
@@ -193,7 +194,7 @@ int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t 
         return 0;
 }
 
-int land( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mode_pub, int* state_sub ) {
+int land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub ) {
         if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING ) {
                 mode->cmd = (enum QUAD_CMD)QUAD_CMD_LAND;
                 orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
@@ -217,7 +218,7 @@ int land( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mod
         return 0;
 }
 
-int emergency_land( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mode_pub, int* state_sub ) {
+int emergency_land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub ) {
         mode->cmd = (enum QUAD_CMD)QUAD_CMD_LAND;
         orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
 
@@ -237,7 +238,7 @@ int emergency_land( struct quad_mode_s* state, struct quad_mode_s* mode, orb_adv
         return 0;
 }
 
-int start_swarm( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mode_pub, int* state_sub ) {
+int start_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub ) {
         if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING && !low_battery ) {
                 mode->cmd = (enum QUAD_CMD)QUAD_CMD_START_SWARM;
                 orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
@@ -262,7 +263,7 @@ int start_swarm( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert
         return 0;
 }
 
-int stop_swarm( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mode_pub, int* state_sub ) {
+int stop_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub ) {
         if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_SWARMING ) {
                 mode->cmd = (enum QUAD_CMD)QUAD_CMD_STOP_SWARM;
                 orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
