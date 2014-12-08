@@ -107,12 +107,6 @@ int att_control_thread_main(int argc, char *argv[]) {
                 yaw_max = 0.4;  /* yaw maximum output */
 
         while (!thread_should_exit) {
-                bool sp_updated;
-                orb_check(sp_sub, &sp_updated);
-                if ( sp_updated ){
-                        orb_copy(ORB_ID(quad_velocity_sp), sp_sub, &sp);
-                }
-
                 int ret_v_att = poll(fd_v_att, 1, 1);
                 if (ret_v_att < 0) {
                         warnx("poll sp error");
@@ -120,6 +114,13 @@ int att_control_thread_main(int argc, char *argv[]) {
                         /* no return value - nothing has happened */
                 } else if (fd_v_att[0].revents & POLLIN) {
                         orb_copy(ORB_ID(vehicle_attitude), v_att_sub, &v_att);
+
+                        bool sp_updated;
+                	orb_check(sp_sub, &sp_updated);
+                	
+	                if ( sp_updated ){
+	                        orb_copy(ORB_ID(quad_velocity_sp), sp_sub, &sp);
+	                }
 
                         abs_yaw = fabs(v_att.yaw);
                         v_att.yaw = (float)-1 * ((PI - abs_yaw) * (v_att.yaw / abs_yaw)); /* Correct the yaw angle to be about zero */
