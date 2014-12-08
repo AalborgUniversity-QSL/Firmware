@@ -120,6 +120,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
 
         /* Initial state of the quadrotor; operations always start from the ground */
         state.current_state = QUAD_STATE_GROUNDED;
+        mode.current_state = QUAD_STATE_GROUNDED;
         orb_publish(ORB_ID(quad_mode), mode_pub, &mode);
 
         while (!thread_should_exit) {
