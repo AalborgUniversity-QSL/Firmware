@@ -185,7 +185,7 @@ int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t 
                 float t0 = ( hrt_absolute_time() / (float)1000000 );
                 bool state_updated;
                 do {
-                        orb_check(state_sub, &state_updated);
+                        orb_check(*state_sub, &state_updated);
                         if ( state_updated )
                                 orb_copy(ORB_ID(quad_mode), *state_sub, state);
 
