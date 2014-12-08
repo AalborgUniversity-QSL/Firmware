@@ -79,7 +79,7 @@ static int daemon_task;
 static bool low_battery = false;
 
 static int mavlink_fd;
-const float time_out = 20.f;
+const int time_out = 20000;    /* Timeout value for state transition poll [ms] */
 
 
 int quad_commander_thread_main(int argc, char *argv[]) {
@@ -201,7 +201,7 @@ int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t 
                 fd_state.fd = *state_sub;
                 fd_state.events = POLLIN;
 
-                int ret_state = poll(&fd_state, 1, 20000);
+                int ret_state = poll(&fd_state, 1, time_out);
                 if (ret_state < 0) {
                         warnx("poll cmd error");
                 } else if (ret_state == 0) {
@@ -232,7 +232,7 @@ int land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mod
                 fd_state.fd = *state_sub;
                 fd_state.events = POLLIN;
 
-                int ret_state = poll(&fd_state, 1, 20000);
+                int ret_state = poll(&fd_state, 1, time_out);
                 if (ret_state < 0) {
                         warnx("poll cmd error");
                 } else if (ret_state == 0) {
@@ -262,7 +262,7 @@ int emergency_land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_adv
         fd_state.fd = *state_sub;
         fd_state.events = POLLIN;
 
-        int ret_state = poll(&fd_state, 1, 20000);
+        int ret_state = poll(&fd_state, 1, time_out);
         if (ret_state < 0) {
                 warnx("poll cmd error");
         } else if (ret_state == 0) {
@@ -289,7 +289,7 @@ int start_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert
                 fd_state.fd = *state_sub;
                 fd_state.events = POLLIN;
 
-                int ret_state = poll(&fd_state, 1, 20000);
+                int ret_state = poll(&fd_state, 1, time_out);
                 if (ret_state < 0) {
                         warnx("poll cmd error");
                 } else if (ret_state == 0) {
@@ -320,7 +320,7 @@ int stop_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_
                 fd_state.fd = *state_sub;
                 fd_state.events = POLLIN;
 
-                int ret_state = poll(&fd_state, 1, 20000);
+                int ret_state = poll(&fd_state, 1, time_out);
                 if (ret_state < 0) {
                         warnx("poll cmd error");
                 } else if (ret_state == 0) {
