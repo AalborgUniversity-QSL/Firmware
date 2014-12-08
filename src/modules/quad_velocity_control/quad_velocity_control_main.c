@@ -95,13 +95,14 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		hover_threashold = 0.2,
 		anti_gravity = 0.48,
 		min_rotor_speed = 0.25,
+		pos_max = 0.1,
 		speed_up_time = 4,
 		// min_hover_velocity = 0.001,
 
 		thrust_filter = 0.01,
 
 		dt_pos = 0,
-	        time_old = 0;
+	        time_old = (hrt_absolute_time() / (float)1000000); /* time is in seconds */
 
 	int system_id = 1;
 
@@ -130,51 +131,26 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			orb_copy(ORB_ID(quad_pos_msg), quad_pos_sub, &quad_pos);
 
 			orb_check(quad_mode_sub, &quad_mode_updated);
-
 			if (quad_mode_updated){
 				orb_copy(ORB_ID(quad_mode), quad_mode_sub, &quad_mode);
-				// mavlink_log_info(mavlink_fd,"[POT] current_state: %d", quad_mode.current_state);
-				// mavlink_log_info(mavlink_fd,"[POT] cmd: %d", quad_mode.cmd);
-
 			}
 
-			if (!initialised && quad_mode.current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED) {
-				dt_pos = 0.1;
-				time_old = quad_pos.timestamp;
-				state.x_old = quad_pos.x[system_id - 1] / (float)1000;
-				state.y_old = quad_pos.y[system_id - 1] / (float)1000;
-
-				initialised = true;
-                       		mavlink_log_info(mavlink_fd,"[POT] INITIALISED");
-
-			} else {
-
-				dt_pos = quad_pos.timestamp - time_old;
-				time_old = quad_pos.timestamp;
-
-				// mavlink_log_info(mavlink_fd,"dt_pos %.3f", (double)dt_pos);
-			}
+			time = (hrt_absolute_time() / (float)1000000); /* time is in seconds */
+                        dt_pos = time - time_old;
+                        time_old = time;
 
 			// Set state values
 			state.x = quad_pos.x[system_id - 1] / (float)1000;
 			state.y = quad_pos.y[system_id - 1] / (float)1000;
 			state.z = quad_pos.z[system_id - 1] / (float)1000;
-			// state.dx = (state.x - state.x_old) / (float)dt_pos;
-			// state.dy = (state.y - state.y_old) / (float)dt_pos;
-
-			state.x_old = state.x;
-			state.y_old = state.y;
 
 			// Set initial values when received commands
 			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && !state_transition.takeoff){
-				
-				takeoff_pos.timestamp = quad_pos.timestamp;
-				// error.x_old = state.x;
-				// error.y_old = state.y;
-				// error.z_old = state.z;
+				initialised = true;
 
-				sp.x = 0;
-				sp.y = 0;
+				sp.timestamp = (hrt_absolute_time() / (float)1000000);
+				sp.x = state.x;
+				sp.y = state.y;
 				sp.z = hover_alt;
 
 				state_transition.takeoff = true;
@@ -183,8 +159,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && !state_transition.land){
 				// initialise landing sequence
-				sp.x = 0;
-				sp.y = 0;
+				sp.x = state.x;
+				sp.y = state.y;
 
 				state_transition.land = true;
 				mavlink_log_info(mavlink_fd,"[POT] LANDING INITIALISED");
@@ -213,7 +189,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			if (state_transition.takeoff){
 				
 				// Takeoff sequence
-				if ((state.z > (sp.z - (float)hover_threashold)) && (state.z < (sp.z + (float)hover_threashold)) /*&& ((float)fabs(state.dx + state.dy) < (float)min_hover_velocity)*/){
+				if ((state.z > (sp.z - (float)hover_threashold)) && (state.z < (sp.z + (float)hover_threashold))){
 					
 					// Change state to hovering state
 					state_transition.takeoff = false;
@@ -236,6 +212,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				} else {
 					
 					shutdown_motors = true;
+					initialised = false;
 					state_transition.land = false;
 					quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
 					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
@@ -262,14 +239,13 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 				// Thrust controller
 				error.thrust = sp.z - state.z;
-				mavlink_log_info(mavlink_fd,"[POT] sp:%.3f z:%.3f",(double)sp.z, (double)state.z);
+				// mavlink_log_info(mavlink_fd,"[POT] sp:%.3f z:%.3f",(double)sp.z, (double)state.z);
 				error.thrust_der = (error.thrust - error.thrust_old)/(float)dt_pos;
 
 				error.thrust_old = error.thrust;
+				state.thrust_old = output.thrust;
 
 				output.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error.thrust_der;
-				
-				state.thrust_old = output.thrust;
 
 				// Thrust filter
 	                        if (output.thrust > state.thrust_old + (float)thrust_filter){
@@ -287,7 +263,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 				velocity_sp.thrust = output.thrust + anti_gravity;
 
-				if ((takeoff_pos.timestamp + (float)speed_up_time) > quad_pos.timestamp){
+				if ((sp.timestamp + (float)speed_up_time) > (hrt_absolute_time() / (float)1000000);){
 					velocity_sp.thrust = min_rotor_speed;
 				}
                         } else {
@@ -313,22 +289,22 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         error.x = sp.x - state.x;
                         error.y = sp.y - state.y;
 
-                        error.dx = (error.x - error.x_old)/dt_pos;
-                        error.dy = (error.y - error.y_old)/dt_pos;
+                        error.dx = (error.x - error.x_old)/(float)dt_pos;
+                        error.dy = (error.y - error.y_old)/(float)dt_pos;
 
                         error.x_old = error.x;
                         error.y_old = error.y;
 
-                        output.pitch = - (float)Kp_pos * error.x - (float)Kd_pos * error.dx;
-                        output.roll  = - (float)Kp_pos * error.y - (float)Kd_pos * error.dy;
+                        output.pitch = - Kp_pos * error.x - Kd_pos * error.dx;
+                        output.roll  = - Kp_pos * error.y - Kd_pos * error.dy;
 
 
-                        // /* Limiting position controller output */
-                        // if ((float)fabs(output.roll) > max_accl)
-                        //         output.roll = max_velocity * (pos_roll / (float)fabs(pos_roll));
+                        /* Limiting position controller output */
+                        if ((float)fabs(output.roll) > pos_max)
+                                output.roll = pos_max * (output.roll / (float)fabs(output.roll));
 
-                        // if ((float)fabs(pos_pitch) > max_accl)
-                        //         output.pitch = max_accl * pos_pitch / (float)fabs(pos_pitch));
+                        if ((float)fabs(pos_pitch) > pos_max)
+                                output.pitch = pos_max * output.pitch / (float)fabs(output.pitch));
 
                         velocity_sp.roll = output.roll;
                         velocity_sp.pitch = output.pitch;
@@ -341,6 +317,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         	velocity_sp.pitch = 0;
          	                velocity_sp.yaw = 0;
                         }
+
                         orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 		}
 	}
