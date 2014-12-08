@@ -57,7 +57,7 @@ int quad_commander_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
 
 /**
- * Error messages
+ * Error messages via mavlink
  */
 void error_msg( int error );
 
