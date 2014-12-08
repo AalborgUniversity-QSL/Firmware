@@ -176,6 +176,8 @@ int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t 
                 mode->cmd = (enum QUAD_CMD)QUAD_CMD_TAKEOFF;
                 orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
 
+                mavlink_log_critical(mavlink_fd, "[quad_commmander] halløj før loopet!");
+
                 float t0 = ( hrt_absolute_time() / (float)1000000 );
                 bool state_updated;
                 do {
@@ -186,7 +188,8 @@ int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t 
                         if ( time_out < ((hrt_absolute_time() / (float)1000000 ) - (float)t0) ) {
                                 return -1;
                         }
-                        BUG(1)
+                        mavlink_log_critical(mavlink_fd, "[quad_commmander] halløj fra loopet!");
+                        /* BUG(1) */
 
                 } while ( state->current_state != (enum QUAD_STATE)QUAD_STATE_HOVERING );
         } else {
