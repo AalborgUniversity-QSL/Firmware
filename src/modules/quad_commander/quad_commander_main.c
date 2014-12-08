@@ -177,17 +177,17 @@ int quad_commander_thread_main(int argc, char *argv[]) {
         }
 }
 
-int take_off( struct quad_mode_s* state, struct quad_mode_s* mode, orb_advert_t* mode_pub, int* state_sub ) {
+int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub ) {
         if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED /*&& !low_battery*/ ) {
                 mode->cmd = (enum QUAD_CMD)QUAD_CMD_TAKEOFF;
-                orb_publish(ORB_ID(quad_mode), mode_pub, mode);
+                orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
 
                 float t0 = ( hrt_absolute_time() / (float)1000000 );
                 bool state_updated;
                 do {
                         orb_check(state_sub, &state_updated);
                         if ( state_updated )
-                                orb_copy(ORB_ID(quad_mode), state_sub, state);
+                                orb_copy(ORB_ID(quad_mode), *state_sub, state);
 
                         if ( time_out < ((hrt_absolute_time() / (float)1000000 ) - (float)t0) ) {
                                 return -1;
