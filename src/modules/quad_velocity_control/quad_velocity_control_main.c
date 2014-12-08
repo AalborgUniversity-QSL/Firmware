@@ -240,7 +240,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         if (shutdown_motors) {
 
                         	velocity_sp.thrust = 0;
-                        	mavlink_log_info(mavlink_fd,"current_state: %d",(enum QUAD_STATE)QUAD_STATE_GROUNDED);
+                        	// quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
+                        	// mavlink_log_info(mavlink_fd,"current_state: %d",quad_mode.current_state);
 
                         } else if (!quad_mode.error && !shutdown_motors) {
 
