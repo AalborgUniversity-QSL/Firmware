@@ -112,6 +112,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				
 				mavlink_log_info(mavlink_fd,"[POT] Package loss limit reached");
 			}
+			mavlink_log_info(mavlink_fd,"[POT] lol");
 
 
 		} else if (fds[0].revents & POLLIN) {
