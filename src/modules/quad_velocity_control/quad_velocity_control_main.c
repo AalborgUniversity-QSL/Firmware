@@ -90,7 +90,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	        Kp_pos = 0.06,
 	        Kd_pos = 0.01, /* Controller constants for position controller */
 	 	
-	 	hover_alt = 1,		// 1 meter altitude
+	 	hover_alt = 2,		// 1 meter altitude
 	 	landing_alt = 0.2,
 		hover_threashold = 0.2,
 		anti_gravity = 0.48,
