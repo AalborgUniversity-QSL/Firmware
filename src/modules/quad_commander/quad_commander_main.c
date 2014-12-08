@@ -141,6 +141,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                 } else if (fd_cmd[0].revents & POLLIN) {
                         orb_copy(ORB_ID(quad_swarm_cmd), swarm_cmd_sub, &swarm_cmd);
 
+                                mavlink_log_critical(mavlink_fd, "[quad_commmander] her kalder vi");                        	
                         if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_TAKEOFF ) {
                                 if ( take_off( &state, &mode, &mode_pub, &state_sub ) < (int)0 )
                                         mavlink_log_critical(mavlink_fd, "[quad_commmander] take_off failed!");
@@ -172,16 +173,17 @@ int quad_commander_thread_main(int argc, char *argv[]) {
 }
 
 int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub ) {
+                mavlink_log_critical(mavlink_fd, "[quad_commmander] halløj før loopet!");
         if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED /*&& !low_battery*/ ) {
+                
                 mode->cmd = (enum QUAD_CMD)QUAD_CMD_TAKEOFF;
                 orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
 
-                mavlink_log_critical(mavlink_fd, "[quad_commmander] halløj før loopet!");
 
                 int i = 0;
                 float t0 = ( hrt_absolute_time() / (float)1000000 );
-                bool state_updated;
                 do {
+                	bool state_updated;
                         orb_check(*state_sub, &state_updated);
 
                         if ( state_updated )
