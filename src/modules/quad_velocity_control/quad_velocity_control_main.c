@@ -159,8 +159,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			state.x = quad_pos.x[system_id - 1] / (float)1000;
 			state.y = quad_pos.y[system_id - 1] / (float)1000;
 			state.z = quad_pos.z[system_id - 1] / (float)1000;
-			state.dx = (state.x - state.x_old) / (float)dt_pos;
-			state.dy = (state.y - state.y_old) / (float)dt_pos;
+			// state.dx = (state.x - state.x_old) / (float)dt_pos;
+			// state.dy = (state.y - state.y_old) / (float)dt_pos;
 
 			state.x_old = state.x;
 			state.y_old = state.y;
@@ -169,12 +169,12 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && !state_transition.takeoff){
 				
 				takeoff_pos.timestamp = quad_pos.timestamp;
-				// takeoff_pos.x = state.x;
-				// takeoff_pos.y = state.y;
-				// takeoff_pos.z = state.z;
+				// error.x_old = state.x;
+				// error.y_old = state.y;
+				// error.z_old = state.z;
 
-				sp.dx = 0;
-				sp.dy = 0;
+				sp.x = 0;
+				sp.y = 0;
 				sp.z = hover_alt;
 
 				state_transition.takeoff = true;
@@ -183,8 +183,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND && !state_transition.land){
 				// initialise landing sequence
-				sp.dx = 0;
-				sp.dy = 0;
+				sp.x = 0;
+				sp.y = 0;
 
 				state_transition.land = true;
 				mavlink_log_info(mavlink_fd,"[POT] LANDING INITIALISED");
