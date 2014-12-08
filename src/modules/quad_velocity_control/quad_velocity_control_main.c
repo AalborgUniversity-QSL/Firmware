@@ -39,6 +39,9 @@ __EXPORT int quad_velocity_control_main(int argc, char *argv[]);
 int quad_velocity_control_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
 
+// Prototypes
+// float velocity_controller()
+
 
 static bool thread_running = false;
 static bool thread_should_exit = false;
@@ -295,8 +298,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         error.dy_old = error.dy;
 
                         // PD velocity controller
-                        output.pitch = - Kp_pos * error.dx - Kd_pos * error.ddx;
-                        output.roll  = - Kp_pos * error.dy - Kd_pos * error.ddy;
+                        output.pitch = - (float)Kp_pos * error.dx - (float)Kd_pos * error.ddx;
+                        output.roll  = - (float)Kp_pos * error.dy - (float)Kd_pos * error.ddy;
 
                         // /* Limiting position controller output */
                         // if ((float)fabs(output.roll) > max_accl)
