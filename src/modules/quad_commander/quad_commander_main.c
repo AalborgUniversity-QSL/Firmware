@@ -185,7 +185,7 @@ void error_msg( int error ) {
                 mavlink_log_info(mavlink_fd, "[quad_commmander] State transition succes!");
 
         } else if ( error == -1 ) {
-                mavlink_log_info(mavlink_fd, "[quad_commmander] No state transition happened!");
+                mavlink_log_info(mavlink_fd, "[quad_commmander] No state transition occured!");
 
         } else if ( error == -2 ) {
                 mavlink_log_info(mavlink_fd, "[quad_commmander] Not in correct state!");
