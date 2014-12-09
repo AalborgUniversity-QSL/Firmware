@@ -161,7 +161,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			} else {
 				time = hrt_absolute_time() / (float)1000000;
 	                        dt_pos = time - time_old;
-	                        time_old = time;	
+	                        time_old = time;
 
 	                        // mavlink_log_info(mavlink_fd,"dt_pos: %.3f",(double)dt_pos);	
 			}
@@ -266,16 +266,18 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					// Do nothing yet
 				}
 
-
 			} else if ( vehicle_status.arming_state == ARMING_STATE_STANDBY ) {
 
 				shutdown_motors = true;
 				initialised = false;
 
-				quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
-				quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
+				if ( quad_mode.current_state != (enum QUAD_STATE)QUAD_STATE_GROUNDED ) {
 
-				orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+					quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
+					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
+
+					orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+				}
 			}
 
 
