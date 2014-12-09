@@ -131,6 +131,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			orb_copy(ORB_ID(quad_pos_msg), quad_pos_sub, &quad_pos);
 
 			orb_check(quad_mode_sub, &quad_mode_updated);
+			
 			if (quad_mode_updated){
 				orb_copy(ORB_ID(quad_mode), quad_mode_sub, &quad_mode);
 			}
@@ -156,7 +157,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && !state_transition.takeoff){
 				initialised = true;
 
-				sp.timestamp = (hrt_absolute_time() / (float)1000000);
+				sp.timestamp = time;
 				sp.x = state.x;
 				sp.y = state.y;
 				sp.z = hover_alt;
@@ -268,7 +269,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 				velocity_sp.thrust = output.thrust + anti_gravity;
 
-				if ((sp.timestamp + (float)speed_up_time) > (hrt_absolute_time() / (float)1000000)){
+				if ((sp.timestamp + (float)speed_up_time) > time){
 					velocity_sp.thrust = min_rotor_speed;
 				}
                         } else {
