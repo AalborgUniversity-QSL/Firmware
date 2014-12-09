@@ -265,14 +265,15 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	                                output.thrust = state.thrust_old - thrust_filter;
 	                        }
 
-	                        // Thrust limiter
-	                        if ( output.thrust > (float)1 ) {
-	                                output.thrust = (float)1;
-	                        } else if ( output.thrust < 0 ) {
-	                                output.thrust = 0;
-	                        }
 
 				velocity_sp.thrust = output.thrust + anti_gravity;
+
+	                        // Thrust limiter
+	                        if ( velocity_sp.thrust > (float)1 ) {
+	                                velocity_sp.thrust = (float)1;
+	                        } else if ( velocity_sp.thrust < 0 ) {
+	                                velocity_sp.thrust = 0;
+	                        }
 
 				if ((sp.timestamp + (float)speed_up_time) > time){
 					velocity_sp.thrust = min_rotor_speed;
