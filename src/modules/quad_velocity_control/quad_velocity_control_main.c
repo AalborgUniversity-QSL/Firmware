@@ -222,7 +222,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					if ((state.z > (sp.z - (float)hover_threashold)) && (state.z < (sp.z + (float)hover_threashold)) && ((float)fabs(state.dz) < min_hover_velocity)){
 						
 						// Change state to hovering state
-						state_transition.takeoff = false;
+						memset(&state_transition, false, sizeof(state_transition));
 						quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
 						quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_HOVERING;
 						orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
@@ -246,7 +246,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					} else {
 						
 						shutdown_motors = true;
-						state_transition.land = false;
+						memset(&state_transition, false, sizeof(state_transition));
 						quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
 						quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
 	                        		orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
@@ -266,8 +266,13 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			} else {
 				shutdown_motors = true;
 				initialised = false;
+
 				memset(&state_transition, false, sizeof(state_transition));
+				memset(&quad_mode, 0, sizeof(quad_mode));
+
 				quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
+				quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
+				
 				orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 			}
 
