@@ -154,22 +154,22 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                         orb_copy(ORB_ID(quad_swarm_cmd), swarm_cmd_sub, &swarm_cmd);
 
                         if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_TAKEOFF ) {
-                                mavlink_log_info(mavlink_fd, "[quad_commmander] Takeoff initialised!");
+                                mavlink_log_info(mavlink_fd, "[quad_commmander] Takeoff transition begun!");
                                 int ret_value = take_off( &state, &mode, &mode_pub, &state_sub );
                                 error_msg( ret_value, &transition_error );
 
                         } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_LAND ) {
-                                mavlink_log_info(mavlink_fd, "[quad_commmander] Landing initialised!");
+                                mavlink_log_info(mavlink_fd, "[quad_commmander] Landing transition begun!");
                                 int ret_value = land( &state, &mode, &mode_pub, &state_sub, &transition_error );
                                 error_msg( ret_value, &transition_error );
 
                         } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_START_SWARM ) {
-                                mavlink_log_info(mavlink_fd, "[quad_commmander] Swarming initialised!");
+                                mavlink_log_info(mavlink_fd, "[quad_commmander] Swarming transition begun!");
                                 int ret_value = start_swarm( &state, &mode, &mode_pub, &state_sub );
                                 error_msg( ret_value, &transition_error );
 
                         } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_STOP_SWARM ) {
-                                mavlink_log_info(mavlink_fd, "[quad_commmander] Stop swarming initialised!");
+                                mavlink_log_info(mavlink_fd, "[quad_commmander] Stop swarming transition begun!");
                                 int ret_value = stop_swarm( &state, &mode, &mode_pub, &state_sub );
                                 error_msg( ret_value, &transition_error );
 
