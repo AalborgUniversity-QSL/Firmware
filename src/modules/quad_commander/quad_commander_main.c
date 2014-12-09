@@ -79,7 +79,7 @@ static int daemon_task;
 static bool low_battery = false;
 
 static int mavlink_fd;
-const int time_out = 10000;    /* Timeout value for state transition poll [ms] */
+const int time_out = 6000;    /* Timeout value for state transition poll [ms] */
 
 
 int quad_commander_thread_main(int argc, char *argv[]) {
@@ -146,18 +146,22 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                         orb_copy(ORB_ID(quad_swarm_cmd), swarm_cmd_sub, &swarm_cmd);
 
                         if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_TAKEOFF ) {
+                                mavlink_log_info(mavlink_fd, "[quad_commmander] Takeoff initialised!");
                                 int ret_value = take_off( &state, &mode, &mode_pub, &state_sub );
                                 error_msg( ret_value );
 
                         } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_LAND ) {
+                                mavlink_log_info(mavlink_fd, "[quad_commmander] Landing initialised!");
                                 int ret_value = land( &state, &mode, &mode_pub, &state_sub );
                                 error_msg( ret_value );
 
                         } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_START_SWARM ) {
+                                mavlink_log_info(mavlink_fd, "[quad_commmander] Swarming initialised!");
                                 int ret_value = start_swarm( &state, &mode, &mode_pub, &state_sub );
                                 error_msg( ret_value );
 
                         } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_STOP_SWARM ) {
+                                mavlink_log_info(mavlink_fd, "[quad_commmander] Stop swarming initialised!");
                                 int ret_value = stop_swarm( &state, &mode, &mode_pub, &state_sub );
                                 error_msg( ret_value );
 
