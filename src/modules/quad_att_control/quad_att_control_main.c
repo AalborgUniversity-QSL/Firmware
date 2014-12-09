@@ -106,7 +106,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 rp_max = 0.7,  /* roll and pitch maximum output */
                 yaw_max = 0.4;  /* yaw maximum output */
 
-        while (!thread_should_exit) {
+        while ( !thread_should_exit ) {
                 int ret_v_att = poll(fd_v_att, 1, 1);
                 if (ret_v_att < 0) {
                         warnx("poll sp error");
