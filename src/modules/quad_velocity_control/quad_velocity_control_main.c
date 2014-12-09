@@ -98,7 +98,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		min_rotor_speed = 0.25,
 		pos_max = 0.1,
 		speed_up_time = 4,
-		// min_hover_velocity = 0.001,
+		min_hover_velocity = 0.001,
 		thrust_filter = 0.01,
 		dt_pos = 0,
 		time = 0,
@@ -140,9 +140,17 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         time_old = time;
 
 			// Set state values
+			state.x_old = state.x;
+			state.y_old = state.y;
+			state.z_old = state.z;
+
 			state.x = quad_pos.x[system_id - 1] / (float)1000;
 			state.y = quad_pos.y[system_id - 1] / (float)1000;
 			state.z = quad_pos.z[system_id - 1] / (float)1000;
+
+			state.dx = (state.x - state.x_old)/dt_pos;
+			state.dy = (state.y - state.y_old)/dt_pos;
+			state.dz = (state.z - state.z_old)/dt_pos;
 
 			// Set initial values when received commands
 			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && !state_transition.takeoff){
@@ -189,7 +197,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			if (state_transition.takeoff){
 				
 				// Takeoff sequence
-				if ((state.z > (sp.z - (float)hover_threashold)) && (state.z < (sp.z + (float)hover_threashold))){
+				if ((state.z > (sp.z - (float)hover_threashold)) && (state.z < (sp.z + (float)hover_threashold)) && ((float)fabs(state.dz) < min_hover_velocity)){
 					
 					// Change state to hovering state
 					state_transition.takeoff = false;
@@ -232,26 +240,23 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         if (shutdown_motors) {
 
                         	velocity_sp.thrust = 0;
-                        	// quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
-                        	// mavlink_log_info(mavlink_fd,"current_state: %d",quad_mode.current_state);
 
                         } else if (!quad_mode.error && !shutdown_motors) {
 
 				// Thrust controller
 				error.thrust = sp.z - state.z;
-				// mavlink_log_info(mavlink_fd,"[POT] sp:%.3f z:%.3f",(double)sp.z, (double)state.z);
 				error.thrust_der = (error.thrust - error.thrust_old)/(float)dt_pos;
 
 				error.thrust_old = error.thrust;
 				state.thrust_old = output.thrust;
 
-				output.thrust = (float)Kp_thrust * (float)error.thrust + (float)Kd_thrust * (float)error.thrust_der;
+				output.thrust = Kp_thrust * error.thrust + Kd_thrust * error.thrust_der;
 
 				// Thrust filter
-	                        if (output.thrust > state.thrust_old + (float)thrust_filter){
-	                                output.thrust = state.thrust_old + (float)thrust_filter;
-	                        } else if (output.thrust < state.thrust_old - (float)thrust_filter) {
-	                                output.thrust = state.thrust_old - (float)thrust_filter;
+	                        if (output.thrust > state.thrust_old + thrust_filter){
+	                                output.thrust = state.thrust_old + thrust_filter;
+	                        } else if (output.thrust < state.thrust_old - thrust_filter) {
+	                                output.thrust = state.thrust_old - thrust_filter;
 	                        }
 
 	                        // Thrust limiter
@@ -311,7 +316,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
                         // mavlink_log_info(mavlink_fd,"th: %.3f r: %.3f p: %.3f yaw: %.3f ",(double)velocity_sp.thrust,(double)velocity_sp.roll,(double)velocity_sp.pitch,(double)velocity_sp.yaw);
                         // Publish the new roll, pitch, yaw and thrust set points
-                        if(test){
+                        
+                        if(test) {
                         	velocity_sp.thrust = 0;
                         	velocity_sp.roll = 0;
                         	velocity_sp.pitch = 0;
