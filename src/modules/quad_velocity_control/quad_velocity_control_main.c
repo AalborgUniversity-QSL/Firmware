@@ -161,7 +161,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			state.dz = (state.z - state.z_old)/dt_pos;
 
 			// Set initial values when received commands
-			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && !state_transition.takeoff){
+			if ( quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && !state_transition.takeoff ) {
 
 				sp.timestamp = time;
 				sp.x = state.x;
