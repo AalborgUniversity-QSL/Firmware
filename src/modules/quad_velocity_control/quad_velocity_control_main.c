@@ -117,7 +117,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 	while(!thread_should_exit){
 
-		int pret = poll(fds, 1, 500);
+		int pret = poll(fds, 1, 300);
 		if (pret < 0){
 			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
@@ -135,10 +135,17 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			if (quad_mode_updated){
 				orb_copy(ORB_ID(quad_mode), quad_mode_sub, &quad_mode);
 			}
+			if (!initialised){
+				time = hrt_absolute_time() / (float)1000000;
+				dt_pos = time - time_old;
+				time_old = time;
+				initialised = true;
+			} else {
+				time = hrt_absolute_time() / (float)1000000;
+	                        dt_pos = time - time_old;
+	                        time_old = time;		
+			}
 
-			time = (hrt_absolute_time() / (float)1000000);
-                        dt_pos = time - time_old;
-                        time_old = time;
 
 			// Set state values
 			state.x_old = state.x;
@@ -155,7 +162,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			// Set initial values when received commands
 			if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && !state_transition.takeoff){
-				initialised = true;
 
 				sp.timestamp = time;
 				sp.x = state.x;
@@ -221,7 +227,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				} else {
 					
 					shutdown_motors = true;
-					initialised = false;
 					state_transition.land = false;
 					quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
 					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
