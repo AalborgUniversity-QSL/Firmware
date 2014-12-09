@@ -96,7 +96,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	        Kd_pos = 0.01, /* Controller constants for position controller */
 	 	
 	 	hover_alt = 1,		// 1 meter altitude setpoint
-	 	landing_alt = 0.2,
+	 	landing_alt = 0.3,
 		hover_threashold = 0.2,
 		anti_gravity = 0.48,
 		min_rotor_speed = 0.25,
@@ -127,7 +127,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
 			if (initialised){
-				emergency(&velocity_sp, &quad_mode, &quad_mode_pub);
+				// emergency(&velocity_sp, &quad_mode, &quad_mode_pub);
 				mavlink_log_info(mavlink_fd,"[POT] Package loss limit reached");
 			}
 
@@ -150,6 +150,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				dt_pos = time - time_old;
 				time_old = time;
 				initialised = true;
+				mavlink_log_info(mavlink_fd,"INITIALISED");
 			} else {
 				time = hrt_absolute_time() / (float)1000000;
 	                        dt_pos = time - time_old;
@@ -229,15 +230,19 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					} else {
 						// Do nothing
 					}
+				}
 
-				} else if (state_transition.land){
+				if (state_transition.land){
 
 					if(state.z > hover_alt ) {
 						sp.z = state.z - (float)0.1;
+						mavlink_log_info(mavlink_fd,"NOT");
 					} else if (state.z < hover_alt && state.z > (float)0.5){
-						sp.z = state.z - (float)0.02;		
+						sp.z = state.z - (float)0.02;
+						mavlink_log_info(mavlink_fd,"ALLMOST NOT");		
 					} else if (state.z < (float)0.5 && state.z > landing_alt){
 						sp.z = state.z - (float)0.005;
+						mavlink_log_info(mavlink_fd,"ALLMOST LANDED");
 					} else {
 						
 						shutdown_motors = true;
@@ -248,17 +253,20 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 	                        		mavlink_log_info(mavlink_fd,"[POT] LANDED");
 					}
+				}
 
-				} else if (state_transition.start){
-
-				} else if (state_transition.stop){
-
-				} else {
+				if (state_transition.start){
 
 				}
+
+				if (state_transition.stop){
+
+				}
+
 			} else {
 				shutdown_motors = true;
 				initialised = false;
+				memset(&state_transition, false, sizeof(state_transition));
 				quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
 				orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 			}
