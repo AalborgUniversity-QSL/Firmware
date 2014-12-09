@@ -1,5 +1,5 @@
-#ifndef PARAM
-#define PARAM
+#ifndef QUAD_VELOCITY_CONTROL_PARAM_H
+#define QUAD_VELOCITY_CONTROL_PARAM_H
 
 struct init_pos_s {
 	float timestamp;
@@ -34,4 +34,4 @@ struct quad_alt_velocity {
 	float thrust_old;
 };
 
-#endif
+#endif  /* QUAD_VELOCITY_CONTROL_PARAM_H */
