@@ -91,7 +91,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	        Kp_pos = 0.06,
 	        Kd_pos = 0.01, /* Controller constants for position controller */
 	 	
-	 	hover_alt = 1,		// 1 meter altitude
+	 	hover_alt = 1,		// 1 meter altitude setpoint
 	 	landing_alt = 0.2,
 		hover_threashold = 0.2,
 		anti_gravity = 0.48,
@@ -104,7 +104,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		time = 0,
 	        time_old = hrt_absolute_time() / (float)1000000;
 
-	int system_id = 1;
+	const int system_id = 1;
 
 	bool initialised = false,
 	     shutdown_motors = true,
@@ -115,10 +115,10 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	fds[0].fd = quad_pos_sub;
 	fds[0].events = POLLIN;
 
-	while(!thread_should_exit){
+	while( !thread_should_exit ) {
 
 		int pret = poll(fds, 1, 300);
-		if (pret < 0){
+		if (pret < 0) {
 			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
 			if (initialised){
