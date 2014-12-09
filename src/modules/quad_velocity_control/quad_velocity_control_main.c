@@ -95,7 +95,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	        Kp_pos = 0.06,
 	        Kd_pos = 0.01, /* Controller constants for position controller */
 	 	
-	 	hover_alt = 0.8,		// 1 meter altitude setpoint
+	 	hover_alt = 1,		// 1 meter altitude setpoint
 	 	landing_alt = 0.2,
 		hover_threashold = 0.2,
 		anti_gravity = 0.48,
@@ -155,7 +155,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	                        dt_pos = time - time_old;
 	                        time_old = time;	
 
-	                        mavlink_log_info(mavlink_fd,"dt_pos: %.3f",(double)dt_pos);	
+	                        // mavlink_log_info(mavlink_fd,"dt_pos: %.3f",(double)dt_pos);	
 			}
 
 
@@ -174,6 +174,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			// Set initial values when received commands
 			if(vehicle_status.arming_state == ARMING_STATE_ARMED){
+
 				if ( quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && !state_transition.takeoff ) {
 
 					sp.timestamp = time;
@@ -280,7 +281,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         }
 
 
-			velocity_sp.thrust = output.thrust + anti_gravity;
+			if ((sp.timestamp + (float)speed_up_time) > time){
+				velocity_sp.thrust = min_rotor_speed;
+			} else {
+				velocity_sp.thrust = output.thrust + anti_gravity;
+			}
 
                         // Thrust limiter
                         if ( velocity_sp.thrust > (float)1 ) {
@@ -289,13 +294,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                                 velocity_sp.thrust = 0;
                         }
 
-			if ((sp.timestamp + (float)speed_up_time) > time){
-				velocity_sp.thrust = min_rotor_speed;
-			}
-
-			if (shutdown_motors){
-				velocity_sp.thrust = 0;
-			}
 
                         // // Velocity controller
                         // error.dx = sp.dx - state.dx;
@@ -339,7 +337,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         // mavlink_log_info(mavlink_fd,"th: %.3f r: %.3f p: %.3f yaw: %.3f ",(double)velocity_sp.thrust,(double)velocity_sp.roll,(double)velocity_sp.pitch,(double)velocity_sp.yaw);
                         // Publish the new roll, pitch, yaw and thrust set points
                         
-                        if(test) {
+                        if(test || shutdown_motors) {
                         	velocity_sp.thrust = 0;
                         	velocity_sp.roll = 0;
                         	velocity_sp.pitch = 0;
