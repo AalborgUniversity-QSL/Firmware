@@ -59,13 +59,13 @@ static void usage(const char *reason);
 /**
  * Error messages via mavlink
  */
-void error_msg( int error );
+void error_msg( int error, bool *transition_error );
 
 /**
  * State transitions functions
  */
 int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
-int land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
+int land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub, bool *transition_error );
 int emergency_land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
 int start_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
 int stop_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
@@ -79,7 +79,7 @@ static int daemon_task;
 static bool low_battery = false;
 
 static int mavlink_fd;
-const int time_out = 6000;    /* Timeout value for state transition poll [ms] */
+const int time_out = 10000;    /* Timeout value for state transition poll [ms] */
 
 
 int quad_commander_thread_main(int argc, char *argv[]) {
@@ -123,8 +123,16 @@ int quad_commander_thread_main(int argc, char *argv[]) {
         mode.current_state = QUAD_STATE_GROUNDED;
         orb_publish(ORB_ID(quad_mode), mode_pub, &mode);
 
+        bool transition_error  = false;
+
         while (!thread_should_exit) {
-                orb_copy(ORB_ID(vehicle_status), v_status_sub, &v_status);
+                bool v_status_updated;
+                orb_check(v_status_sub, &v_status_updated);
+                if ( v_status_updated )
+                        orb_copy(ORB_ID(vehicle_status), v_status_sub, &v_status);
+
+                if ( v_status.arming_state == ARMING_STATE_STANDBY )
+                        state.current_state == QUAD_STATE_GROUNDED;
 
                 if ( (v_status.battery_warning == VEHICLE_BATTERY_WARNING_LOW) &&
                      (state.current_state != QUAD_STATE_GROUNDED) ) {
@@ -148,22 +156,22 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                         if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_TAKEOFF ) {
                                 mavlink_log_info(mavlink_fd, "[quad_commmander] Takeoff initialised!");
                                 int ret_value = take_off( &state, &mode, &mode_pub, &state_sub );
-                                error_msg( ret_value );
+                                error_msg( ret_value, &transition_error );
 
                         } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_LAND ) {
                                 mavlink_log_info(mavlink_fd, "[quad_commmander] Landing initialised!");
-                                int ret_value = land( &state, &mode, &mode_pub, &state_sub );
-                                error_msg( ret_value );
+                                int ret_value = land( &state, &mode, &mode_pub, &state_sub, &transition_error );
+                                error_msg( ret_value, &transition_error );
 
                         } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_START_SWARM ) {
                                 mavlink_log_info(mavlink_fd, "[quad_commmander] Swarming initialised!");
                                 int ret_value = start_swarm( &state, &mode, &mode_pub, &state_sub );
-                                error_msg( ret_value );
+                                error_msg( ret_value, &transition_error );
 
                         } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_STOP_SWARM ) {
                                 mavlink_log_info(mavlink_fd, "[quad_commmander] Stop swarming initialised!");
                                 int ret_value = stop_swarm( &state, &mode, &mode_pub, &state_sub );
-                                error_msg( ret_value );
+                                error_msg( ret_value, &transition_error );
 
                         } else {
                                 /* Nothing to do */
@@ -175,12 +183,12 @@ int quad_commander_thread_main(int argc, char *argv[]) {
 
                 if ( state.error == true ) {
                         int ret_value = emergency_land( &state, &mode, &mode_pub, &state_sub );
-                        error_msg( ret_value );
+                        error_msg( ret_value, &transition_error );
                 }
         }
 }
 
-void error_msg( int error ) {
+void error_msg( int error, bool *transition_error ) {
         if ( error == 0 ){
                 mavlink_log_info(mavlink_fd, "[quad_commmander] State transition succes!");
 
@@ -197,10 +205,14 @@ void error_msg( int error ) {
                 mavlink_log_info(mavlink_fd, "[quad_commmander] Unknown return value!");
 
         }
+
+        if ( error == -1 )
+                *transition_error = true;
+
 }
 
 int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub ) {
-        if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED /*&& !low_battery*/ ) {
+        if ( (state->current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED) ) {
                 mode->cmd = (enum QUAD_CMD)QUAD_CMD_TAKEOFF;
                 orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
                 orb_copy(ORB_ID(quad_mode), *state_sub, state);
@@ -233,8 +245,8 @@ int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t 
         }
 }
 
-int land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub ) {
-        if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING ) {
+int land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub, bool *transition_error ) {
+        if ( (state->current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING) || *transition_error ) {
                 mode->cmd = (enum QUAD_CMD)QUAD_CMD_LAND;
                 orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
                 orb_copy(ORB_ID(quad_mode), *state_sub, state);
@@ -251,9 +263,10 @@ int land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mod
 
                 } else if (fd_state.revents & POLLIN) {
                         orb_copy(ORB_ID(quad_mode), *state_sub, state);
-                        if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED )
+                        if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED ){
                                 return 0;
-
+                                *transition_error = false;
+                        }
                         return -3;
 
                 } else {
