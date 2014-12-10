@@ -39,3 +39,6 @@ tags
 .pydevproject
 .ropeproject
 *.orig
+firmware.sublime-project
+firmware.sublime-workspace
+src/modules/quad_att_control/quad_att_control_main.sublime-workspace
