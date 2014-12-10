@@ -114,7 +114,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	     shutdown_motors = true,
 	     quad_mode_updated = false,
 	     vehicle_status_updated = false,
-	     test = false;
+	     test = false,
+	     first = true;
 
 	struct pollfd fds[1];
 	fds[0].fd = quad_pos_sub;
@@ -264,6 +265,10 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_PENDING){
 					// Do nothing yet
+					if ( first ) {
+						first = false;
+						mavlink_log_info(mavlink_fd,"[POT] PENDING");
+					}
 				}
 
 			} else if ( vehicle_status.arming_state == ARMING_STATE_STANDBY ) {
@@ -272,7 +277,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				initialised = false;
 
 				if ( quad_mode.current_state != (enum QUAD_STATE)QUAD_STATE_GROUNDED ) {
-
+					first = true;
 					quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
 					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
 
