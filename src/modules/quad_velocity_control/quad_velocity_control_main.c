@@ -271,7 +271,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					}
 				}
 
-			} else if ( vehicle_status.arming_state == ARMING_STATE_STANDBY ) {
+			} else {
 
 				shutdown_motors = true;
 				initialised = false;
