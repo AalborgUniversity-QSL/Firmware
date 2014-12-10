@@ -93,15 +93,15 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	float	Kp_thrust = 0.1,//0.00008,
 	        Kd_thrust = 0.11, /* Controller constants for thrust controller */
 		Ki_thrust = 0.002,
-	        Kp_pos = 0.2,
-	        Kd_pos = 0.01, /* Controller constants for position controller */
-                Ki_pos = 0.001,
+	        Kp_pos = 0,/*0.2,*/
+	        Kd_pos = 0, /*0.01,*/ /* Controller constants for position controller */
+                Ki_pos = 0, /*0.001,*/
 	 	
-	 	hover_alt = 1.2,		// 1 meter altitude setpoint
-	 	landing_alt = 0.4,
+	 	hover_alt = 1,		// 1 meter altitude setpoint
+	 	landing_alt = 0.3,
 		hover_threashold = 0.2,
 		anti_gravity = 0.49,
-		min_rotor_speed = 0.25,
+		min_rotor_speed = 0.3,
 		pos_max = 0.2,
 		speed_up_time = 4,
 		min_hover_velocity = 0.1,
@@ -129,8 +129,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
 			if (vehicle_status.arming_state == ARMING_STATE_ARMED){
-				emergency(&velocity_sp, &quad_mode, &quad_mode_pub);
-				orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
+				// emergency(&velocity_sp, &quad_mode, &quad_mode_pub);
+				// orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 				mavlink_log_critical(mavlink_fd,"[POT] Package loss limit reached");
 			}
 
@@ -226,34 +226,14 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					
 					} else {
 
-						// if ( state.z > hover_alt ) {
-						// 	sp.z = state.z - (float)0.02;
-						// 	mavlink_log_info(mavlink_fd,"LANDING 1");
-
-						// } else if ((state.z < hover_alt) && (state.z > hover_alt/(float)2)){
-						// 	sp.z = state.z - (float)0.01;
-						// 	mavlink_log_info(mavlink_fd,"LANDING 2");
-
-						// } else if ((state.z < hover_alt/(float)2) && (state.z > landing_alt)){
-						// 	sp.z = state.z - (float)0.005;
-						// 	mavlink_log_info(mavlink_fd,"LANDING 3");
-
-						// } else if (state.z < landing_alt) {
-							
-						// 	sp.z = 0;
-						// 	shutdown_motors = true;
-						// 	state_transition.land = false;
-						// 	quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
-						// 	quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
-		    //                     		orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
-
-		    //                     		mavlink_log_info(mavlink_fd,"[POT] LANDED");
-						// }
-
 						if ((state.z > (sp.z - (float)hover_threashold)) && (state.z < (sp.z + (float)hover_threashold)) && ((float)fabs(state.dz) < min_hover_velocity)){
 							
 							// Change state to hovering state
+
+							sp.z = 0;
+							shutdown_motors = true;
 							state_transition.land = false;
+
 							quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
 							quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
 
@@ -265,17 +245,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM){
 				
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM){
-					
-					// // Stop computing potential fields and break formation and return to hovering
-					// struct init_pos_s landing_pos;
-					// memset(&landing_pos, 0, sizeof(landing_pos));
-
-					// landing_pos.timestamp = quad_pos.timestamp;
-					// landing_pos.x = state.x;
-					// landing_pos.y = state.y;
-					// landing_pos.z = state.z;
-
-					// state_transition = true;
 
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_PENDING){
 						// mavlink_log_info(mavlink_fd,"[POT] PENDING");
@@ -319,19 +288,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         }
 
 
-			if ((sp.timestamp + (float)speed_up_time) > time){
-				velocity_sp.thrust = min_rotor_speed;
-				error.thrust_int = 0;
-			} else {
-				velocity_sp.thrust = output.thrust + anti_gravity;
-			}
-
-                        // Thrust limiter
-                        if ( velocity_sp.thrust > (float)1 ) {
-                                velocity_sp.thrust = (float)1;
-                        } else if ( velocity_sp.thrust < 0 ) {
-                                velocity_sp.thrust = 0;
-                        }
+			
 
 
                         // // Velocity controller
@@ -378,6 +335,22 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
                         velocity_sp.roll = output.roll;
                         velocity_sp.pitch = output.pitch;
+
+                        if ((sp.timestamp + (float)speed_up_time) > time){
+				velocity_sp.thrust = min_rotor_speed;
+				error.thrust_int = 0;
+				error.x_int = 0;
+				error.y_int = 0;
+			} else {
+				velocity_sp.thrust = output.thrust + anti_gravity;
+			}
+
+                        // Thrust limiter
+                        if ( velocity_sp.thrust > (float)1 ) {
+                                velocity_sp.thrust = (float)1;
+                        } else if ( velocity_sp.thrust < 0 ) {
+                                velocity_sp.thrust = 0;
+                        }
 
                         // mavlink_log_info(mavlink_fd,"th: %.3f r: %.3f p: %.3f yaw: %.3f ",(double)velocity_sp.thrust,(double)velocity_sp.roll,(double)velocity_sp.pitch,(double)velocity_sp.yaw);
                         
