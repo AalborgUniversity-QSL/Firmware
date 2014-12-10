@@ -95,9 +95,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		Ki_thrust = 0.002,
 	        Kp_pos = 0.2,
 	        Kd_pos = 0.01, /* Controller constants for position controller */
-                Ki_pos = 0.002,
+                Ki_pos = 0.001,
 	 	
-	 	hover_alt = 0.8,		// 1 meter altitude setpoint
+	 	hover_alt = 1.2,		// 1 meter altitude setpoint
 	 	landing_alt = 0.3,
 		hover_threashold = 0.2,
 		anti_gravity = 0.49,
@@ -128,8 +128,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		if (pret < 0) {
 			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
-			if (initialised){
-				// emergency(&velocity_sp, &quad_mode, &quad_mode_pub);
+			if (vehicle_status.arming_state == ARMING_STATE_ARMED){
+				emergency(&velocity_sp, &quad_mode, &quad_mode_pub);
+				orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 				mavlink_log_info(mavlink_fd,"[POT] Package loss limit reached");
 			}
 
@@ -211,7 +212,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 						}
 					} 
 
-				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND){
+				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_LAND) {
 					
 					if (!state_transition.land) {
 
@@ -308,6 +309,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			if ((sp.timestamp + (float)speed_up_time) > time){
 				velocity_sp.thrust = min_rotor_speed;
+				error.thrust_int = 0;
 			} else {
 				velocity_sp.thrust = output.thrust + anti_gravity;
 			}
@@ -351,8 +353,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         error.y_int = error.y_int + error.y;
 
 
-                        output.pitch = - Kp_pos * error.x - Kd_pos * error.dx + Ki_pos * error.x_int;
-                        output.roll  = - Kp_pos * error.y - Kd_pos * error.dy + Ki_pos * error.y_int;
+                        output.pitch = - Kp_pos * error.x - Kd_pos * error.dx - Ki_pos * error.x_int;
+                        output.roll  = - Kp_pos * error.y - Kd_pos * error.dy - Ki_pos * error.y_int;
 
 
                         /* Limiting position controller output */
