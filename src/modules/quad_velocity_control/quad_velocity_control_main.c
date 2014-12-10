@@ -98,7 +98,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                 Ki_pos = 0.001,
 	 	
 	 	hover_alt = 1.2,		// 1 meter altitude setpoint
-	 	landing_alt = 0.3,
+	 	landing_alt = 0.4,
 		hover_threashold = 0.2,
 		anti_gravity = 0.49,
 		min_rotor_speed = 0.25,
@@ -131,7 +131,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			if (vehicle_status.arming_state == ARMING_STATE_ARMED){
 				emergency(&velocity_sp, &quad_mode, &quad_mode_pub);
 				orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
-				mavlink_log_info(mavlink_fd,"[POT] Package loss limit reached");
+				mavlink_log_critical(mavlink_fd,"[POT] Package loss limit reached");
 			}
 
 		} else if (fds[0].revents & POLLIN) {
@@ -219,34 +219,46 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					// initialise landing sequence
 					sp.x = state.x;
 					sp.y = state.y;
+					sp.z = landing_alt;
 
 					state_transition.land = true;
 					mavlink_log_info(mavlink_fd,"[POT] LANDING INITIALISED");
 					
 					} else {
 
-						if ( state.z > hover_alt ) {
-							sp.z = state.z - (float)0.02;
-							mavlink_log_info(mavlink_fd,"LANDING 1");
+						// if ( state.z > hover_alt ) {
+						// 	sp.z = state.z - (float)0.02;
+						// 	mavlink_log_info(mavlink_fd,"LANDING 1");
 
-						} else if ((state.z < hover_alt) && (state.z > hover_alt/(float)2)){
-							sp.z = state.z - (float)0.01;
-							mavlink_log_info(mavlink_fd,"LANDING 2");
+						// } else if ((state.z < hover_alt) && (state.z > hover_alt/(float)2)){
+						// 	sp.z = state.z - (float)0.01;
+						// 	mavlink_log_info(mavlink_fd,"LANDING 2");
 
-						} else if ((state.z < hover_alt/(float)2) && (state.z > landing_alt)){
-							sp.z = state.z - (float)0.005;
-							mavlink_log_info(mavlink_fd,"LANDING 3");
+						// } else if ((state.z < hover_alt/(float)2) && (state.z > landing_alt)){
+						// 	sp.z = state.z - (float)0.005;
+						// 	mavlink_log_info(mavlink_fd,"LANDING 3");
 
-						} else if (state.z < landing_alt) {
+						// } else if (state.z < landing_alt) {
 							
-							sp.z = 0;
-							shutdown_motors = true;
+						// 	sp.z = 0;
+						// 	shutdown_motors = true;
+						// 	state_transition.land = false;
+						// 	quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
+						// 	quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
+		    //                     		orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+
+		    //                     		mavlink_log_info(mavlink_fd,"[POT] LANDED");
+						// }
+
+						if ((state.z > (sp.z - (float)hover_threashold)) && (state.z < (sp.z + (float)hover_threashold)) && ((float)fabs(state.dz) < min_hover_velocity)){
+							
+							// Change state to hovering state
 							state_transition.land = false;
 							quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
 							quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
-		                        		orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 
-		                        		mavlink_log_info(mavlink_fd,"[POT] LANDED");
+							orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+							mavlink_log_info(mavlink_fd,"[POT] LANDED");
 						}
 					}
 
