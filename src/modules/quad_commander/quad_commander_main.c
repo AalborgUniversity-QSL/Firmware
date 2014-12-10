@@ -160,6 +160,11 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                         /* nothing happened */
                 }
 
+                if ( state.error == true ) {
+                        int ret_value = emergency_land( &state, &mode, &mode_pub, &state_sub );
+                        error_msg( ret_value, &transition_error );
+                }
+
                 int ret_cmd = poll(fd_cmd, 1, 250);
                 if (ret_cmd < 0) {
                         warnx("poll cmd error");
@@ -194,11 +199,6 @@ int quad_commander_thread_main(int argc, char *argv[]) {
 
                 } else {
                         /* nothing happened */
-                }
-
-                if ( state.error == true ) {
-                        int ret_value = emergency_land( &state, &mode, &mode_pub, &state_sub );
-                        error_msg( ret_value, &transition_error );
                 }
         }
 }
