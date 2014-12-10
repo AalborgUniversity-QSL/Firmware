@@ -102,7 +102,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		min_rotor_speed = 0.25,
 		pos_max = 0.1,
 		speed_up_time = 4,
-		min_hover_velocity = 0.001,
+		min_hover_velocity = 0.1,
 		thrust_filter = 0.01,
 		dt_pos = 0,
 		time = 0,
