@@ -90,20 +90,20 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	orb_advert_t quad_velocity_sp_pub = orb_advertise(ORB_ID(quad_velocity_sp), &velocity_sp);
 	orb_advert_t quad_mode_pub = orb_advertise(ORB_ID(quad_mode), &quad_mode);
 
-	float	Kp_thrust = 0.2,//0.00008,
+	float	Kp_thrust = 0.1,//0.00008,
 	        Kd_thrust = 0.11, /* Controller constants for thrust controller */
-	        Kp_pos = 0.06,
+	        Kp_pos = 0.2,
 	        Kd_pos = 0.01, /* Controller constants for position controller */
 	 	
-	 	hover_alt = 1,		// 1 meter altitude setpoint
+	 	hover_alt = 0.8,		// 1 meter altitude setpoint
 	 	landing_alt = 0.3,
 		hover_threashold = 0.2,
-		anti_gravity = 0.48,
+		anti_gravity = 0.49,
 		min_rotor_speed = 0.25,
-		pos_max = 0.1,
+		pos_max = 0.2,
 		speed_up_time = 4,
 		min_hover_velocity = 0.1,
-		thrust_filter = 0.01,
+		thrust_filter = 0.1,
 		dt_pos = 0,
 		time = 0,
 	        time_old = hrt_absolute_time() / (float)1000000;
@@ -157,7 +157,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				memset(&error, 0, sizeof(error));
 
 				initialised = true;
-				mavlink_log_info(mavlink_fd,"INITIALISED");
+				// mavlink_log_info(mavlink_fd,"INITIALISED");
 
 			} else {
 				time = hrt_absolute_time() / (float)1000000;
@@ -335,6 +335,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         // Position controller
                         error.x = sp.x - state.x;
                         error.y = sp.y - state.y;
+
+                        mavlink_log_info(mavlink_fd,"err_x: %.3f  err_y: %.3f", (double)error.x, (double)error.y);
 
                         error.dx = (error.x - error.x_old)/(float)dt_pos;
                         error.dy = (error.y - error.y_old)/(float)dt_pos;
