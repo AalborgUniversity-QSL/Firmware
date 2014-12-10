@@ -92,6 +92,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 	float	Kp_thrust = 0.1,//0.00008,
 	        Kd_thrust = 0.11, /* Controller constants for thrust controller */
+		Ki_thrust = 0.01,
 	        Kp_pos = 0.2,
 	        Kd_pos = 0.01, /* Controller constants for position controller */
 	 	
@@ -283,11 +284,13 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			// Thrust controller
 			error.thrust = sp.z - state.z;
 			error.thrust_der = (error.thrust - error.thrust_old)/(float)dt_pos;
+			error.thrust_int = error.thrust_int_old + error.thrust;
 
 			error.thrust_old = error.thrust;
+			error.thrust_int_old = error.thrust_int;
 			state.thrust_old = output.thrust;
 
-			output.thrust = Kp_thrust * error.thrust + Kd_thrust * error.thrust_der;
+			output.thrust = Kp_thrust * error.thrust + Kd_thrust * error.thrust_der + Ki_thrust * error.thrust_int;
 
 			// Thrust filter
                         if (output.thrust > state.thrust_old + thrust_filter){
@@ -330,7 +333,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         error.x = sp.x - state.x;
                         error.y = sp.y - state.y;
 
-                        mavlink_log_info(mavlink_fd,"err_x: %.3f  err_y: %.3f", (double)error.x, (double)error.y);
+                        // mavlink_log_info(mavlink_fd,"err_x: %.3f  err_y: %.3f", (double)error.x, (double)error.y);
 
                         error.dx = (error.x - error.x_old)/(float)dt_pos;
                         error.dy = (error.y - error.y_old)/(float)dt_pos;
