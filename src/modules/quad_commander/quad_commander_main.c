@@ -79,7 +79,7 @@ static int daemon_task;
 static bool low_battery = false;
 
 static int mavlink_fd;
-const int time_out = 10000;    /* Timeout value for state transition poll [ms] */
+const int time_out = 30000;    /* Timeout value for state transition poll [ms] */
 
 
 int quad_commander_thread_main(int argc, char *argv[]) {
