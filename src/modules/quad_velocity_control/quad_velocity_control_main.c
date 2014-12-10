@@ -92,9 +92,10 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 	float	Kp_thrust = 0.1,//0.00008,
 	        Kd_thrust = 0.11, /* Controller constants for thrust controller */
-		Ki_thrust = 0.01,
+		Ki_thrust = 0.002,
 	        Kp_pos = 0.2,
 	        Kd_pos = 0.01, /* Controller constants for position controller */
+                Ki_pos = 0.002
 	 	
 	 	hover_alt = 0.8,		// 1 meter altitude setpoint
 	 	landing_alt = 0.3,
@@ -284,10 +285,15 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			// Thrust controller
 			error.thrust = sp.z - state.z;
 			error.thrust_der = (error.thrust - error.thrust_old)/(float)dt_pos;
-			error.thrust_int = error.thrust_int_old + error.thrust;
+			error.thrust_int = error.thrust_int + error.thrust;
+
+                        // if ( error.thrust_int > error.thrust_int_max ) {
+                        //         error.thrust_int = error.thrust_int_max;
+                        // } else if ( error.thrust_int < -error.thrust_int_max ) {
+                        //         error.thrust_int = -error.thrust_int_max;
+                        // }
 
 			error.thrust_old = error.thrust;
-			error.thrust_int_old = error.thrust_int;
 			state.thrust_old = output.thrust;
 
 			output.thrust = Kp_thrust * error.thrust + Kd_thrust * error.thrust_der + Ki_thrust * error.thrust_int;
@@ -341,8 +347,12 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                         error.x_old = error.x;
                         error.y_old = error.y;
 
-                        output.pitch = - Kp_pos * error.x - Kd_pos * error.dx;
-                        output.roll  = - Kp_pos * error.y - Kd_pos * error.dy;
+                        error.x_int = error.x_int + error.x;
+                        error.y_int = error.y_int + error.y;
+
+
+                        output.pitch = - Kp_pos * error.x - Kd_pos * error.dx + Ki_pos * error.x_int;
+                        output.roll  = - Kp_pos * error.y - Kd_pos * error.dy + Ki_pos * error.y_int;
 
 
                         /* Limiting position controller output */

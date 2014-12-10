@@ -36,7 +36,6 @@ struct quad_alt_velocity {
 	float thrust;
 	float thrust_der;
 	float thrust_int;
-	float thrust_int_old;
 	float thrust_old;
 };
 
