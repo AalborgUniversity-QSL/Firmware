@@ -125,7 +125,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
 
         bool transition_error  = false;
 
-        while (!thread_should_exit) {
+        while ( !thread_should_exit ) {
                 bool v_status_updated;
                 orb_check(v_status_sub, &v_status_updated);
                 if ( v_status_updated )
@@ -222,12 +222,12 @@ int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t 
                 fd_state.events = POLLIN;
 
                 int ret_state = poll(&fd_state, 1, time_out);
-                if (ret_state < 0) {
+                if ( ret_state < 0 ) {
                         warnx("poll cmd error");
-                } else if (ret_state == 0) {
+                } else if ( ret_state == 0 ) {
                         return -1;
 
-                } else if (fd_state.revents & POLLIN) {
+                } else if ( fd_state.revents & POLLIN ) {
                         orb_copy(ORB_ID(quad_mode), *state_sub, state);
 
                         if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING )
@@ -256,14 +256,14 @@ int land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mod
                 fd_state.events = POLLIN;
 
                 int ret_state = poll(&fd_state, 1, time_out);
-                if (ret_state < 0) {
+                if ( ret_state < 0 ) {
                         warnx("poll cmd error");
-                } else if (ret_state == 0) {
+                } else if ( ret_state == 0 ) {
                         return -1;
 
-                } else if (fd_state.revents & POLLIN) {
+                } else if ( fd_state.revents & POLLIN ) {
                         orb_copy(ORB_ID(quad_mode), *state_sub, state);
-                        if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED ){
+                        if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED ) {
                                 return 0;
                                 *transition_error = false;
                         }
@@ -289,12 +289,12 @@ int emergency_land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_adv
         fd_state.events = POLLIN;
 
         int ret_state = poll(&fd_state, 1, time_out);
-        if (ret_state < 0) {
+        if ( ret_state < 0 ) {
                 warnx("poll cmd error");
-        } else if (ret_state == 0) {
+        } else if ( ret_state == 0 ) {
                 return -1;
 
-        } else if (fd_state.revents & POLLIN) {
+        } else if ( fd_state.revents & POLLIN ) {
                 orb_copy(ORB_ID(quad_mode), *state_sub, state);
                 if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_GROUNDED )
                         return 0;
@@ -319,12 +319,12 @@ int start_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert
                 fd_state.events = POLLIN;
 
                 int ret_state = poll(&fd_state, 1, time_out);
-                if (ret_state < 0) {
+                if ( ret_state < 0 ) {
                         warnx("poll cmd error");
-                } else if (ret_state == 0) {
+                } else if ( ret_state == 0 ) {
                         return -1;
 
-                } else if (fd_state.revents & POLLIN) {
+                } else if ( fd_state.revents & POLLIN ) {
                         orb_copy(ORB_ID(quad_mode), *state_sub, state);
                         if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_SWARMING )
                                 return 0;
@@ -352,12 +352,12 @@ int stop_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_
                 fd_state.events = POLLIN;
 
                 int ret_state = poll(&fd_state, 1, time_out);
-                if (ret_state < 0) {
+                if ( ret_state < 0 ) {
                         warnx("poll cmd error");
-                } else if (ret_state == 0) {
+                } else if ( ret_state == 0 ) {
                         return -1;
 
-                } else if (fd_state.revents & POLLIN) {
+                } else if ( fd_state.revents & POLLIN ) {
                         orb_copy(ORB_ID(quad_mode), *state_sub, state);
                         if ( state->current_state == (enum QUAD_STATE)QUAD_STATE_HOVERING )
                                 return 0;
