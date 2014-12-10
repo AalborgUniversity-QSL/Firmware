@@ -118,6 +118,10 @@ int quad_commander_thread_main(int argc, char *argv[]) {
         fd_cmd[0].fd = swarm_cmd_sub;
         fd_cmd[0].events = POLLIN;
 
+        struct pollfd fd_state;
+        fd_state.fd = state_sub;
+        fd_state.events = POLLIN;
+
         /* Initial state of the quadrotor; operations always start from the ground */
         state.current_state = QUAD_STATE_GROUNDED;
         mode.current_state = QUAD_STATE_GROUNDED;
@@ -143,6 +147,17 @@ int quad_commander_thread_main(int argc, char *argv[]) {
 
                 } else {
                         low_battery = false;
+                }
+
+                int ret_state = poll(&fd_state, 1, 1);
+                if ( ret_state < 0 ) {
+                        warnx("poll cmd error");
+                } else if ( ret_state == 0 ) {
+                        /* nothing happened */
+                } else if ( fd_state.revents & POLLIN ) {
+                        orb_copy(ORB_ID(quad_mode), state_sub, &state);
+                } else {
+                        /* nothing happened */
                 }
 
                 int ret_cmd = poll(fd_cmd, 1, 250);
