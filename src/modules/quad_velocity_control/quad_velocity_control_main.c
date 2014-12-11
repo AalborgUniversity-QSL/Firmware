@@ -117,6 +117,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	     shutdown_motors = true,
 	     quad_mode_updated = false,
 	     vehicle_status_updated = false,
+	     error = false,
 	     test = false;
 
 	struct pollfd fds[1];
@@ -130,6 +131,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
 			if (vehicle_status.arming_state == ARMING_STATE_ARMED){
+				error = true;
 				shutdown(&velocity_sp, &quad_velocity_sp_pub);
 				emergency(&quad_mode, &quad_mode_pub);
 				mavlink_log_critical(mavlink_fd,"[POT] Package loss limit reached");
@@ -190,7 +192,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			// Set initial values when received commands
 			if ( vehicle_status.arming_state == ARMING_STATE_ARMED ){
 
-				if ( quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF) {
+				if ( quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && !error) {
 
 					if ( !state_transition.takeoff ) {
 						sp.timestamp = time;
@@ -328,6 +330,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			} else {
 
 				initialised = false;
+				error = false;
 
 				if(velocity_sp.thrust != 0) {
 					velocity_sp.thrust = 0;
@@ -355,7 +358,7 @@ void emergency(struct quad_mode_s *mode, orb_advert_t *mode_pub){
 	orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
 
 	mode->current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
-	
+
 	orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
 
 }
