@@ -94,9 +94,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	float	Kp_thrust = 0.1,//0.00008,
 	        Kd_thrust = 0.11, /* Controller constants for thrust controller */
 		Ki_thrust = 0.002,
-	        Kp_pos = 0.2,
+	        Kp_pos = 0.4,
 	        Kd_pos = 0.01, /* Controller constants for position controller */
-                Ki_pos = 0.004,
+                Ki_pos = 0.01,
 	 	
 	 	hover_alt = 1,		// 1 meter altitude setpoint
 	 	landing_alt = 0.3,
@@ -106,7 +106,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		pos_max = 0.1,
 		speed_up_time = 4,
 		min_hover_velocity = 0.1,
-		thrust_filter = 0.005,
+		thrust_filter = 0.008,
 		dt_pos = 0,
 		time = 0,
 	        time_old = hrt_absolute_time() / (float)1000000;
@@ -354,7 +354,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			}
 		}
 	}
-	return 0;
 }
 
 void emergency(struct quad_mode_s *mode, orb_advert_t *mode_pub){
