@@ -117,7 +117,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	     shutdown_motors = true,
 	     quad_mode_updated = false,
 	     vehicle_status_updated = false,
-	     error = false,
+	     system_error = false,
 	     test = false;
 
 	struct pollfd fds[1];
@@ -131,7 +131,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
 			if (vehicle_status.arming_state == ARMING_STATE_ARMED){
-				error = true;
+				system_error = true;
 				shutdown(&velocity_sp, &quad_velocity_sp_pub);
 				emergency(&quad_mode, &quad_mode_pub);
 				mavlink_log_critical(mavlink_fd,"[POT] Package loss limit reached");
@@ -190,7 +190,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			state.dz = (state.z - state.z_old) / (float)dt_pos;
 
 			// Set initial values when received commands
-			if ( vehicle_status.arming_state == ARMING_STATE_ARMED  && !error ){
+			if ( vehicle_status.arming_state == ARMING_STATE_ARMED && !system_error ){
 
 				if ( quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF) {
 
@@ -330,7 +330,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			} else {
 
 				initialised = false;
-				error = false;
+				system_error = false;
 
 				if(velocity_sp.thrust != 0) {
 					velocity_sp.thrust = 0;
