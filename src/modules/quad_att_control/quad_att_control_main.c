@@ -125,9 +125,9 @@ int att_control_thread_main(int argc, char *argv[]) {
                         abs_yaw = fabs(v_att.yaw);
                         v_att.yaw = (float)-1 * ((PI - abs_yaw) * (v_att.yaw / abs_yaw)); /* Correct the yaw angle to be about zero */
 
-                        pd_set_desired(&roll, 0);//sp.roll);
-                        pd_set_desired(&pitch, 0);//sp.pitch);
-                        pd_set_desired(&yaw, 0);//sp.yaw);
+                        pd_set_desired(&roll, sp.roll);
+                        pd_set_desired(&pitch, sp.pitch);
+                        pd_set_desired(&yaw, sp.yaw);
 
                         time = (hrt_absolute_time() / (float)1000000);
                         dt = time - time_old;
@@ -151,7 +151,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         if ( (float)fabs(out.yaw) > yaw_max )
                                 out.yaw = yaw_max * (out.yaw / (float)fabs(out.yaw));
 
-                        out.thrust = 0.48;//sp.thrust; /* Thrust controller resides in velocity controller */
+                        out.thrust = sp.thrust; /* Thrust controller resides in velocity controller */
 
                         actuators.control[0] = (float)out.roll;
                         actuators.control[1] = (float)out.pitch;
