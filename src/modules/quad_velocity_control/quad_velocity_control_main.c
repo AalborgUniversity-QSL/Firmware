@@ -190,9 +190,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			state.dz = (state.z - state.z_old) / (float)dt_pos;
 
 			// Set initial values when received commands
-			if ( vehicle_status.arming_state == ARMING_STATE_ARMED ){
+			if ( vehicle_status.arming_state == ARMING_STATE_ARMED  && !error ){
 
-				if ( quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF && !error) {
+				if ( quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF) {
 
 					if ( !state_transition.takeoff ) {
 						sp.timestamp = time;
