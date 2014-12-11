@@ -148,7 +148,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				orb_copy(ORB_ID(vehicle_status), vehicle_status_sub, &vehicle_status);
 			}
 
-			if (!initialised){
+			if (!initialised && vehicle_status.arming_state == ARMING_STATE_ARMED){
 				time = hrt_absolute_time() / (float)1000000;
 				dt_pos = time - time_old;
 				time_old = time;
@@ -157,9 +157,12 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				memset(&state_transition, false, sizeof(state_transition));
 				memset(&sp, 0, sizeof(sp));
 				memset(&error, 0, sizeof(error));
+				memset(&velocity_sp, 0, sizeof(velocity_sp));
+
+				orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 
 				initialised = true;
-				// mavlink_log_info(mavlink_fd,"INITIALISED");
+				mavlink_log_info(mavlink_fd,"INITIALISED");
 
 			} else {
 				time = hrt_absolute_time() / (float)1000000;
@@ -247,12 +250,82 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM){
 
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_PENDING){
-						// mavlink_log_info(mavlink_fd,"[POT] PENDING");
+					// mavlink_log_info(mavlink_fd,"[POT] PENDING");
 				}
+
+				// Thrust controller
+				error.thrust = sp.z - state.z;
+				error.thrust_der = (error.thrust - error.thrust_old) / (float)dt_pos;
+				error.thrust_int = error.thrust_int + error.thrust;
+
+				error.thrust_old = error.thrust;
+				state.thrust_old = output.thrust;
+
+				output.thrust = Kp_thrust * error.thrust + Kd_thrust * error.thrust_der + Ki_thrust * error.thrust_int;
+
+				// Thrust filter
+	                        if (output.thrust > state.thrust_old + thrust_filter){
+	                                output.thrust = state.thrust_old + thrust_filter;
+	                        } else if (output.thrust < state.thrust_old - thrust_filter) {
+	                                output.thrust = state.thrust_old - thrust_filter;
+	                        }
+
+
+	                        // Position controller
+	                        error.x = sp.x - state.x;
+	                        error.y = sp.y - state.y;
+
+	                        error.dx = (error.x - error.x_old) / (float)dt_pos;
+	                        error.dy = (error.y - error.y_old) / (float)dt_pos;
+
+	                        error.x_old = error.x;
+	                        error.y_old = error.y;
+
+	                        error.x_int = error.x_int + error.x;
+	                        error.y_int = error.y_int + error.y;
+
+	                        output.pitch = - Kp_pos * error.x - Kd_pos * error.dx - Ki_pos * error.x_int;
+	                        output.roll  = - Kp_pos * error.y - Kd_pos * error.dy - Ki_pos * error.y_int;
+
+
+	                        /* Limiting position controller output */
+	                        if ((float)fabs(output.roll) > pos_max)
+	                                output.roll = pos_max * (output.roll / (float)fabs(output.roll));
+
+	                        if ((float)fabs(output.pitch) > pos_max)
+	                                output.pitch = pos_max * output.pitch / (float)fabs(output.pitch);
+
+	                        velocity_sp.roll = output.roll;
+	                        velocity_sp.pitch = output.pitch;
+
+	                        if ((sp.timestamp + (float)speed_up_time) > time){
+					velocity_sp.thrust = min_rotor_speed;
+					error.thrust_int = 0;
+					error.x_int = 0;
+					error.y_int = 0;
+				} else {
+					velocity_sp.thrust = output.thrust + anti_gravity;
+				}
+
+	                        // Thrust limiter
+	                        if ( velocity_sp.thrust > (float)1 ) {
+	                                velocity_sp.thrust = (float)1;
+	                        } else if ( velocity_sp.thrust < 0 ) {
+	                                velocity_sp.thrust = 0;
+	                        }
+	                        
+	                        if(test || shutdown_motors) {
+	                        	velocity_sp.thrust = 0;
+	                        	velocity_sp.roll = 0;
+	                        	velocity_sp.pitch = 0;
+	         	                velocity_sp.yaw = 0;
+	                        }
+
+	                        // Publish the new roll, pitch, yaw and thrust set points
+	                        orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 
 			} else {
 
-				shutdown_motors = true;
 				initialised = false;
 
 				if ( quad_mode.current_state != (enum QUAD_STATE)QUAD_STATE_GROUNDED ) {
@@ -262,107 +335,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 				}
 			}
-
-
-			// Thrust controller
-			error.thrust = sp.z - state.z;
-			error.thrust_der = (error.thrust - error.thrust_old)/(float)dt_pos;
-			error.thrust_int = error.thrust_int + error.thrust;
-
-                        // if ( error.thrust_int > error.thrust_int_max ) {
-                        //         error.thrust_int = error.thrust_int_max;
-                        // } else if ( error.thrust_int < -error.thrust_int_max ) {
-                        //         error.thrust_int = -error.thrust_int_max;
-                        // }
-
-			error.thrust_old = error.thrust;
-			state.thrust_old = output.thrust;
-
-			output.thrust = Kp_thrust * error.thrust + Kd_thrust * error.thrust_der + Ki_thrust * error.thrust_int;
-
-			// Thrust filter
-                        if (output.thrust > state.thrust_old + thrust_filter){
-                                output.thrust = state.thrust_old + thrust_filter;
-                        } else if (output.thrust < state.thrust_old - thrust_filter) {
-                                output.thrust = state.thrust_old - thrust_filter;
-                        }
-
-
-			
-
-
-                        // // Velocity controller
-                        // error.dx = sp.dx - state.dx;
-                        // error.dy = sp.dx - state.dy;
-
-                        // // Derivative part
-                        // error.ddx = (error.dx - error.dx_old)/(float)dt_pos;
-                        // error.ddy = (error.dy - error.dy_old)/(float)dt_pos;
-
-                        // error.dx_old = error.dx;
-                        // error.dy_old = error.dy;
-
-                        // // PD velocity controller
-                        // output.pitch = - (float)Kp_pos * error.dx - (float)Kd_pos * error.ddx;
-                        // output.roll  = - (float)Kp_pos * error.dy - (float)Kd_pos * error.ddy;
-
-                        // Position controller
-                        error.x = sp.x - state.x;
-                        error.y = sp.y - state.y;
-
-                        // mavlink_log_info(mavlink_fd,"err_x: %.3f  err_y: %.3f", (double)error.x, (double)error.y);
-
-                        error.dx = (error.x - error.x_old)/(float)dt_pos;
-                        error.dy = (error.y - error.y_old)/(float)dt_pos;
-
-                        error.x_old = error.x;
-                        error.y_old = error.y;
-
-                        error.x_int = error.x_int + error.x;
-                        error.y_int = error.y_int + error.y;
-
-
-                        output.pitch = - Kp_pos * error.x - Kd_pos * error.dx - Ki_pos * error.x_int;
-                        output.roll  = - Kp_pos * error.y - Kd_pos * error.dy - Ki_pos * error.y_int;
-
-
-                        /* Limiting position controller output */
-                        if ((float)fabs(output.roll) > pos_max)
-                                output.roll = pos_max * (output.roll / (float)fabs(output.roll));
-
-                        if ((float)fabs(output.pitch) > pos_max)
-                                output.pitch = pos_max * output.pitch / (float)fabs(output.pitch);
-
-                        velocity_sp.roll = output.roll;
-                        velocity_sp.pitch = output.pitch;
-
-                        if ((sp.timestamp + (float)speed_up_time) > time){
-				velocity_sp.thrust = min_rotor_speed;
-				error.thrust_int = 0;
-				error.x_int = 0;
-				error.y_int = 0;
-			} else {
-				velocity_sp.thrust = output.thrust + anti_gravity;
-			}
-
-                        // Thrust limiter
-                        if ( velocity_sp.thrust > (float)1 ) {
-                                velocity_sp.thrust = (float)1;
-                        } else if ( velocity_sp.thrust < 0 ) {
-                                velocity_sp.thrust = 0;
-                        }
-
-                        // mavlink_log_info(mavlink_fd,"th: %.3f r: %.3f p: %.3f yaw: %.3f ",(double)velocity_sp.thrust,(double)velocity_sp.roll,(double)velocity_sp.pitch,(double)velocity_sp.yaw);
-                        
-                        if(test || shutdown_motors) {
-                        	velocity_sp.thrust = 0;
-                        	velocity_sp.roll = 0;
-                        	velocity_sp.pitch = 0;
-         	                velocity_sp.yaw = 0;
-                        }
-
-                        // Publish the new roll, pitch, yaw and thrust set points
-                        orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 		}
 	}
 	return 0;
