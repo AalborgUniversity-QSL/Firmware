@@ -94,19 +94,19 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	float	Kp_thrust = 0.1,//0.00008,
 	        Kd_thrust = 0.11, /* Controller constants for thrust controller */
 		Ki_thrust = 0.002,
-	        Kp_pos = 0.2,
+	        Kp_pos = 0.4,
 	        Kd_pos = 0.01, /* Controller constants for position controller */
-                Ki_pos = 0.001,
+                Ki_pos = 0.004,
 	 	
 	 	hover_alt = 1,		// 1 meter altitude setpoint
-	 	landing_alt = 0.2,
+	 	landing_alt = 0.3,
 		hover_threashold = 0.2,
 		anti_gravity = 0.49,
-		min_rotor_speed = 0.3,
+		min_rotor_speed = 0.35,
 		pos_max = 0.2,
 		speed_up_time = 4,
 		min_hover_velocity = 0.1,
-		thrust_filter = 0.1,
+		thrust_filter = 0.005,
 		dt_pos = 0,
 		time = 0,
 	        time_old = hrt_absolute_time() / (float)1000000;
