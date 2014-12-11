@@ -44,7 +44,8 @@ static void usage(const char *reason);
 
 // Prototypes
 // float velocity_controller()
-void emergency(struct quad_velocity_sp_s *sp, struct quad_mode_s *mode, orb_advert_t *mode_pub);
+void emergency( struct quad_mode_s *mode, orb_advert_t *mode_pub );
+void shutdown( struct quad_velocity_sp_s *sp, orb_advert_t *quad_velocity_sp_pub );
 
 
 static bool thread_running = false;
@@ -129,8 +130,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
 			if (vehicle_status.arming_state == ARMING_STATE_ARMED){
-				emergency(&velocity_sp, &quad_mode, &quad_mode_pub);
-				orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
+				shutdown(&velocity_sp, &quad_velocity_sp_pub);
 				mavlink_log_critical(mavlink_fd,"[POT] Package loss limit reached");
 			}
 
@@ -349,18 +349,20 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	return 0;
 }
 
-void emergency(struct quad_velocity_sp_s *sp, struct quad_mode_s *mode, orb_advert_t *mode_pub){
+void emergency(struct quad_mode_s *mode, orb_advert_t *mode_pub){
+	mode->error = true;
+	mode->current_state = (enum QUAD_STATE)QUAD_STATE_EMERGENCY;
+
+	orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
+}
+
+void shutdown( struct quad_velocity_sp_s *sp, orb_advert_t *velocity_sp_pub ){
 	sp->thrust = 0;
 	sp->roll = 0;
 	sp->pitch = 0;
 	sp->yaw = 0;
 
-	mode->error = true;
-	mode->current_state = (enum QUAD_STATE)QUAD_STATE_EMERGENCY;
-
-	orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
-
-
+	orb_publish(ORB_ID(quad_velocity_sp), *velocity_sp_pub, sp);
 }
 
 
