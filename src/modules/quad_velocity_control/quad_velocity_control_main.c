@@ -93,9 +93,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	float	Kp_thrust = 0.1,//0.00008,
 	        Kd_thrust = 0.11, /* Controller constants for thrust controller */
 		Ki_thrust = 0.002,
-	        Kp_pos = 0,/*0.2,*/
-	        Kd_pos = 0, /*0.01,*/ /* Controller constants for position controller */
-                Ki_pos = 0, /*0.001,*/
+	        Kp_pos = 0.2,
+	        Kd_pos = 0.01, /* Controller constants for position controller */
+                Ki_pos = 0.001,
 	 	
 	 	hover_alt = 1,		// 1 meter altitude setpoint
 	 	landing_alt = 0.3,
@@ -129,8 +129,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
 			if (vehicle_status.arming_state == ARMING_STATE_ARMED){
-				// emergency(&velocity_sp, &quad_mode, &quad_mode_pub);
-				// orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
+				emergency(&velocity_sp, &quad_mode, &quad_mode_pub);
+				orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 				mavlink_log_critical(mavlink_fd,"[POT] Package loss limit reached");
 			}
 
@@ -182,9 +182,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			state.y = quad_pos.y[system_id - 1] / (float)1000;
 			state.z = quad_pos.z[system_id - 1] / (float)1000;
 
-			state.dx = (state.x - state.x_old)/dt_pos;
-			state.dy = (state.y - state.y_old)/dt_pos;
-			state.dz = (state.z - state.z_old)/dt_pos;
+			state.dx = (state.x - state.x_old) / (float)dt_pos;
+			state.dy = (state.y - state.y_old) / (float)dt_pos;
+			state.dz = (state.z - state.z_old) / (float)dt_pos;
 
 			// Set initial values when received commands
 			if ( vehicle_status.arming_state == ARMING_STATE_ARMED ){
@@ -327,6 +327,15 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			} else {
 
 				initialised = false;
+
+				if(velocity_sp.thrust != 0) {
+					velocity_sp.thrust = 0;
+		                        velocity_sp.roll = 0;
+		                        velocity_sp.pitch = 0;
+		         	        velocity_sp.yaw = 0;
+
+		         	        orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
+				}
 
 				if ( quad_mode.current_state != (enum QUAD_STATE)QUAD_STATE_GROUNDED ) {
 					quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
