@@ -130,12 +130,14 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		if (pret < 0) {
 			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
-			if (vehicle_status.arming_state == ARMING_STATE_ARMED){
+			if (vehicle_status.arming_state == ARMING_STATE_ARMED && !system_error){
 				system_error = true;
 				shutdown(&velocity_sp, &quad_velocity_sp_pub);
 				emergency(&quad_mode, &quad_mode_pub);
 
-				quad_mode.cmd = 0;
+				quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
+				orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+
 				mavlink_log_critical(mavlink_fd,"[POT] Package loss limit reached");
 			}
 
