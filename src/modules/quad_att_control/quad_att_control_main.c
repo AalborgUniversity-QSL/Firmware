@@ -153,10 +153,10 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                         out.thrust = sp.thrust; /* Thrust controller resides in velocity controller */
 
-                        actuators.control[0] = 0; //(float)out.roll;
-                        actuators.control[1] = 0; //(float)out.pitch;
-                        actuators.control[2] = 0; //(float)out.yaw;
-                        actuators.control[3] = 0.48; //(float)out.thrust;
+                        actuators.control[0] = (float)out.roll;
+                        actuators.control[1] = (float)out.pitch;
+                        actuators.control[2] = (float)out.yaw;
+                        actuators.control[3] = (float)out.thrust;
 
                         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
 
