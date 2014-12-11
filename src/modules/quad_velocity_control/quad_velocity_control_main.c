@@ -99,7 +99,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                 Ki_pos = 0.001,
 	 	
 	 	hover_alt = 0.8,		// 1 meter altitude setpoint
-	 	landing_alt = 0.3,
+	 	landing_alt = 0.2,
 		hover_threashold = 0.2,
 		anti_gravity = 0.49,
 		min_rotor_speed = 0.3,
@@ -134,6 +134,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				system_error = true;
 				shutdown(&velocity_sp, &quad_velocity_sp_pub);
 				emergency(&quad_mode, &quad_mode_pub);
+
+				quad_mode.cmd = 0;
 				mavlink_log_critical(mavlink_fd,"[POT] Package loss limit reached");
 			}
 
@@ -360,6 +362,8 @@ void emergency(struct quad_mode_s *mode, orb_advert_t *mode_pub){
 	mode->current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
 
 	orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
+
+
 
 }
 
