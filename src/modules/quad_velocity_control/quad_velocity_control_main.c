@@ -352,9 +352,12 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 void emergency(struct quad_mode_s *mode, orb_advert_t *mode_pub){
 	mode->error = true;
-	mode->current_state = (enum QUAD_STATE)QUAD_STATE_EMERGENCY;
-
 	orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
+
+	mode->current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
+	
+	orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
+
 }
 
 void shutdown( struct quad_velocity_sp_s *sp, orb_advert_t *velocity_sp_pub ){
