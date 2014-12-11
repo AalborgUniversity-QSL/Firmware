@@ -161,7 +161,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
 
                 } else {
-                        /* nothint happened */
+                        /* nothing happened */
                 }
         }
 }

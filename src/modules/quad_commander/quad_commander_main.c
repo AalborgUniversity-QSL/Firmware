@@ -66,7 +66,7 @@ void error_msg( int error, bool *transition_error );
  */
 int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
 int land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub, bool *transition_error );
-int emergency_land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
+int emergency_land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub, struct quad_swarm_cmd_s *swarm_cmd );
 int start_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
 int stop_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
 
@@ -143,7 +143,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
 
                         low_battery = true;
                         mavlink_log_critical(mavlink_fd, "[quad_commmander] Battery lavel low!");
-                        emergency_land( &state, &mode, &mode_pub, &state_sub );
+                        emergency_land( &state, &mode, &mode_pub, &state_sub, &swarm_cmd );
 
                 } else {
                         low_battery = false;
@@ -161,7 +161,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                 }
 
                 if ( state.error == true ) {
-                        int ret_value = emergency_land( &state, &mode, &mode_pub, &state_sub );
+                        int ret_value = emergency_land( &state, &mode, &mode_pub, &state_sub, &swarm_cmd );
                         error_msg( ret_value, &transition_error );
                 }
 
@@ -294,7 +294,7 @@ int land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mod
         }
 }
 
-int emergency_land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub ) {
+int emergency_land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub, struct quad_swarm_cmd_s *swarm_cmd ) {
         mode->cmd = (enum QUAD_CMD)QUAD_CMD_LAND;
         orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
         orb_copy(ORB_ID(quad_mode), *state_sub, state);
@@ -321,6 +321,7 @@ int emergency_land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_adv
 
         }
         state->error = false;
+        swarm_cmd->cmd_id = 0;
 }
 
 int start_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub ) {
