@@ -166,6 +166,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				memset(&sp, 0, sizeof(sp));
 				memset(&error, 0, sizeof(error));
 				memset(&velocity_sp, 0, sizeof(velocity_sp));
+				memset(&quad_mode, 0, sizeof(quad_mode));
 
 				orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 
@@ -318,7 +319,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					error.x_int = 0;
 					error.y_int = 0;
 				} else {
+					// Set thrust output
 					velocity_sp.thrust = output.thrust + anti_gravity;
+
 				}
 
 	                        // Thrust limiter
@@ -352,7 +355,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		         	        orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 				}
 
-				if ( quad_mode.current_state != (enum QUAD_STATE)QUAD_STATE_GROUNDED ) {
+				if ( quad_mode.current_state != (enum QUAD_STATE)QUAD_STATE_GROUNDED || quad_mode.cmd != (enum QUAD_CMD)QUAD_CMD_PENDING ) {
 					quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
 					quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
 
