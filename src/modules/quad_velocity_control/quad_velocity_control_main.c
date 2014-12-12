@@ -108,6 +108,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		speed_up_time = 4,
 		min_hover_velocity = 0.1,
 		thrust_filter = 0.03,
+                sp_dx = 0,
+                sp_dy = 0,
 		dt_pos = 0,
 		time = 0,
 	        time_old = hrt_absolute_time() / (float)1000000;
@@ -256,7 +258,14 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					}
 
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM){
-				
+        				if(state.x < (float)0.3){
+                                                sp_dx = (float)0.01;
+                                                sp.x = sp.x + (sp_dx * (float)dt_pos);
+                                        }
+                                        else {
+                                                sp_dx = (float)0;
+                                        }
+
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM){
 
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_PENDING){
@@ -285,8 +294,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	                        error.x = sp.x - state.x;
 	                        error.y = sp.y - state.y;
 
-	                        error.dx = (error.x - error.x_old) / (float)dt_pos;
-	                        error.dy = (error.y - error.y_old) / (float)dt_pos;
+	                        error.dx = sp_dx - (error.x - error.x_old) / (float)dt_pos;
+	                        error.dy = sp_dy - (error.y - error.y_old) / (float)dt_pos;
 
 	                        error.x_old = error.x;
 	                        error.y_old = error.y;
