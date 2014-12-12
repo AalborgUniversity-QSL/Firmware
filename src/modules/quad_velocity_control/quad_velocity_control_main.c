@@ -372,7 +372,7 @@ void emergency(struct quad_mode_s *mode, orb_advert_t *mode_pub){
 	mode->error = true;
 	orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
 
-	mode->current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
+	mode->current_state = QUAD_STATE_GROUNDED;
 
 	orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
 }
