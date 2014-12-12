@@ -140,6 +140,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                         mode.cmd = QUAD_CMD_PENDING;
                         mode.current_state = QUAD_STATE_GROUNDED;
                         orb_publish(ORB_ID(quad_mode), mode_pub, &mode);
+                        swarm_cmd.cmd_id = (float)0;
                 }
 
                 if ( (v_status.battery_warning == VEHICLE_BATTERY_WARNING_LOW) &&
