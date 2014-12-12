@@ -135,8 +135,12 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                 if ( v_status_updated )
                         orb_copy(ORB_ID(vehicle_status), v_status_sub, &v_status);
 
-                if ( v_status.arming_state == ARMING_STATE_STANDBY )
-                        state.current_state == QUAD_STATE_GROUNDED;
+                if ( v_status.arming_state == ARMING_STATE_STANDBY ) {
+                        state.current_state = QUAD_STATE_GROUNDED;
+                        mode.cmd = QUAD_CMD_PENDING;
+                        mode.current_state = QUAD_STATE_GROUNDED;
+                        orb_publish(ORB_ID(quad_mode), mode_pub, &mode);
+                }
 
                 if ( (v_status.battery_warning == VEHICLE_BATTERY_WARNING_LOW) &&
                      (state.current_state != QUAD_STATE_GROUNDED) ) {
