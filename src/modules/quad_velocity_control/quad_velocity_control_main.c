@@ -98,7 +98,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	        Kd_pos = 0.001, /* Controller constants for position controller */
                 Ki_pos = 0.01,
 	 	
-	 	hover_alt = 1,		// 1 meter altitude setpoint
+	 	hover_alt = 0.8,		// 1 meter altitude setpoint
 	 	landing_alt = 0.3,
 		hover_threashold = 0.2,
 		anti_gravity = 0.46,
@@ -256,11 +256,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					}
 
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM){
-        				if(state.y < (float)0.3){
+        				if( state.y < (float)0.5 ){
                                                 sp.dy = (float)0.01;
                                                 sp.y = sp.y + (sp.dy * (float)dt_pos);
-                                        }
-                                        else {
+                                        
+                                        } else {
                                                 sp.dy = (float)0;
                                         }
 
