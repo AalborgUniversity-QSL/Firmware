@@ -260,7 +260,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
         				if(!state_transition.start_swarm){
         					state_transition.start_swarm = true;
                                         	quad_mode.current_state = QUAD_STATE_SWARMING;
-        					mavlink_log_info(mavlink_fd,"INITIALISED SWARMING");
+                                        	orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+        					mavlink_log_info(mavlink_fd,"[POT] INITIALISED SWARMING");
 
         				}
 
@@ -275,9 +276,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                                                 orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
                                         }
                                         
-
-
-
 
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM){
 					if ( !state_transition.stop_swarm ) {
