@@ -94,7 +94,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	float	Kp_thrust = 0.1,//0.00008,
 	        Kd_thrust = 0.11, /* Controller constants for thrust controller */
 		Ki_thrust = 0.002,
-	        Kp_pos = 0.4,
+	        Kp_pos = 0.35,
 	        Kd_pos = 0.001, /* Controller constants for position controller */
                 Ki_pos = 0.01,
 	 	
