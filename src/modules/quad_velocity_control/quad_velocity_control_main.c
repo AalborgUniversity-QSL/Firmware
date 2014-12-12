@@ -133,6 +133,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		} else if (pret == 0){
 			if (vehicle_status.arming_state == ARMING_STATE_ARMED && !system_error){
 				system_error = true;
+				initialised = false;
 				shutdown(&velocity_sp, &quad_velocity_sp_pub);
 				emergency(&quad_mode, &quad_mode_pub);
 
@@ -299,6 +300,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	                        if ( ((float)fabs(error.y_int) * (float)Ki_pos) > (float)int_max )
 	                                error.y_int = int_max * error.y_int / ((float)fabs(error.y_int) * Ki_pos);
 
+
 	                        output.pitch = - Kp_pos * error.x - Kd_pos * error.dx - Ki_pos * error.x_int;
 	                        output.roll  = - Kp_pos * error.y - Kd_pos * error.dy - Ki_pos * error.y_int;
 
@@ -341,7 +343,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	                        // Publish the new roll, pitch, yaw and thrust set points
 	                        orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 
-			} else {
+			} else if (vehicle_status.arming_state == ARMING_STATE_STANDBY) {
 
 				initialised = false;
 				system_error = false;
@@ -373,9 +375,6 @@ void emergency(struct quad_mode_s *mode, orb_advert_t *mode_pub){
 	mode->current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
 
 	orb_publish(ORB_ID(quad_mode), *mode_pub, mode);
-
-
-
 }
 
 void shutdown( struct quad_velocity_sp_s *sp, orb_advert_t *velocity_sp_pub ){
