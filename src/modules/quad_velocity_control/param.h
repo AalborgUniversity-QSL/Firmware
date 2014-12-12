@@ -11,8 +11,8 @@ struct init_pos_s {
 struct state_transition_s {
 	bool takeoff;
 	bool land;
-	bool start;
-	bool stop;
+	bool start_swarm;
+	bool stop_swarm;
 	bool in_air;
 };
 

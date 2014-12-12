@@ -256,15 +256,51 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					}
 
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM){
-        				if( state.y < (float)0.5 ){
-                                                sp.dy = (float)0.01;
+        				
+        				if(!state_transition.start_swarm){
+        					state_transition.start_swarm = true;
+                                        	quad_mode.current_state = QUAD_STATE_SWARMING;
+        					mavlink_log_info(mavlink_fd,"INITIALISED SWARMING");
+
+        				}
+
+        				if( state.y < (float)0.8 ){
+                                                sp.dy = (float)0.1;
                                                 sp.y = sp.y + (sp.dy * (float)dt_pos);
                                         
                                         } else {
                                                 sp.dy = (float)0;
+                                                state_transition.start_swarm = false;
+                                                quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
+                                                orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
                                         }
+                                        
+
+
+
 
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM){
+					if ( !state_transition.stop_swarm ) {
+						sp.x = state.x;
+						sp.y = state.y;
+
+						state_transition.stop_swarm = true;
+						mavlink_log_info(mavlink_fd,"[POT] STOPPING SWARM");
+					
+					} else {
+						// STopping sequence
+						if (((float)fabs(state.dx) < min_hover_velocity) && ((float)fabs(state.dy) < min_hover_velocity) ){
+							
+							// Change state to hovering state
+							state_transition.stop_swarm = false;
+							quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
+							quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_HOVERING;
+
+							orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+							mavlink_log_info(mavlink_fd,"[POT] HOVERING");
+						}
+					}
+
 
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_PENDING){
 					// mavlink_log_info(mavlink_fd,"[POT] PENDING");
