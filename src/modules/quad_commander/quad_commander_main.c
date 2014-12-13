@@ -167,6 +167,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
 
                 if ( state.error == true ) {
                         int ret_value = emergency_land( &state, &mode, &mode_pub, &state_sub, &swarm_cmd );
+                	mavlink_log_info(mavlink_fd, "[quad_commmander] emergency landing");
                         error_msg( ret_value, &transition_error );
                 }
 

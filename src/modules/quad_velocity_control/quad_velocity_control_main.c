@@ -112,7 +112,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		time = 0,
 	        time_old = hrt_absolute_time() / (float)1000000;
 
-	const int system_id = 1;
+	const int system_id = 1,
+		  error_count = 0;
 
 	bool initialised = false,
 	     shutdown_motors = true,
@@ -132,15 +133,18 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
 			if (vehicle_status.arming_state == ARMING_STATE_ARMED && !system_error){
-				system_error = true;
-				initialised = false;
-				shutdown(&velocity_sp, &quad_velocity_sp_pub);
-				emergency(&quad_mode, &quad_mode_pub);
+				if (error_count > 5){
+					system_error = true;
+					initialised = false;
+					shutdown(&velocity_sp, &quad_velocity_sp_pub);
+					emergency(&quad_mode, &quad_mode_pub);
 
-				quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
-				orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+					quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
+					orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 
-				mavlink_log_critical(mavlink_fd,"[POT] Package loss limit reached");
+					mavlink_log_critical(mavlink_fd,"[POT] Package loss limit reached");
+				}
+				error_count++;	
 			}
 
 		} else if (fds[0].revents & POLLIN) {
@@ -276,7 +280,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                                                 orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
                                         }
                                         
-
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM){
 					if ( !state_transition.stop_swarm ) {
 						sp.x = state.x;
@@ -298,7 +301,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 							mavlink_log_info(mavlink_fd,"[POT] HOVERING");
 						}
 					}
-
 
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_PENDING){
 					// mavlink_log_info(mavlink_fd,"[POT] PENDING");
@@ -388,6 +390,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 				initialised = false;
 				system_error = false;
+				error_count = 0;
 
 				if(velocity_sp.thrust != 0) {
 					velocity_sp.thrust = 0;
