@@ -110,10 +110,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		thrust_filter = 0.03,
 		dt_pos = 0,
 		time = 0,
+		print_timer = 0,
 	        time_old = hrt_absolute_time() / (float)1000000;
 
-	const int system_id = 1,
-		  error_count = 0;
+	const int system_id = 1;
+	int error_count = 0;
 
 	bool initialised = false,
 	     shutdown_motors = true,
@@ -133,9 +134,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 			mavlink_log_info(mavlink_fd,"[POT] Poll error");
 		} else if (pret == 0){
 			if (vehicle_status.arming_state == ARMING_STATE_ARMED && !system_error){
-				if (error_count > 5){
+				if (error_count >= 5){
 					system_error = true;
 					initialised = false;
+					error_count = 0;
+
 					shutdown(&velocity_sp, &quad_velocity_sp_pub);
 					emergency(&quad_mode, &quad_mode_pub);
 
@@ -165,6 +168,10 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				time = hrt_absolute_time() / (float)1000000;
 				dt_pos = time - time_old;
 				time_old = time;
+				error_count = 0;
+
+				orb_copy(ORB_ID(quad_mode), quad_mode_sub, &quad_mode);
+				orb_copy(ORB_ID(vehicle_status), vehicle_status_sub, &vehicle_status);
 
 				memset(&output, 0, sizeof(output));
 				memset(&state_transition, false, sizeof(state_transition));
@@ -173,10 +180,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				memset(&velocity_sp, 0, sizeof(velocity_sp));
 				memset(&quad_mode, 0, sizeof(quad_mode));
 
+				// orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 				orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 
 				initialised = true;
-				mavlink_log_info(mavlink_fd,"INITIALISED");
+				mavlink_log_info(mavlink_fd,"[POS] INITIALISED");
 
 			} else {
 				time = hrt_absolute_time() / (float)1000000;
@@ -202,6 +210,13 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
 			// Set initial values when received commands
 			if ( vehicle_status.arming_state == ARMING_STATE_ARMED && !system_error ){
+
+				print_timer = print_timer + dt_pos;
+
+				if(print_timer > 5){
+					mavlink_log_info(mavlink_fd,"error_count: %d",(int)error_count);
+					print_timer = 0;
+				}
 
 				if ( quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF) {
 
@@ -243,7 +258,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					
 					} else {
 
-						if ((state.z > (sp.z - (float)hover_threashold)) && (state.z < (sp.z + (float)hover_threashold)) && ((float)fabs(state.dz) < min_hover_velocity)){
+						if (((state.z > (sp.z - (float)hover_threashold)) && (state.z < (sp.z + (float)hover_threashold)) && ((float)fabs(state.dz) < min_hover_velocity)) || quad_mode.current_state == QUAD_STATE_GROUNDED){
 							
 							// Change state to hovering state
 
