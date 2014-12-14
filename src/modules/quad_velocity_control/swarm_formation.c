@@ -20,8 +20,8 @@ velocity_t wall(float posx, float posy) {
 
 	float wall1x [6] = {-1.500, -1.500, -1.500, -1.500 , 0.800,  1.500};
 	float wall2x [6] = {-1.500, 1.500, -0.800, 1.500 , 1.500, 1.500};
-	float wall1y [6] = {-1.500, -1.500,   0.f,  1.500 , 0.f,   -1.500};
-	float wall2y [6] = {1.500, -1.500,     0.f,   1.500 , 0.f,   1.500};
+	float wall1y [6] = {-1.500, -1.500,   200.f,  1.500 , 0.f,   -1.500};
+	float wall2y [6] = {1.500, -1.500,     0.f,   1.500 , 200.f,   1.500};
 	velocity_t vel;
 	vel.v1 = (float)0;
 	vel.v2 = (float)0;
