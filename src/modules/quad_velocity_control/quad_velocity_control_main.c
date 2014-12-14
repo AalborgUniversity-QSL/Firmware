@@ -125,6 +125,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 	     system_error = false,
 	     test = false;
 
+        velocity_t q_vel_ref;
+        memset(&q_vel_ref, 0, sizeof(q_vel_ref));
+
 	struct pollfd fds[1];
 	fds[0].fd = quad_pos_sub;
 	fds[0].events = POLLIN;
@@ -283,19 +286,23 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                                         	quad_mode.current_state = QUAD_STATE_SWARMING;
                                         	orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
         					mavlink_log_info(mavlink_fd,"[POT] INITIALISED SWARMING");
-
         				}
 
-        				if( state.y < (float)0.8 ){
-                                                sp.dy = (float)0.1;
+                                        q_vel_ref = wall( state.x, state.y );
+
+                                        sp.dx = q_vel_ref.v1;
+                                        sp.dy = q_vel_ref.v2;
+
+        				if ( state.y < (float)0.8 ) {
+                                                sp.dy += (float)0.1;
                                                 sp.y = sp.y + (sp.dy * (float)dt_pos);
                                         
-                                        } else {
-                                                sp.dy = (float)0;
-                                                state_transition.start_swarm = false;
-                                                quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
-                                                orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
-                                        }
+                                        } /* else {
+                                         *         /\* sp.dy = (float)0; *\/
+                                         *         state_transition.start_swarm = false;
+                                         *         quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
+                                         *         orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+                                         * } */
                                         
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM){
 
