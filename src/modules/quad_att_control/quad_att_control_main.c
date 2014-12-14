@@ -8,17 +8,17 @@
  *
  */
 
-#include <nuttx/config.h>
+/* #include <nuttx/config.h> */
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <math.h>
+/* #include <stdlib.h> */
+/* #include <string.h>
+ * #include <unistd.h>
+ * #include <fcntl.h>
+ * #include <errno.h> */
+/* #include <math.h> */
 #include <poll.h>
-#include <time.h>
-#include <drivers/drv_hrt.h>
+/* #include <time.h> */
+/* #include <drivers/drv_hrt.h> */
 
 #include <mavlink/mavlink_log.h>
 
@@ -28,13 +28,12 @@
 #include <uORB/topics/quad_velocity_sp.h>
 #include <uORB/topics/vehicle_attitude.h>
 
-#include <geo/geo.h>
+/* #include <geo/geo.h> */
 
 #include <systemlib/param/param.h>
-#include <systemlib/pid/pid.h>
-#include <systemlib/perf_counter.h>
+/* #include <systemlib/perf_counter.h> */
 #include <systemlib/systemlib.h>
-#include <systemlib/err.h>
+/* #include <systemlib/err.h> */
 #include <lib/mathlib/mathlib.h>
 
 #include "quad_att_control_main.h"
@@ -44,10 +43,12 @@
 __EXPORT int quad_att_control_main(int argc, char *argv[]);
 int att_control_thread_main(int argc, char *argv[]);
 static void usage(const char *reason);
-void pd_init(struct PD_object_s *pd, float desired, float kp, float kd, float dt);
-void pd_set_dt(struct PD_object_s* pd, float dt);
-float pd_update(struct PD_object_s* pd, float measured);
-void pd_set_desired(struct PD_object_s* pd, float desired);
+void pid_init(struct PID_object_s *pid, float desired, float kp, float ki, float kd, float dt);
+void pid_set_dt(struct PID_object_s *pid, float dt);
+float pid_update(struct PID_object_s *pid, float measured);
+void pid_set_desired(struct PID_object_s *pid, float desired);
+void pid_set_integral_limit(struct PID_object_s *pid, float limit);
+void pid_set_integral_limit_low(struct PID_object_s *pid, float limitLow);
 
 /**
  * Globals
@@ -66,11 +67,11 @@ int att_control_thread_main(int argc, char *argv[]) {
 
         struct output_s out;
         memset(&out, 0, sizeof(out));
-        struct PD_object_s roll;
+        struct PID_object_s roll;
         memset(&roll, 0, sizeof(roll));
-        struct PD_object_s pitch;
+        struct PID_object_s pitch;
         memset(&pitch, 0, sizeof(pitch));
-        struct PD_object_s yaw;
+        struct PID_object_s yaw;
         memset(&yaw, 0, sizeof(yaw));
 
         /**
@@ -99,9 +100,17 @@ int att_control_thread_main(int argc, char *argv[]) {
         fd_v_att[0].fd = v_att_sub;
         fd_v_att[0].events = POLLIN;
 
-        pd_init(&roll, (float)0, (float)ROLL_PITCH_KP, (float)ROLL_PITCH_KD, (float)0.01);
-        pd_init(&pitch, (float)0, (float)ROLL_PITCH_KP, (float)ROLL_PITCH_KD, (float)0.01);
-        pd_init(&yaw, (float)0, (float)YAW_KP, (float)YAW_KD, (float)0.01);
+        pid_init(&roll, (float)0, (float)QUAD_ROLL_PITCH_KP, (float)QUAD_ROLL_PITCH_KI, (float)QUAD_ROLL_PITCH_KD, (float)0.01);
+        pid_init(&pitch, (float)0, (float)QUAD_ROLL_PITCH_KP, (float)QUAD_ROLL_PITCH_KI, (float)QUAD_ROLL_PITCH_KD, (float)0.01);
+        pid_init(&yaw, (float)0, (float)QUAD_YAW_KP, (float)QUAD_YAW_KI, (float)QUAD_YAW_KD, (float)0.01);
+
+        pid_set_integral_limit(&roll, (float)QUAD_ROLL_PITCH_INTEGRATION_LIMIT);
+        pid_set_integral_limit(&pitch, (float)QUAD_ROLL_PITCH_INTEGRATION_LIMIT);
+        pid_set_integral_limit(&yaw, (float)QUAD_YAW_INTEGRATION_LIMIT);
+
+        pid_set_integral_limit_low(&roll, (float)QUAD_ROLL_PITCH_INTEGRATION_LIMIT);
+        pid_set_integral_limit_low(&pitch, (float)QUAD_ROLL_PITCH_INTEGRATION_LIMIT);
+        pid_set_integral_limit_low(&yaw, (float)QUAD_YAW_INTEGRATION_LIMIT);
 
         float   abs_yaw = 0.f,
                 dt = 0.f,
@@ -130,21 +139,21 @@ int att_control_thread_main(int argc, char *argv[]) {
                         abs_yaw = fabs(v_att.yaw);
                         v_att.yaw = (float)-1 * ((PI - abs_yaw) * (v_att.yaw / abs_yaw)); /* Correct the yaw angle to be about zero */
 
-                        pd_set_desired(&roll, sp.roll);
-                        pd_set_desired(&pitch, sp.pitch);
-                        pd_set_desired(&yaw, sp.yaw);
+                        pid_set_desired(&roll, sp.roll);
+                        pid_set_desired(&pitch, sp.pitch);
+                        pid_set_desired(&yaw, sp.yaw);
 
                         time = (hrt_absolute_time() / (float)1000000);
                         dt = time - time_old;
                         time_old = time;
 
-                        pd_set_dt(&roll, dt);
-                        pd_set_dt(&pitch, dt);
-                        pd_set_dt(&yaw, dt);
+                        pid_set_dt(&roll, dt);
+                        pid_set_dt(&pitch, dt);
+                        pid_set_dt(&yaw, dt);
 
-                        out.roll = pd_update(&roll, v_att.roll);
-                        out.pitch = pd_update(&pitch, v_att.pitch);
-                        out.yaw = pd_update(&yaw, v_att.yaw);
+                        out.roll = pid_update(&roll, v_att.roll);
+                        out.pitch = pid_update(&pitch, v_att.pitch);
+                        out.yaw = pid_update(&yaw, v_att.yaw);
 
                         /* Limiting attitude controllers output */
                         if ( (float)fabs(out.roll) > rp_max )
@@ -181,39 +190,60 @@ int att_control_thread_main(int argc, char *argv[]) {
         }
 }
 
-float pd_update(struct PD_object_s* pd, float measured) {
+float pid_update(struct PID_object_s* pid, float measured) {
         float output;
 
-        pd->error = pd->desired - measured;
+        pid->error = pid->desired - measured;
 
-        pd->deriv = (pd->error - pd->prevError) / pd->dt;
+        pid->integ += pid->error * pid->dt;
+        if ( pid->integ > pid->iLimit ) {
+                pid->integ = pid->iLimit;
+        }
+        else if ( pid->integ < pid->iLimitLow ) {
+                pid->integ = pid->iLimitLow;
+        }
 
-        pd->outP = pd->kp * pd->error;
-        pd->outD = pd->kd * pd->deriv;
+        pid->deriv = (pid->error - pid->prevError) / pid->dt;
 
-        output = pd->outP + pd->outD;
+        pid->outP = pid->kp * pid->error;
+        pid->outI = pid->ki * pid->integ;
+        pid->outD = pid->kd * pid->deriv;
 
-        pd->prevError = pd->error;
+        output = pid->outP + pid->outI + pid->outD;
+
+        pid->prevError = pid->error;
 
         return output;
 }
 
-void pd_set_dt(struct PD_object_s* pd, float dt) {
-        pd->dt = dt;
+void pid_set_dt(struct PID_object_s* pid, float dt) {
+        pid->dt = dt;
 }
 
-void pd_set_desired(struct PD_object_s* pd, float desired) {
-        pd->desired = desired;
+void pid_set_desired(struct PID_object_s* pid, float desired) {
+        pid->desired = desired;
 }
 
-void pd_init(struct PD_object_s* pd, float desired, float kp, float kd, float dt) {
-        pd->error = 0;
-        pd->prevError = 0;
-        pd->deriv = 0;
-        pd->desired = desired;
-        pd->kp = kp;
-        pd->kd = kd;
-        pd->dt = dt;
+void pid_set_integral_limit(struct PID_object_s *pid, float limit) {
+        pid->iLimit = limit;
+}
+
+void pid_set_integral_limit_low(struct PID_object_s *pid, float limitLow) {
+        pid->iLimitLow = -limitLow;
+}
+
+void pid_init(struct PID_object_s *pid, float desired, float kp, float ki, float kd, float dt) {
+        pid->error     = 0;
+        pid->prevError = 0;
+        pid->integ     = 0;
+        pid->deriv     = 0;
+        pid->desired = desired;
+        pid->kp = kp;
+        pid->ki = ki;
+        pid->kd = kd;
+        pid->iLimit    = (float)DEFAULT_PID_INTEGRATION_LIMIT;
+        pid->iLimitLow = (float)DEFAULT_PID_INTEGRATION_LIMIT * (float)-1.0;
+        pid->dt        = dt;
 }
 
 static void usage(const char *reason) {
