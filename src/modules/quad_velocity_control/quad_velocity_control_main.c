@@ -104,7 +104,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 		anti_gravity = 0.46,
 		min_rotor_speed = 0.3,
 		pos_max = 0.3,
-		int_max= 0.15,
+		int_max= 0.2,
 		speed_up_time = 4,
 		min_hover_velocity = 0.1,
 		thrust_filter = 0.03,
@@ -178,9 +178,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 				memset(&sp, 0, sizeof(sp));
 				memset(&error, 0, sizeof(error));
 				memset(&velocity_sp, 0, sizeof(velocity_sp));
-				memset(&quad_mode, 0, sizeof(quad_mode));
 
-				// orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+				quad_mode.cmd = QUAD_CMD_PENDING;
+				quad_mode.current_state = QUAD_STATE_GROUNDED;
+
+				orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 				orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 
 				initialised = true;
@@ -249,8 +251,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					if (!state_transition.land) {
 
 					// initialise landing sequence
-					sp.x = state.x;
-					sp.y = state.y;
 					sp.z = landing_alt;
 
 					state_transition.land = true;
@@ -258,7 +258,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					
 					} else {
 
-						if (((state.z > (sp.z - (float)hover_threashold)) && (state.z < (sp.z + (float)hover_threashold)) && ((float)fabs(state.dz) < min_hover_velocity)) || quad_mode.current_state == QUAD_STATE_GROUNDED){
+						if ((state.z > (sp.z - (float)hover_threashold)) && (state.z < (sp.z + (float)hover_threashold)) && ((float)fabs(state.dz) < min_hover_velocity)){
 							
 							// Change state to hovering state
 
@@ -297,11 +297,10 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                                         
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM){
 					if ( !state_transition.stop_swarm ) {
-						sp.x = state.x;
-						sp.y = state.y;
-
+						sp.dx = (float)0;
+						sp.dy = (float)0;
 						state_transition.stop_swarm = true;
-						mavlink_log_info(mavlink_fd,"[POT] STOPPING SWARM");
+						mavlink_log_info(mavlink_fd,"[POT] STOPPING SWARM INITIALISED");
 					
 					} else {
 						// STopping sequence
