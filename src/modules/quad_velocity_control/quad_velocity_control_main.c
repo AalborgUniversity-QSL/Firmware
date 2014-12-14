@@ -35,6 +35,8 @@
 #include <systemlib/err.h>
 
 #include "param.h"
+#include "swarm_formation.h"
+
 
 // #define BUG(x) mavlink_log_info(mavlink_fd, "[quad_commander] Debug no. %i", x); /* to ease debug messages */
 
