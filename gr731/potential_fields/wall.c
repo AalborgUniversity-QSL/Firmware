@@ -20,16 +20,15 @@ velocity_t wall(float posx, float posy)
 	float l;
 	float dotab;
 	float wallfield = 10;
-	float potfield = 0.5;
-	float karmdist = 0.9;
+	float karmdist = 0.7;
 
-	float wall1x [6] = {10, 10, 13, 13, 8, 8};
-	float wall2x [6] = {10, 10, 15, 15, 13, 13};
-	float wall1y [6] = {0, 4, 4, 6, 2, 4};
-	float wall2y [6] = {2, 15, 0, 15, 4, 6};
+	float wall1x [6] = {-1.500, -1.500, -1.500, -1.500 , 0.800,  1.500};
+	float wall2x [6] = {-1.500, 1.500, , -0.800, 1.500 , 1.500, 1.500};
+	float wall1y [6] = {-1.500, -1.500,   0.f,  1.500 , 0.f,   -1.500};
+	float wall2y [6] = {1.500, -1.500,     0.f,   1.500 , 0.f,   1.500};
 	velocity_t vel;
-	vel.v1 = 0;
-	vel.v2 = 0;
+	vel.v1 = (float)0;
+	vel.v2 = (float)0;
 
 
     for(int o = 0; o <= 5; ++o)
@@ -57,13 +56,13 @@ velocity_t wall(float posx, float posy)
         
 
     	l = sqrt((obsx-posx)*(obsx-posx)+(obsy-posy)*(obsy-posy));
-		vm[0] = wallfield*potfield*(posx-obsx)/l*(karmdist-l);
-		vm[1] = wallfield*potfield*(posy-obsy)/l*(karmdist-l);
+        vm[0] = wallfield*(posx-obsx)/l*(karmdist-l)*fabs((karmdist-l));
+        vm[1] = wallfield*(posy-obsy)/l*(karmdist-l)*fabs((karmdist-l));
 
 		if(l > karmdist)
 		    {
-				vm[0]= 0;
-			    vm[1]= 0;
+		      vm[0]= (float)0;
+	               vm[1]= (float)0;
 			}
 
 		vel.v1 = vel.v1 + vm[0];
