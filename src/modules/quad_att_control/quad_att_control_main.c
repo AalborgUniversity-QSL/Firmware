@@ -23,6 +23,7 @@
 #include <mavlink/mavlink_log.h>
 
 #include <uORB/uORB.h>
+#include <uORB/topics/quad_mode.h>
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/quad_velocity_sp.h>
 #include <uORB/topics/vehicle_attitude.h>
@@ -88,7 +89,10 @@ int att_control_thread_main(int argc, char *argv[]) {
          */
         struct actuator_controls_s actuators;
         memset(&actuators, 0, sizeof(actuators));
+        struct quad_mode_s mode;
+        memset(&mode, 0, sizeof(mode));
 
+        orb_advert_t mode_pub = orb_advertise(ORB_ID(quad_mode), &mode);
         orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
 
         struct pollfd fd_v_att[1];
@@ -103,6 +107,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 dt = 0.f,
                 time = 0.f,
                 time_old = 0.f,
+                rp_safe = 0.4,
                 rp_max = 0.7,  /* roll and pitch maximum output */
                 yaw_max = 0.4;  /* yaw maximum output */
 
@@ -152,6 +157,16 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 out.yaw = yaw_max * (out.yaw / (float)fabs(out.yaw));
 
                         out.thrust = sp.thrust; /* Thrust controller resides in velocity controller */
+
+                        if ( (v_att.roll > rp_safe) || (v_att.pitch > rp_safe) ) {
+                                out.roll = 0;
+                                out.pitch = 0;
+                                out.yaw = 0;
+                                out.thrust = 0;
+
+                                mode.error == true;
+                                orb_publish(ORB_ID(quad_mode), mode_pub, &mode);
+                        }
 
                         actuators.control[0] = (float)out.roll;
                         actuators.control[1] = (float)out.pitch;
