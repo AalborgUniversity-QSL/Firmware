@@ -275,8 +275,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 					}
 
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM){
-        				
         				if(!state_transition.start_swarm){
+        					Ki_pos = Ki_pos * (float)0.1;
         					state_transition.start_swarm = true;
                                         	quad_mode.current_state = QUAD_STATE_SWARMING;
                                         	orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
@@ -296,7 +296,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
                                         }
                                         
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM){
+
 					if ( !state_transition.stop_swarm ) {
+						Ki_pos = Ki_pos * (float)10;
 						sp.dx = (float)0;
 						sp.dy = (float)0;
 						state_transition.stop_swarm = true;
