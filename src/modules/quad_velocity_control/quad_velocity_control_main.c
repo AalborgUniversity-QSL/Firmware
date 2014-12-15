@@ -292,40 +292,52 @@ int quad_velocity_control_thread_main(int argc, char *argv[]){
 
                                         sp.dx = q_vel_ref.v1;
                                         sp.dy = q_vel_ref.v2;
+					}
 
-        				if ( state.y < (float)0.8 ) {
-                                                sp.dy += (float)0.1;
-                                                sp.y = sp.y + (sp.dy * (float)dt_pos);
-                                        
+                                        if ( state.y < (float)0.8 ) {
+                                                sp.dy += (float)0.05;
                                         } /* else {
                                          *         /\* sp.dy = (float)0; *\/
                                          *         state_transition.start_swarm = false;
                                          *         quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
                                          *         orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
                                          * } */
+
+                                        if ( (float)(sp.dx) > (float)0.1 )
+                                                sp.dx = (float)0.1;
+                                        if ( (float)(sp.dx) < (float)-0.1 )
+                                                sp.dx = (float)-0.1;
+
+                                        if ( (float)(sp.dy) > (float)0.1 )
+                                                sp.dy = (float)0.1;
+                                        if ( (float)(sp.dy) < (float)-0.1 )
+                                                sp.dy = (float)-0.1;
+
+                                                sp.y = sp.y + (sp.dy * (float)dt_pos);
+                                                sp.x = sp.x + (sp.dx * (float)dt_pos);
                                         
-				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM){
+                                } else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM){
 
-					if ( !state_transition.stop_swarm ) {
-						Ki_pos = Ki_pos * (float)10;
-						sp.dx = (float)0;
-						sp.dy = (float)0;
-						state_transition.stop_swarm = true;
-						mavlink_log_info(mavlink_fd,"[POT] STOPPING SWARM INITIALISED");
-					
-					} else {
-						// STopping sequence
-						if (((float)fabs(state.dx) < min_hover_velocity) && ((float)fabs(state.dy) < min_hover_velocity) ){
-							
-							// Change state to hovering state
-							state_transition.stop_swarm = false;
-							quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
-							quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_HOVERING;
+                                        if ( !state_transition.stop_swarm ) {
+                                                Ki_pos = Ki_pos * (float)10;
+                                                sp.dx = (float)0;
+                                                sp.dy = (float)0;
+                                                state_transition.stop_swarm = true;
+                                                mavlink_log_info(mavlink_fd,"[POT] STOPPING SWARM INITIALISED");
+                                        
+                                        } else {
+                                                // STopping sequence
+                                                if (((float)fabs(state.dx) < min_hover_velocity) && ((float)fabs(state.dy) < min_hover_velocity) ){
+                                                        
+                                                        // Change state to hovering state
+                                                        state_transition.stop_swarm = false;
+                                                        quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
+                                                        quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_HOVERING;
 
-							orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
-							mavlink_log_info(mavlink_fd,"[POT] HOVERING");
-						}
-					}
+                                                        orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
+                                                        mavlink_log_info(mavlink_fd,"[POT] HOVERING");
+                                                }
+
 
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_PENDING){
 					// mavlink_log_info(mavlink_fd,"[POT] PENDING");
