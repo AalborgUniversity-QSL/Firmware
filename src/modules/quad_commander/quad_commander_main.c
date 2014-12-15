@@ -20,8 +20,8 @@
 #include <systemlib/param/param.h>
 #include <systemlib/systemlib.h>
 
-#define BUG(x) mavlink_log_info(mavlink_fd, "[quad_commander] Debug no. %i", x); /* to ease debug messages */
-#define BUG(x)
+/* #define BUG(x) mavlink_log_info(mavlink_fd, "[quad_commander] Debug no. %i", x); /\* to ease debug messages *\/
+ * #define BUG(x) */
 
 /**
  * Main loop starter
