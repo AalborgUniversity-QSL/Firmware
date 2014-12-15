@@ -155,14 +155,13 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                         out.thrust = sp.thrust; /* Thrust controller resides in velocity controller */
 
-                        if ( ((float)fabs(v_att.roll) > rp_safe) || ((float)fabs(v_att.pitch) > rp_safe) || (error == true) ) {
+                        if ( ((float)fabs(v_att.roll) > rp_safe) || ((float)fabs(v_att.pitch) > rp_safe) || error ) {
                                 out.roll = 0;
                                 out.pitch = 0;
                                 out.yaw = 0;
                                 out.thrust = 0;
 
-                                // mode.error == true;
-                                // orb_publish(ORB_ID(quad_mode), mode_pub, &mode);
+                                mavlink_log_info(mavlink_fd, "[ATT] Failsafe initialised");
 
                                 error = true;
                         }
@@ -171,12 +170,6 @@ int att_control_thread_main(int argc, char *argv[]) {
                         actuators.control[1] = (float)out.pitch;
                         actuators.control[2] = (float)out.yaw;
                         actuators.control[3] = (float)out.thrust;
-
-                        if (i == 10){
-                                mavlink_log_info(mavlink_fd, "[ATT] thrust: %.3f", (double)out.thrust);
-                                i = 0;
-                        }
-                        ++i;
 
                         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
 
