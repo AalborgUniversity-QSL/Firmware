@@ -106,6 +106,8 @@ int att_control_thread_main(int argc, char *argv[]) {
 
         bool error = false;
 
+        static int i = 0;
+
         while ( !thread_should_exit ) {
                 int ret_v_att = poll(fd_v_att, 1, 1);
                 if (ret_v_att < 0) {
@@ -170,7 +172,11 @@ int att_control_thread_main(int argc, char *argv[]) {
                         actuators.control[2] = (float)out.yaw;
                         actuators.control[3] = (float)out.thrust;
 
-                        mavlink_log_info(mavlink_fd, "[ATT] thrust: %.3f", (double)out.thrust);
+                        if (i == 10){
+                                mavlink_log_info(mavlink_fd, "[ATT] thrust: %.3f", (double)out.thrust);
+                                i = 0;
+                        }
+                        ++i;
 
                         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
 
