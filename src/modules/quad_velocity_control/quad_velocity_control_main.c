@@ -140,7 +140,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 
 		int pret = poll(fds, 1, 300);
 		if (pret < 0) {
-			mavlink_log_info(mavlink_fd,"[POT] Poll error");
+			mavlink_log_info(mavlink_fd,"[POT%d] Poll error", system_id);
 		} else if (pret == 0){
 			if (vehicle_status.arming_state == ARMING_STATE_ARMED && !system_error){
 				if (error_count >= 5){
@@ -154,7 +154,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 					quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
 					orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
 
-					mavlink_log_critical(mavlink_fd,"[POT] Package loss limit reached");
+					mavlink_log_critical(mavlink_fd,"[POT%d] Package loss limit reached", system_id);
 				}
 				error_count++;	
 			}
@@ -195,7 +195,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 				orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 
 				initialised = true;
-				mavlink_log_info(mavlink_fd,"[POS] INITIALISED");
+				mavlink_log_info(mavlink_fd,"[POS%d] INITIALISED",system_id);
 
 			} else {
 				time = hrt_absolute_time() / (float)1000000;
@@ -239,7 +239,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 
 						state_transition.takeoff = true;
 						shutdown_motors = false;
-						mavlink_log_info(mavlink_fd,"[POT] TAKEOFF INITIALISED");
+						mavlink_log_info(mavlink_fd,"[POT%d] TAKEOFF INITIALISED",system_id);
 					
 					} else {
 						// Takeoff sequence
@@ -251,7 +251,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 							quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_HOVERING;
 
 							orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
-							mavlink_log_info(mavlink_fd,"[POT] HOVERING");
+							mavlink_log_info(mavlink_fd,"[POT%d] HOVERING", system_id);
 						}
 					} 
 
@@ -263,7 +263,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                                 sp.z = landing_alt;
 
                                                 state_transition.land = true;
-                                                mavlink_log_info(mavlink_fd,"[POT] LANDING INITIALISED");
+                                                mavlink_log_info(mavlink_fd,"[POT%d] LANDING INITIALISED",system_id);
 					
 					} else {
 
@@ -279,7 +279,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 							quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_GROUNDED;
 
 							orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
-							mavlink_log_info(mavlink_fd,"[POT] LANDED");
+							mavlink_log_info(mavlink_fd,"[POT%d] LANDED",system_id);
 						}
 					}
 
@@ -289,7 +289,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
         					state_transition.start_swarm = true;
                                         	quad_mode.current_state = QUAD_STATE_SWARMING;
                                         	orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
-        					mavlink_log_info(mavlink_fd,"[POT] INITIALISED SWARMING");
+        					mavlink_log_info(mavlink_fd,"[POT%d] INITIALISED SWARMING",system_id);
         				}
 
                                         q_vel_ref = wall( state.x, state.y );
@@ -329,7 +329,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                                 sp.dx = (float)0;
                                                 sp.dy = (float)0;
                                                 state_transition.stop_swarm = true;
-                                                mavlink_log_info(mavlink_fd,"[POT] STOPPING SWARM INITIALISED");
+                                                mavlink_log_info(mavlink_fd,"[POT%d] STOPPING SWARM INITIALISED",system_id);
                                         
                                         } else {
                                                 // STopping sequence
@@ -341,7 +341,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                                         quad_mode.current_state = (enum QUAD_STATE)QUAD_STATE_HOVERING;
 
                                                         orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
-                                                        mavlink_log_info(mavlink_fd,"[POT] HOVERING");
+                                                        mavlink_log_info(mavlink_fd,"[POT%d] HOVERING",system_id);
                                                 }
                                         }
 
