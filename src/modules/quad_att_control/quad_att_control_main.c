@@ -118,7 +118,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                         bool sp_updated;
                 	orb_check(sp_sub, &sp_updated);
 
-	                if ( sp_updated ){
+	                if ( sp_updated ) {
 	                        orb_copy(ORB_ID(quad_velocity_sp), sp_sub, &sp);
 	                }
 
@@ -153,7 +153,7 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                         out.thrust = sp.thrust; /* Thrust controller resides in velocity controller */
 
-                        if ( (v_att.roll > rp_safe) || (v_att.pitch > rp_safe) || (error == true) ) {
+                        if ( ((float)fabs(v_att.roll) > rp_safe) || ((float)fabs(v_att.pitch) > rp_safe) || (error == true) ) {
                                 out.roll = 0;
                                 out.pitch = 0;
                                 out.yaw = 0;
@@ -169,6 +169,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                         actuators.control[1] = (float)out.pitch;
                         actuators.control[2] = (float)out.yaw;
                         actuators.control[3] = (float)out.thrust;
+
+                        mavlink_log_info(mavlink_fd, "[ATT] thrust: %.3f", (double)out.thrust);
 
                         orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
 
