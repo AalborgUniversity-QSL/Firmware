@@ -104,7 +104,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 	 	landing_alt = 0.3,
 		hover_threashold = 0.2,
 		anti_gravity = 0.46,
-		min_rotor_speed = 0.3,
+		min_rotor_speed = 0.29,
 		pos_max = 0.3,
 		int_max= 0.2,
 		speed_up_time = 4,
@@ -112,10 +112,14 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 		thrust_filter = 0.03,
 		dt_pos = 0,
 		time = 0,
-		print_timer = 0,
+		// print_timer = 0,
 	        time_old = hrt_absolute_time() / (float)1000000;
 
-	const int system_id = 1;
+	param_t param_ptr = param_find("MAV_SYS_ID");
+	int32_t system_id;
+
+	param_get(param_ptr, &system_id);
+
 	int error_count = 0;
 
 	bool    initialised = false,
@@ -218,12 +222,12 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 			// Set initial values when received commands
 			if ( vehicle_status.arming_state == ARMING_STATE_ARMED && !system_error ){
 
-				print_timer = print_timer + dt_pos;
+				// print_timer = print_timer + dt_pos;
 
-				if(print_timer > 5){
-					mavlink_log_info(mavlink_fd,"error_count: %d",(int)error_count);
-					print_timer = 0;
-				}
+				// if(print_timer > 5){
+				// 	mavlink_log_info(mavlink_fd,"error_count: %d",(int)error_count);
+				// 	print_timer = 0;
+				// }
 
 				if ( quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_TAKEOFF) {
 
