@@ -127,7 +127,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                 quad_mode_updated = false,
                 vehicle_status_updated = false,
                 system_error = false,
-                test = true;
+                test = false;
 
         velocity_t q_vel_ref;
         memset(&q_vel_ref, 0, sizeof(q_vel_ref));
@@ -291,10 +291,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                         	orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
         					mavlink_log_info(mavlink_fd,"[POT%d] INITIALISED SWARMING",system_id);
         				}
+        				mavlink_log_info(mavlink_fd,"Calculating");
 
                                         q_vel_ref = wall( state.x, state.y );
 
-                                        sp.dx = q_vel_ref.v1;
+                                        sp.dx = (float)-1 * q_vel_ref.v1;
                                         sp.dy = q_vel_ref.v2;
 					//}
 
@@ -307,7 +308,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                            *         orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
                                            * } */
 
-                                        mavlink_log_info(mavlink_fd,"[POT%d] non sp.dx = %.3f, sp.dy = %.3f",system_id, (double)sp.dx, (double)sp.dy);
+                                        // mavlink_log_info(mavlink_fd,"[POT%d] non sp.dx = %.3f, sp.dy = %.3f",system_id, (double)sp.dx, (double)sp.dy);
                                         if ( (float)(sp.dx) > (float)0.1 )
                                                 sp.dx = (float)0.1;
 
@@ -321,7 +322,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                                 sp.dy = (float)-0.1;
 
 
-                                        mavlink_log_info(mavlink_fd,"[POT%d] lim sp.dx = %.3f, sp.dy = %.3f", system_id, (double)sp.dx, (double)sp.dy);
+                                        // mavlink_log_info(mavlink_fd,"[POT%d] lim sp.dx = %.3f, sp.dy = %.3f", system_id, (double)sp.dx, (double)sp.dy);
                                         sp.y = sp.y + (sp.dy * (float)dt_pos);
                                         sp.x = sp.x + (sp.dx * (float)dt_pos);
                                         
