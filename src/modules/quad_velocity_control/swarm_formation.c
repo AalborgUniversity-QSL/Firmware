@@ -15,7 +15,7 @@ velocity_t wall(float posx, float posy) {
 	float lb;
 	float l;
 	float dotab;
-	float wallfield = 10;
+	float wallfield = 2.5;
 	float karmdist = 0.5;
 
 	float wall1x [6] = {-1.500, -1.500, -1.500, -1.500 , 0.800,  1.500};
