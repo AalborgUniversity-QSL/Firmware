@@ -409,6 +409,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 					error.thrust_int = 0;
 					error.x_int = 0;
 					error.y_int = 0;
+
+					sp.x = state.x;
+					sp.y = state.y;
 				} else {
 					// Set thrust output
 					velocity_sp.thrust = output.thrust + anti_gravity;
