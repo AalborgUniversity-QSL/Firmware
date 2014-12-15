@@ -8,34 +8,17 @@
  *
  */
 
-/* #include <nuttx/config.h> */
 #include <stdio.h>
-/* #include <stdlib.h> */
-/* #include <string.h>
- * #include <unistd.h>
- * #include <fcntl.h>
- * #include <errno.h> */
-/* #include <math.h> */
 #include <poll.h>
-/* #include <time.h> */
-/* #include <drivers/drv_hrt.h> */
-
 #include <mavlink/mavlink_log.h>
-
 #include <uORB/uORB.h>
 #include <uORB/topics/quad_mode.h>
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/quad_velocity_sp.h>
 #include <uORB/topics/vehicle_attitude.h>
-
-/* #include <geo/geo.h> */
-
 #include <systemlib/param/param.h>
-/* #include <systemlib/perf_counter.h> */
 #include <systemlib/systemlib.h>
-/* #include <systemlib/err.h> */
 #include <lib/mathlib/mathlib.h>
-
 #include "quad_att_control_main.h"
 #include "params.h"
 
@@ -100,17 +83,17 @@ int att_control_thread_main(int argc, char *argv[]) {
         fd_v_att[0].fd = v_att_sub;
         fd_v_att[0].events = POLLIN;
 
-        pid_init(&roll, (float)0, (float)QUAD_ROLL_PITCH_KP, (float)QUAD_ROLL_PITCH_KI, (float)QUAD_ROLL_PITCH_KD, (float)0.01);
-        pid_init(&pitch, (float)0, (float)QUAD_ROLL_PITCH_KP, (float)QUAD_ROLL_PITCH_KI, (float)QUAD_ROLL_PITCH_KD, (float)0.01);
-        pid_init(&yaw, (float)0, (float)QUAD_YAW_KP, (float)QUAD_YAW_KI, (float)QUAD_YAW_KD, (float)0.01);
+        pid_init(&roll, 0, QUAD_ROLL_PITCH_KP, QUAD_ROLL_PITCH_KI, QUAD_ROLL_PITCH_KD, 0.01);
+        pid_init(&pitch, 0, QUAD_ROLL_PITCH_KP, QUAD_ROLL_PITCH_KI, QUAD_ROLL_PITCH_KD, 0.01);
+        pid_init(&yaw, 0, QUAD_YAW_KP, QUAD_YAW_KI, QUAD_YAW_KD, 0.01);
 
-        pid_set_integral_limit(&roll, (float)QUAD_ROLL_PITCH_INTEGRATION_LIMIT);
-        pid_set_integral_limit(&pitch, (float)QUAD_ROLL_PITCH_INTEGRATION_LIMIT);
-        pid_set_integral_limit(&yaw, (float)QUAD_YAW_INTEGRATION_LIMIT);
+        pid_set_integral_limit(&roll, QUAD_ROLL_PITCH_INTEGRATION_LIMIT);
+        pid_set_integral_limit(&pitch, QUAD_ROLL_PITCH_INTEGRATION_LIMIT);
+        pid_set_integral_limit(&yaw, QUAD_YAW_INTEGRATION_LIMIT);
 
-        pid_set_integral_limit_low(&roll, (float)QUAD_ROLL_PITCH_INTEGRATION_LIMIT);
-        pid_set_integral_limit_low(&pitch, (float)QUAD_ROLL_PITCH_INTEGRATION_LIMIT);
-        pid_set_integral_limit_low(&yaw, (float)QUAD_YAW_INTEGRATION_LIMIT);
+        pid_set_integral_limit_low(&roll, QUAD_ROLL_PITCH_INTEGRATION_LIMIT);
+        pid_set_integral_limit_low(&pitch, QUAD_ROLL_PITCH_INTEGRATION_LIMIT);
+        pid_set_integral_limit_low(&yaw, QUAD_YAW_INTEGRATION_LIMIT);
 
         float   abs_yaw = 0.f,
                 dt = 0.f,
@@ -209,7 +192,7 @@ float pid_update(struct PID_object_s* pid, float measured) {
         pid->outI = pid->ki * pid->integ;
         pid->outD = pid->kd * pid->deriv;
 
-        output = pid->outP - pid->outI + pid->outD;
+        output = pid->outP + pid->outI + pid->outD;
 
         pid->prevError = pid->error;
 
