@@ -16,6 +16,7 @@
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/quad_velocity_sp.h>
 #include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/vehicle_status.h>
 #include <systemlib/param/param.h>
 #include <systemlib/systemlib.h>
 #include <lib/mathlib/mathlib.h>
@@ -65,9 +66,12 @@ int att_control_thread_main(int argc, char *argv[]) {
         memset(&sp, 0, sizeof(sp));
         struct vehicle_attitude_s v_att;
         memset(&v_att, 0, sizeof(v_att));
+        struct vehicle_status_s v_status;
+        memset(&v_status, 0, sizeof(v_status));
 
         int sp_sub = orb_subscribe(ORB_ID(quad_velocity_sp));
         int v_att_sub = orb_subscribe(ORB_ID(vehicle_attitude));
+        int v_status_sub = orb_subscribe(ORB_ID(vehicle_status));
 
         /**
          * Topics to be published on
@@ -106,9 +110,12 @@ int att_control_thread_main(int argc, char *argv[]) {
 
         bool error = false;
 
-        static int i = 0;
-
         while ( !thread_should_exit ) {
+                bool v_status_updated;
+                orb_check(v_status_sub, &v_status_updated);
+                if ( v_status_updated )
+                        orb_copy(ORB_ID(vehicle_status), v_status_sub, &v_status);
+
                 int ret_v_att = poll(fd_v_att, 1, 1);
                 if (ret_v_att < 0) {
                         warnx("poll sp error");
@@ -155,7 +162,7 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                         out.thrust = sp.thrust; /* Thrust controller resides in velocity controller */
 
-                        if ( ((float)fabs(v_att.roll) > rp_safe) || ((float)fabs(v_att.pitch) > rp_safe) || error ) {
+                        if ( ( ((float)fabs(v_att.roll) > rp_safe) || ((float)fabs(v_att.pitch) > rp_safe) || error ) && (v_status.arming_state == ARMING_STATE_ARMED) ) {
                                 out.roll = 0;
                                 out.pitch = 0;
                                 out.yaw = 0;
