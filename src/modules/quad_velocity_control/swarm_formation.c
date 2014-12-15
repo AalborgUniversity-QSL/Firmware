@@ -76,7 +76,6 @@ velocity_t swarm( int i, float allposx [10], float allposy [10] ) {
 	float potfield = 0.5;
 	float vmin = -0.02;
 	float dist = 1.5;
-	float vmax = 0.04;
 	float vm[2] = {0, 0};
 	float allpos[2];
 	float l;
@@ -91,14 +90,14 @@ velocity_t swarm( int i, float allposx [10], float allposy [10] ) {
                         allpos[1] = allposy[n];
                         l = sqrt( ( (allpos[0] - pos[0]) * (allpos[0] - pos[0]) ) + ( (allpos[1] - pos[1]) * (allpos[1] - pos[1]) ) );
                         //printf("l er  %f \n", l);
-                        vm[0] = vm[0] + ( ( potfield * ( allposx[n]) /  l ) * (l - dist) * (float)fabs(l - dist) );
-                        vm[1] = vm[1] + ( ( potfield * ( allposy[n]) /  l ) * (l - dist) * (float)fabs(l - dist) );
+                        vm[0] = vm[0] + ( potfield * ( allposx[n] /  l ) * (l - dist) * (float)fabs(l - dist) );
+                        vm[1] = vm[1] + ( potfield * ( allposy[n] /  l ) * (l - dist) * (float)fabs(l - dist) );
 			//printf("for %i v1 = %f, v2 = %f \n", n, vm[0],vm[1]);
                         // To make them not chrash into each other
                         lvm = sqrt( (vm[0] * vm[0]) + (vm[1] * vm[1]) );
-                        if ( lvm > vmin) {
-                                vm[0] = ( allposx[n]) /  l ) * vmin;
-                                vm[1] = ( allposx[n]) /  l ) * vmin;
+                        if ( lvm > vmin ) {
+                                vm[0] = ( allposx[n] /  l ) * vmin;
+                                vm[1] = ( allposx[n] /  l ) * vmin;
                                 //printf("for %i v1 = %f, v2 = %f \n", n, vm[0],vm[1]);
                         }
                         vel.v1 = vel.v1 + vm[0];
