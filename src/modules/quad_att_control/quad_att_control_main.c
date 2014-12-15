@@ -74,10 +74,10 @@ int att_control_thread_main(int argc, char *argv[]) {
          */
         struct actuator_controls_s actuators;
         memset(&actuators, 0, sizeof(actuators));
-        struct quad_mode_s mode;
-        memset(&mode, 0, sizeof(mode));
+        // struct quad_mode_s mode;
+        // memset(&mode, 0, sizeof(mode));
 
-        orb_advert_t mode_pub = orb_advertise(ORB_ID(quad_mode), &mode);
+        // orb_advert_t mode_pub = orb_advertise(ORB_ID(quad_mode), &mode);
         orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
 
         struct pollfd fd_v_att[1];
@@ -159,8 +159,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                                 out.yaw = 0;
                                 out.thrust = 0;
 
-                                mode.error == true;
-                                orb_publish(ORB_ID(quad_mode), mode_pub, &mode);
+                                // mode.error == true;
+                                // orb_publish(ORB_ID(quad_mode), mode_pub, &mode);
 
                                 error = true;
                         }

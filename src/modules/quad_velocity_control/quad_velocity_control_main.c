@@ -291,7 +291,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                         	orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
         					mavlink_log_info(mavlink_fd,"[POT%d] INITIALISED SWARMING",system_id);
         				}
-        				mavlink_log_info(mavlink_fd,"Calculating");
 
                                         q_vel_ref = wall( state.x, state.y );
 
