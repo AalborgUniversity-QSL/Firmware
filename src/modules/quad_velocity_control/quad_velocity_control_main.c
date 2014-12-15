@@ -431,6 +431,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 	                        }
 
 	                        // Publish the new roll, pitch, yaw and thrust set points
+	                        // mavlink_log_info(mavlink_fd,"th: %.3f", (double)velocity_sp.thrust);
 	                        orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
 
 			} else if (vehicle_status.arming_state == ARMING_STATE_STANDBY) {
