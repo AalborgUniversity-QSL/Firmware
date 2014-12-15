@@ -116,7 +116,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 dt = 0.f,
                 time = 0.f,
                 time_old = 0.f,
-                rp_safe = 0.4,
+                rp_safe = 0.3,
                 rp_max = 0.7,  /* roll and pitch maximum output */
                 yaw_max = 0.4;  /* yaw maximum output */
 
@@ -209,7 +209,7 @@ float pid_update(struct PID_object_s* pid, float measured) {
         pid->outI = pid->ki * pid->integ;
         pid->outD = pid->kd * pid->deriv;
 
-        output = pid->outP + pid->outI + pid->outD;
+        output = pid->outP - pid->outI + pid->outD;
 
         pid->prevError = pid->error;
 
