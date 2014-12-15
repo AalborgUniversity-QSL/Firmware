@@ -307,7 +307,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                            *         orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
                                            * } */
 
-                                        mavlink_log_info(mavlink_fd,"[POT%d] non sp.dx = %f, sp.dy = %f",system_id, sp.dx, sp.dy);
+                                        mavlink_log_info(mavlink_fd,"[POT%d] non sp.dx = %f, sp.dy = %f",system_id, (double)sp.dx, (double)sp.dy);
                                         if ( (float)(sp.dx) > (float)0.1 )
                                                 sp.dx = (float)0.1;
 
@@ -321,7 +321,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                                 sp.dy = (float)-0.1;
 
 
-                                        mavlink_log_info(mavlink_fd,"[POT%d] lim sp.dx = %f, sp.dy = %f",system_id, sp.dx, sp.dy);
+                                        mavlink_log_info(mavlink_fd,"[POT%d] lim sp.dx = %f, sp.dy = %f", system_id, (double)sp.dx, (double)sp.dy);
                                         sp.y = sp.y + (sp.dy * (float)dt_pos);
                                         sp.x = sp.x + (sp.dx * (float)dt_pos);
                                         
