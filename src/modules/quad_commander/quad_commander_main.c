@@ -10,17 +10,17 @@
  *
  */
 
-#include <nuttx/config.h>
+/* #include <nuttx/config.h> */
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <math.h>
+/* #include <stdlib.h> */
+/* #include <string.h>
+ * #include <unistd.h> */
+/* #include <fcntl.h>
+ * #include <errno.h>
+ * #include <math.h> */
 #include <poll.h>
-#include <time.h>
-#include <drivers/drv_hrt.h>
+/* #include <time.h> */
+/* #include <drivers/drv_hrt.h> */
 
 #include <mavlink/mavlink_log.h>
 
@@ -28,18 +28,19 @@
 #include <uORB/topics/quad_mode.h>
 #include <uORB/topics/quad_swarm_cmd.h>
 #include <uORB/topics/vehicle_status.h>
-#include <uORB/topics/quad_pos_msg.h>
+/* #include <uORB/topics/quad_pos_msg.h> */
 
-#include <geo/geo.h>
+/* #include <geo/geo.h> */
 
 #include <systemlib/param/param.h>
-#include <systemlib/pid/pid.h>
-#include <systemlib/perf_counter.h>
+/* #include <systemlib/pid/pid.h> */
+/* #include <systemlib/perf_counter.h> */
 #include <systemlib/systemlib.h>
-#include <systemlib/err.h>
-#include <lib/mathlib/mathlib.h>
+/* #include <systemlib/err.h> */
+/* #include <lib/mathlib/mathlib.h> */
 
 #define BUG(x) mavlink_log_info(mavlink_fd, "[quad_commander] Debug no. %i", x); /* to ease debug messages */
+#define BUG(x)
 
 /**
  * Main loop starter
@@ -62,7 +63,7 @@ static void usage(const char *reason);
 void error_msg( int error, bool *transition_error );
 
 /**
- * State transitions functions
+ * State transition functions
  */
 int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
 int land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub, bool *transition_error );
