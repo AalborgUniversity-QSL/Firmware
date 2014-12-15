@@ -79,6 +79,7 @@ static int daemon_task;
 static bool low_battery = false;
 
 static int mavlink_fd;
+static int32_t system_id;
 const int time_out = 20000;    /* Timeout value for state transition poll [ms] */
 
 
@@ -111,8 +112,11 @@ int quad_commander_thread_main(int argc, char *argv[]) {
         orb_advert_t mode_pub = orb_advertise(ORB_ID(quad_mode), &mode);
         memset(&mode, 0, sizeof(mode));
 
+	param_t param_ptr = param_find("MAV_SYS_ID");
+	param_get(param_ptr, &system_id);
+
         mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
-        mavlink_log_info(mavlink_fd, "[quad_commander] started");
+        mavlink_log_info(mavlink_fd, "[QC%i] started", system_id);
 
         struct pollfd fd_cmd[1];
         fd_cmd[0].fd = swarm_cmd_sub;
@@ -147,7 +151,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                      (state.current_state != QUAD_STATE_GROUNDED) ) {
 
                         low_battery = true;
-                        mavlink_log_critical(mavlink_fd, "[quad_commmander] Battery lavel low!");
+                        mavlink_log_critical(mavlink_fd, "[QC%i] Battery lavel low!", system_id);
                         emergency_land( &state, &mode, &mode_pub, &state_sub, &swarm_cmd );
 
                 } else {
@@ -167,7 +171,7 @@ int quad_commander_thread_main(int argc, char *argv[]) {
 
                 if ( state.error == true ) {
                         int ret_value = emergency_land( &state, &mode, &mode_pub, &state_sub, &swarm_cmd );
-                	mavlink_log_info(mavlink_fd, "[quad_commmander] emergency landing");
+                	mavlink_log_info(mavlink_fd, "[QC%i] emergency landing", system_id);
                         error_msg( ret_value, &transition_error );
                 }
 
@@ -180,22 +184,22 @@ int quad_commander_thread_main(int argc, char *argv[]) {
                         orb_copy(ORB_ID(quad_swarm_cmd), swarm_cmd_sub, &swarm_cmd);
 
                         if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_TAKEOFF ) {
-                                mavlink_log_info(mavlink_fd, "[quad_commmander] Takeoff transition begun!");
+                                mavlink_log_info(mavlink_fd, "[QC%i] Takeoff transition begun!", system_id);
                                 int ret_value = take_off( &state, &mode, &mode_pub, &state_sub );
                                 error_msg( ret_value, &transition_error );
 
                         } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_LAND ) {
-                                mavlink_log_info(mavlink_fd, "[quad_commmander] Landing transition begun!");
+                                mavlink_log_info(mavlink_fd, "[QC%i] Landing transition begun!", system_id);
                                 int ret_value = land( &state, &mode, &mode_pub, &state_sub, &transition_error );
                                 error_msg( ret_value, &transition_error );
 
                         } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_START_SWARM ) {
-                                mavlink_log_info(mavlink_fd, "[quad_commmander] Swarming transition begun!");
+                                mavlink_log_info(mavlink_fd, "[QC%i] Swarming transition begun!", system_id);
                                 int ret_value = start_swarm( &state, &mode, &mode_pub, &state_sub );
                                 error_msg( ret_value, &transition_error );
 
                         } else if ( swarm_cmd.cmd_id == (enum QUAD_MSG_CMD)QUAD_MSG_CMD_STOP_SWARM ) {
-                                mavlink_log_info(mavlink_fd, "[quad_commmander] Stop swarming transition begun!");
+                                mavlink_log_info(mavlink_fd, "[QC%i] Stop swarming transition begun!", system_id);
                                 int ret_value = stop_swarm( &state, &mode, &mode_pub, &state_sub );
                                 error_msg( ret_value, &transition_error );
 
@@ -211,19 +215,19 @@ int quad_commander_thread_main(int argc, char *argv[]) {
 
 void error_msg( int error, bool *transition_error ) {
         if ( error == 0 ){
-                mavlink_log_info(mavlink_fd, "[quad_commmander] State transition succes!");
+                mavlink_log_info(mavlink_fd, "[QC%i] State transition succes!", system_id);
 
         } else if ( error == -1 ) {
-                mavlink_log_info(mavlink_fd, "[quad_commmander] No state transition occured!");
+                mavlink_log_info(mavlink_fd, "[QC%i] No state transition occured!", system_id);
 
         } else if ( error == -2 ) {
-                mavlink_log_info(mavlink_fd, "[quad_commmander] Not in correct state!");
+                mavlink_log_info(mavlink_fd, "[QC%i] Not in correct state!", system_id);
 
         } else if ( error == -3 ) {
-                mavlink_log_info(mavlink_fd, "[quad_commmander] Not changed to the correct state!");
+                mavlink_log_info(mavlink_fd, "[QC%i] Not changed to the correct state!", system_id);
 
         } else {
-                mavlink_log_info(mavlink_fd, "[quad_commmander] Unknown return value!");
+                mavlink_log_info(mavlink_fd, "[QC%i] Unknown return value!", system_id);
 
         }
 
@@ -257,7 +261,7 @@ int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t 
                         return -3;
 
                 } else {
-                        mavlink_log_info(mavlink_fd, "[quad_commmander] something is very wrong");
+                        mavlink_log_info(mavlink_fd, "[QC%i] something is very wrong", system_id);
 
                 }
 
@@ -291,7 +295,7 @@ int land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mod
                         return -3;
 
                 } else {
-                        mavlink_log_info(mavlink_fd, "[quad_commmander] something is very wrong");
+                        mavlink_log_info(mavlink_fd, "[QC%i] something is very wrong", system_id);
 
                 }
 
@@ -323,7 +327,7 @@ int emergency_land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_adv
                 return -3;
 
         } else {
-                mavlink_log_info(mavlink_fd, "[quad_commmander] something is very wrong");
+                mavlink_log_info(mavlink_fd, "[QC%i] something is very wrong", system_id);
 
         }
         state->error = false;
@@ -354,7 +358,7 @@ int start_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert
                         return -3;
 
                 } else {
-                        mavlink_log_info(mavlink_fd, "[quad_commmander] something is very wrong");
+                        mavlink_log_info(mavlink_fd, "[QC%i] something is very wrong", system_id);
 
                 }
 
@@ -387,7 +391,7 @@ int stop_swarm( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_
                         return -3;
 
                 } else {
-                        mavlink_log_info(mavlink_fd, "[quad_commmander] something is very wrong");
+                        mavlink_log_info(mavlink_fd, "[QC%i] something is very wrong", system_id);
 
                 }
 
