@@ -63,7 +63,7 @@ static void usage(const char *reason);
 void error_msg( int error, bool *transition_error );
 
 /**
- * State transitions functions
+ * State transition functions
  */
 int take_off( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub );
 int land( struct quad_mode_s *state, struct quad_mode_s *mode, orb_advert_t *mode_pub, int *state_sub, bool *transition_error );
