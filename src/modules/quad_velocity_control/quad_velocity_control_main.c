@@ -100,11 +100,11 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 	        Kd_pos = 0.001, /* Controller constants for position controller */
                 Ki_pos = 0.003,//0.001,
 	 	
-	 	hover_alt = 1.5,		// 1 meter altitude setpoint
+	 	hover_alt = 1,		// 1 meter altitude setpoint
 	 	landing_alt = 0.3,
 		hover_threashold = 0.2,
 		anti_gravity = 0.46,
-		min_rotor_speed = 0.29,
+		min_rotor_speed = 0.25,
 		pos_max = 0.3,
 		int_max= 0.2,
 		speed_up_time = 4,
@@ -127,7 +127,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                 quad_mode_updated = false,
                 vehicle_status_updated = false,
                 system_error = false,
-                test = false;
+                test = true;
 
         velocity_t q_vel_ref;
         memset(&q_vel_ref, 0, sizeof(q_vel_ref));
@@ -307,7 +307,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                            *         orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
                                            * } */
 
-                                        mavlink_log_info(mavlink_fd,"[POT%d] non sp.dx = %f, sp.dy = %f",system_id, (double)sp.dx, (double)sp.dy);
+                                        mavlink_log_info(mavlink_fd,"[POT%d] non sp.dx = %.3f, sp.dy = %.3f",system_id, (double)sp.dx, (double)sp.dy);
                                         if ( (float)(sp.dx) > (float)0.1 )
                                                 sp.dx = (float)0.1;
 
@@ -321,7 +321,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                                 sp.dy = (float)-0.1;
 
 
-                                        mavlink_log_info(mavlink_fd,"[POT%d] lim sp.dx = %f, sp.dy = %f", system_id, (double)sp.dx, (double)sp.dy);
+                                        mavlink_log_info(mavlink_fd,"[POT%d] lim sp.dx = %.3f, sp.dy = %.3f", system_id, (double)sp.dx, (double)sp.dy);
                                         sp.y = sp.y + (sp.dy * (float)dt_pos);
                                         sp.x = sp.x + (sp.dx * (float)dt_pos);
                                         
