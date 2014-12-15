@@ -104,6 +104,8 @@ int att_control_thread_main(int argc, char *argv[]) {
                 rp_max = 0.7,  /* roll and pitch maximum output */
                 yaw_max = 0.4;  /* yaw maximum output */
 
+        bool error = false;
+
         while ( !thread_should_exit ) {
                 int ret_v_att = poll(fd_v_att, 1, 1);
                 if (ret_v_att < 0) {
@@ -151,7 +153,7 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                         out.thrust = sp.thrust; /* Thrust controller resides in velocity controller */
 
-                        if ( (v_att.roll > rp_safe) || (v_att.pitch > rp_safe) ) {
+                        if ( (v_att.roll > rp_safe) || (v_att.pitch > rp_safe) || (error == true) ) {
                                 out.roll = 0;
                                 out.pitch = 0;
                                 out.yaw = 0;
@@ -159,6 +161,8 @@ int att_control_thread_main(int argc, char *argv[]) {
 
                                 mode.error == true;
                                 orb_publish(ORB_ID(quad_mode), mode_pub, &mode);
+
+                                error = true;
                         }
 
                         actuators.control[0] = (float)out.roll;
