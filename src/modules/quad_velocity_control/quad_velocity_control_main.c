@@ -118,7 +118,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 	const int system_id = 1;
 	int error_count = 0;
 
-	bool initialised = false,
+	bool    initialised = false,
                 shutdown_motors = true,
                 quad_mode_updated = false,
                 vehicle_status_updated = false,
