@@ -100,7 +100,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 	        Kd_pos = 0.001, /* Controller constants for position controller */
                 Ki_pos = 0.003,//0.001,
 	 	
-	 	hover_alt = 1,		// 1 meter altitude setpoint
+	 	hover_alt = 0.8,		// 1 meter altitude setpoint
 	 	landing_alt = 0.3,
 		hover_threashold = 0.2,
 		anti_gravity = 0.46,
@@ -296,7 +296,6 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 
                                         sp.dx = (float)-1 * q_vel_ref.v1;
                                         sp.dy = q_vel_ref.v2;
-					//}
 
                                         if ( state.y < (float)0.8 ) {
                                                 sp.dy += (float)0.05;
@@ -322,8 +321,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 
 
                                         // mavlink_log_info(mavlink_fd,"[POT%d] lim sp.dx = %.3f, sp.dy = %.3f", system_id, (double)sp.dx, (double)sp.dy);
-                                        sp.y = sp.y + (sp.dy * (float)dt_pos);
                                         sp.x = sp.x + (sp.dx * (float)dt_pos);
+                                        sp.y = sp.y + (sp.dy * (float)dt_pos);
                                         
                                 } else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM) {
 
