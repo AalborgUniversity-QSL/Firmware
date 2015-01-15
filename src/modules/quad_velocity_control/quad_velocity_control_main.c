@@ -120,7 +120,8 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 
 	param_get(param_ptr, &system_id);
 
-	int error_count = 0;
+	int error_count = 0,
+	    loop_count = 0;
 
 	bool    initialised = false,
                 shutdown_motors = true,
@@ -285,7 +286,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 
 				} else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_START_SWARM) {
         				if(!state_transition.start_swarm) {
-        					Ki_pos = Ki_pos * (float)0.1;
+        					// Ki_pos = Ki_pos * (float)0.1;
         					state_transition.start_swarm = true;
                                         	quad_mode.current_state = QUAD_STATE_SWARMING;
                                         	orb_publish(ORB_ID(quad_mode), quad_mode_pub, &quad_mode);
@@ -296,6 +297,10 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 
                                         sp.dx = (float)-1 * q_vel_ref.v1;
                                         sp.dy = q_vel_ref.v2;
+
+                                        if ((loop_count % 10) == 0){
+                                        	mavlink_log_info(mavlink_fd,"[POT%d] [dx dy] [%.1f %.1f]",(double)sp.dx, (double)sp.dy);
+                                        }
 
                                         if ( state.y < (float)0.8 ) {
                                                 sp.dy += (float)0.05;
@@ -327,7 +332,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                 } else if (quad_mode.cmd == (enum QUAD_CMD)QUAD_CMD_STOP_SWARM) {
 
                                         if ( !state_transition.stop_swarm ) {
-                                                Ki_pos = Ki_pos * (float)10;
+                                                // Ki_pos = Ki_pos * (float)10;
                                                 sp.dx = (float)0;
                                                 sp.dy = (float)0;
                                                 state_transition.stop_swarm = true;
@@ -435,6 +440,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 	                        // Publish the new roll, pitch, yaw and thrust set points
 	                        // mavlink_log_info(mavlink_fd,"th: %.3f", (double)velocity_sp.thrust);
 	                        orb_publish(ORB_ID(quad_velocity_sp), quad_velocity_sp_pub, &velocity_sp);
+	                        loop_count++;
 
 			} else if (vehicle_status.arming_state == ARMING_STATE_STANDBY) {
 
