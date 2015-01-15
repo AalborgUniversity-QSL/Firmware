@@ -102,7 +102,7 @@ int att_control_thread_main(int argc, char *argv[]) {
                 time = 0.f,
                 time_old = 0.f,
                 rp_safe = 0.35,
-                rp_max = 0.7,  /* roll and pitch maximum output */
+                rp_max = 0.4,  /* roll and pitch maximum output */
                 yaw_max = 0.4;  /* yaw maximum output */
 
         bool error = false;
