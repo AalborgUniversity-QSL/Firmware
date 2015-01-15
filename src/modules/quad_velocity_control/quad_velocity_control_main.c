@@ -299,12 +299,15 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                         sp.dy = q_vel_ref.v2;
 
                                         if ((loop_count % 10) == 0){
-                                        	mavlink_log_info(mavlink_fd,"[POT%d] [dx dy] [%.1f %.1f]",(double)sp.dx, (double)sp.dy);
+                                        	mavlink_log_info(mavlink_fd,"[POT%d] [dx dy] [%.3f %.3f]",(double)sp.dx, (double)sp.dy);
                                         }
 
                                         if ( state.y < (float)0.8 ) {
                                                 sp.dy += (float)0.05;
-                                        } /* else {
+                                                sp.dx += (float)-0.05*fabs(state.x)
+                                        }
+
+                                        /* else {
                                            *         /\* sp.dy = (float)0; *\/
                                            *         state_transition.start_swarm = false;
                                            *         quad_mode.cmd = (enum QUAD_CMD)QUAD_CMD_PENDING;
