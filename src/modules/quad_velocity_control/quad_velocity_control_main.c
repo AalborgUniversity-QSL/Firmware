@@ -144,7 +144,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 			mavlink_log_info(mavlink_fd,"[POT%d] Poll error", system_id);
 		} else if (pret == 0){
 			if (vehicle_status.arming_state == ARMING_STATE_ARMED && !system_error){
-				if (error_count >= 5){
+				if (error_count >= 10){
 					system_error = true;
 					initialised = false;
 					error_count = 0;
@@ -298,15 +298,19 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                         sp.dx = (float)-1 * q_vel_ref.v1;
                                         sp.dy = q_vel_ref.v2;
 
+
+                                        if ( state.y < (float)0.8 ) {
+                                                sp.dy = (float)0.2;
+                                                sp.dx = (float)-0.2*(float)fabs(state.x);
+                                        }
+                                        else {
+                                        	sp.dy = (float)0;
+                                        	sp.dx = (float)0;
+                                        }
+
                                         if ((loop_count % 10) == 0){
                                         	mavlink_log_info(mavlink_fd,"[POT%d] [dx dy] [%.3f %.3f]",(double)sp.dx, (double)sp.dy);
                                         }
-
-                                        if ( state.y < (float)0.8 ) {
-                                                sp.dy += (float)0.05;
-                                                sp.dx += (float)-0.05*(float)fabs(state.x);
-                                        }
-
                                         /* else {
                                            *         /\* sp.dy = (float)0; *\/
                                            *         state_transition.start_swarm = false;
@@ -315,17 +319,17 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                            * } */
 
                                         // mavlink_log_info(mavlink_fd,"[POT%d] non sp.dx = %.3f, sp.dy = %.3f",system_id, (double)sp.dx, (double)sp.dy);
-                                        if ( (float)(sp.dx) > (float)0.1 )
-                                                sp.dx = (float)0.1;
+                                        if ( (float)(sp.dx) > (float)0.2 )
+                                                sp.dx = (float)0.2;
 
-                                        if ( (float)(sp.dx) < (float)-0.1 )
-                                                sp.dx = (float)-0.1;
+                                        if ( (float)(sp.dx) < (float)-0.2 )
+                                                sp.dx = (float)-0.2;
 
-                                        if ( (float)(sp.dy) > (float)0.1 )
-                                                sp.dy = (float)0.1;
+                                        if ( (float)(sp.dy) > (float)0.2 )
+                                                sp.dy = (float)0.2;
 
-                                        if ( (float)(sp.dy) < (float)-0.1 )
-                                                sp.dy = (float)-0.1;
+                                        if ( (float)(sp.dy) < (float)-0.2 )
+                                                sp.dy = (float)-0.2;
 
 
                                         // mavlink_log_info(mavlink_fd,"[POT%d] lim sp.dx = %.3f, sp.dy = %.3f", system_id, (double)sp.dx, (double)sp.dy);
