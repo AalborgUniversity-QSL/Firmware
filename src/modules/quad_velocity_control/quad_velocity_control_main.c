@@ -304,7 +304,7 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 
                                         if ( state.y < (float)0.8 ) {
                                                 sp.dy += (float)0.05;
-                                                sp.dx += (float)-0.05*fabs(state.x)
+                                                sp.dx += (float)-0.05*(float)fabs(state.x);
                                         }
 
                                         /* else {
