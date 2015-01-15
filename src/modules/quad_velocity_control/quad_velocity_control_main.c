@@ -299,14 +299,14 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
                                         sp.dy = q_vel_ref.v2;
 
 
-                                        if ( state.y < (float)0.8 ) {
-                                                sp.dy = (float)0.2;
-                                                sp.dx = (float)-0.2*(float)fabs(state.x);
-                                        }
-                                        else {
-                                        	sp.dy = (float)0;
-                                        	sp.dx = (float)0;
-                                        }
+                                        //if ( state.y < (float)0.8 ) {
+                                                sp.dy = (float)-0.2 * (float)(state.y-(float)0.8);
+                                                sp.dx = (float)-0.2*(float)(state.x);
+                                        // }
+                                        // else {
+                                        // 	sp.dy = (float)0;
+                                        // 	sp.dx = (float)0;
+                                        // }
 
                                         if ((loop_count % 10) == 0){
                                         	mavlink_log_info(mavlink_fd,"[POT%d] [dx dy] [%.3f %.3f]",(double)sp.dx, (double)sp.dy);
