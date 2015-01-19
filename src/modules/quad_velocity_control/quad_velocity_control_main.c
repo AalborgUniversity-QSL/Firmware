@@ -295,15 +295,15 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 
                                         q_vel_ref = wall( state.x, state.y );
 
-                                        sp.dx = (float)-1 * q_vel_ref.v1;
+                                        sp.dx = q_vel_ref.v1;
                                         sp.dy = q_vel_ref.v2;
 
+                                        // if ((loop_count % 5) == 0){
+                                        // 	mavlink_log_info(mavlink_fd,"[POT%d] [x y dx dy] [%.3f %.3f %.3f %.3f]",(double)state.x, (double)state.y, (double)sp.dx, (double)sp.dy);
+                                        // }
                                         sp.dy += (float)-0.2 * (float)(state.y - (float)0.8);
                                         sp.dx += (float)-0.3 * (float)(state.x);
 
-                                        if ((loop_count % 5) == 0){
-                                        	mavlink_log_info(mavlink_fd,"[POT%d] [x y dx dy] [%.3f %.3f %.3f %.3f]",(double)state.x, (double)state.y, (double)sp.dx, (double)sp.dy);
-                                        }
                                         /* else {
                                            *         /\* sp.dy = (float)0; *\/
                                            *         state_transition.start_swarm = false;
