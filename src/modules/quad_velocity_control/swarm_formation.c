@@ -73,11 +73,11 @@ velocity_t wall(float posx, float posy) {
 
 
 velocity_t swarm( int i, float allposx [3], float allposy [3] ) {
-	float pos[2] = {allposx[i], allposy[i]};
+	float pos[2] = {allposx[i]/(float)1000, allposy[i]/(float)1000};
 	int number_of_quads = 2;
-	float potfield = 0.5;
-	float vmin = -0.02;
-	float dist = 1.5;
+	float potfield = 1;
+	float vmin = 0.1;
+	float dist = 1;
 	float vm[2] = {0, 0};
 	float allpos[2];
 	float l;
@@ -88,18 +88,18 @@ velocity_t swarm( int i, float allposx [3], float allposy [3] ) {
 
 	for (int n = 0; n < number_of_quads; ++n) {
                 if( n != i ) {
-                        allpos[0] = allposx[n];
-                        allpos[1] = allposy[n];
+                        allpos[0] = allposx[n]/(float)1000;
+                        allpos[1] = allposy[n]/(float)1000;
                         l = sqrt( ( (allpos[0] - pos[0]) * (allpos[0] - pos[0]) ) + ( (allpos[1] - pos[1]) * (allpos[1] - pos[1]) ) );
                         //printf("l er  %f \n", l);
-                        vm[0] = vm[0] + ( potfield * ( allposx[n] /  l ) * (l - dist) * (float)fabs(l - dist) );
-                        vm[1] = vm[1] + ( potfield * ( allposy[n] /  l ) * (l - dist) * (float)fabs(l - dist) );
+                        vm[0] = ( potfield * ( (allpos[0] - pos[0]) /  l ) * (l - dist) * (float)fabs(l - dist) );
+                        vm[1] = ( potfield * ( (allpos[1] - pos[1]) /  l ) * (l - dist) * (float)fabs(l - dist) );
 			//printf("for %i v1 = %f, v2 = %f \n", n, vm[0],vm[1]);
                         // To make them not chrash into each other
                         lvm = sqrt( (vm[0] * vm[0]) + (vm[1] * vm[1]) );
-                        if ( lvm > vmin ) {
-                                vm[0] = ( allposx[n] /  l ) * vmin;
-                                vm[1] = ( allposx[n] /  l ) * vmin;
+                        if ( (lvm > vmin) && (l > dist)) {
+                                vm[0] = ( (allpos[0] - pos[0]) /  l ) * vmin;
+                                vm[1] = ( (allpos[1] - pos[1]) /  l ) * vmin;
                                 //printf("for %i v1 = %f, v2 = %f \n", n, vm[0],vm[1]);
                         }
                         vel.v1 = vel.v1 + vm[0];
