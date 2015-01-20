@@ -72,9 +72,9 @@ velocity_t wall(float posx, float posy) {
 }
 
 
-velocity_t swarm( int i, float allposx [10], float allposy [10] ) {
+velocity_t swarm( int i, float allposx [3], float allposy [3] ) {
 	float pos[2] = {allposx[i], allposy[i]};
-	int number_of_quads = 10 ;
+	int number_of_quads = 2;
 	float potfield = 0.5;
 	float vmin = -0.02;
 	float dist = 1.5;
