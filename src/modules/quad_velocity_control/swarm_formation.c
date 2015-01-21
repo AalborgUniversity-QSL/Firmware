@@ -76,8 +76,8 @@ velocity_t swarm( int i, float allposx [3], float allposy [3] ) {
 	float pos[2] = {allposx[i]/(float)1000, allposy[i]/(float)1000};
 	int number_of_quads = 2;
 	float potfield = 1;
-	float vmin = 0.1;
-	float dist = 1;
+	float vmin = 0.05;
+	float dist = 1.2;
 	float vm[2] = {0, 0};
 	float allpos[2];
 	float l;

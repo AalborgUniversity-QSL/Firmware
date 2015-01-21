@@ -98,9 +98,9 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
 		Ki_thrust = 0.002,
 	        Kp_pos = 0.3,
 	        Kd_pos = 0.001, /* Controller constants for position controller */
-                Ki_pos = 0.001,//0.001,
+                Ki_pos = 0.0005,//0.001,
 	 	
-	 	hover_alt = 0.8,		// 1 meter altitude setpoint
+	 	hover_alt = 1,		// 1 meter altitude setpoint
 	 	landing_alt = 0.3,
 		hover_threashold = 0.2,
 		anti_gravity = 0.46,
@@ -292,17 +292,17 @@ int quad_velocity_control_thread_main(int argc, char *argv[]) {
         					mavlink_log_info(mavlink_fd,"[POT%d] INITIALISED SWARMING",system_id);
         				}
 
-                                        // q_vel_ref = wall( state.x, state.y );
-                                        q_vel_ref = swarm((system_id - 1), quad_pos.x, quad_pos.y);
+                                        q_vel_ref = wall( state.x, state.y );
+                                        // q_vel_ref = swarm((system_id - 1), quad_pos.x, quad_pos.y);
 
                                         sp.dx = q_vel_ref.v1;
                                         sp.dy = q_vel_ref.v2;
 
-                                        if ((loop_count % 5) == 0){
-                                        	mavlink_log_info(mavlink_fd,"[POT%d] [x y dx dy] [%.3f %.3f %.3f %.3f]", system_id, (double)quad_pos.x[1], (double)quad_pos.y[1], (double)sp.dx, (double)sp.dy);
-                                        }
-                                        // sp.dy += (float)-0.2 * (float)(state.y - (float)0.8);
-                                        // sp.dx += (float)-0.3 * (float)(state.x);
+                                        // if ((loop_count % 5) == 0){
+                                        // 	mavlink_log_info(mavlink_fd,"[POT%d] [x y dx dy] [%.3f %.3f %.3f %.3f]", system_id, (double)quad_pos.x[1], (double)quad_pos.y[1], (double)sp.dx, (double)sp.dy);
+                                        // }
+                                        sp.dy += (float)-0.2 * (float)(state.y - (float)0.8);
+                                        sp.dx += (float)-0.3 * (float)(state.x);
 
                                         /* else {
                                            *         /\* sp.dy = (float)0; *\/
