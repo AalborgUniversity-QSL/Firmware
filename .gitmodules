@@ -1,9 +1,9 @@
 [submodule "mavlink/include/mavlink/v1.0"]
 	path = mavlink/include/mavlink/v1.0
-	url = git@github.com:BrianGasberg/c_library.git
+	url = git@github.com:AalborgUniversity-QSL/c_library.git
 [submodule "NuttX"]
 	path = NuttX
-	url = git@github.com:BrianGasberg/NuttX.git
+	url = git@github.com:AalborgUniversity-QSL/NuttX.git
 [submodule "uavcan"]
 	path = uavcan
-	url = git@github.com:BrianGasberg/uavcan.git
+	url = git@github.com:AalborgUniversity-QSL/uavcan.git
